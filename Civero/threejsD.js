@@ -285,17 +285,23 @@ async load() {
         Start by creating a scene. Add objects here.
         Add a camera, and set the rendering camera to that one. The stage should update.
 
-        Add an object. By default a white cube will appear.
+        Add an object. By default a white but black cube will appear.
         Create materials and geometries, then asign the object these.
         You can modify these after!
-        
-        Pixel ratio is set to 1. Might add a block to change!
-        Camera defaults is [0,0,3] FOV: 90 Ratio: Canvas ratio
 
-        Creating Objects/Materials/Geometries with the same name will replace them.
+        You might have noticed that the cube is still black. This is because there are no lights!
+        Add a light, only Point Light can be moved. 
+        Directional light should be able to rotate. ???
+        
+        Camera defaults is [0,0,3] FOV: 90 Ratio: Canvas ratio
+        Pixel Ratio default is 1, recommended: 2-3 You can set decimals.
+
+        Creating Objects with the same name will replace them.
         
         To do:
-        Lighting
+        ???
+        Is it really necessary sections geometries & materials? I would never use them, just uploading my own glb models.
+        Add way to add childs/parents/ groups => better! I could add "create [GROUP]" "add [OBJECT] to [GROUP]" Then if you transform the group, the objects would transform too!
         `)
     }
 
@@ -318,7 +324,7 @@ async load() {
     newScene() {
         scene = new THREE.Scene();
         scene.background = new THREE.Color("#222")
-        //scene.add(new THREE.GridHelper(16, 16))
+        //scene.add(new THREE.GridHelper(16, 16)) //future helper section?
         materials = {}
         geometries = {}
         lights = {}
@@ -384,7 +390,7 @@ async load() {
 
         if (args.PROPERTY === "rotation") {
           values = values.map(v => v * Math.PI / 180);
-          object.rotation.set(0,0,0) //why not? set.(...values)
+          object.rotation.set(0,0,0)
         }
           object[args.PROPERTY].set(...values);
     }
@@ -477,7 +483,7 @@ async load() {
     }
 
     newLight(args) {
-      if (lights[args.NAME]) alert ("light already exists! will replace...")
+      if (lights[args.NAME]) alert ("light already exists! will replace...") //should i remove these alerts?
       const light = new THREE[args.TYPE](0xffffff, 1)
       if (args.TYPE === "PointLight")
       light.castShadow = true
