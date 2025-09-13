@@ -302,6 +302,9 @@ async load() {
         ???
         Is it really necessary sections geometries & materials? I would never use them, just uploading my own glb models.
         Add way to add childs/parents/ groups => better! I could add "create [GROUP]" "add [OBJECT] to [GROUP]" Then if you transform the group, the objects would transform too!
+        When project stop button is pressed, stop requesting frames to update => stop/freeze rendering
+        Physics!!!
+        Postprocesing? Focal thing would be cool! Godrays, and more...
         `)
     }
 
