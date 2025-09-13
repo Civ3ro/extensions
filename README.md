@@ -4,3 +4,5 @@ Use it in turbowarp!
 
 Or load a demo from:
 https://drive.google.com/drive/folders/1_dg5Afb7bO10wym21ohwvFVn4G2arsD_?usp=drive_link
+
+<iframe frameborder="0" src="https://itch.io/embed-upload/14947129" allowfullscreen="" width="480" height="380"><a href="https://civero-test.itch.io/three-js-extension-test">Play three js extension test on itch.io</a></iframe>
