@@ -1,7 +1,7 @@
 // Name: Three-D
 // ID: threeDjsExtension
-// Description: Use three js inside Turbowarp! A 3D graphics library.
-// By: Civero <https://scratch.mit.edu/users/civero/>
+// Description: Use three js inside Turbowarp! A 3D graphics library. 
+// By: me <https://scratch.mit.edu/users/civero/>
 // License: MIT License Copyright (c) 2021-2024 TurboWarp Extensions Contributors 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
 //The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software. 
@@ -18,6 +18,7 @@
   const vm = Scratch.vm;
   const runtime = vm.runtime
   const renderer = Scratch.renderer;
+  const Cast = Scratch.Cast;
   const menuIconURI = "data:image/svg+xml;base64,PHN2ZyB2ZXJzaW9uPSIxLjEiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgeG1sbnM6eGxpbms9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkveGxpbmsiIHdpZHRoPSIyMTgiIGhlaWdodD0iMjE4IiB2aWV3Qm94PSIwLDAsMjE4LDIxOCI+PGcgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoLTEzMSwtNzEpIj48ZyBzdHJva2Utd2lkdGg9IjQiIHN0cm9rZS1taXRlcmxpbWl0PSIxMCI+PHBhdGggZD0iTTEzMywxODBjMCwtNTkuMDk0NDcgNDcuOTA1NTMsLTEwNyAxMDcsLTEwN2M1OS4wOTQ0NywwIDEwNyw0Ny45MDU1MyAxMDcsMTA3YzAsNTkuMDk0NDcgLTQ3LjkwNTUzLDEwNyAtMTA3LDEwN2MtNTkuMDk0NDcsMCAtMTA3LC00Ny45MDU1MyAtMTA3LC0xMDd6IiBmaWxsPSIjMTkxOTE5IiBmaWxsLXJ1bGU9Im5vbnplcm8iIHN0cm9rZT0iIzVjZDQ5OCIgc3Ryb2tlLWxpbmVqb2luPSJtaXRlciIvPjxnIGZpbGw9Im5vbmUiIGZpbGwtcnVsZT0iZXZlbm9kZCIgc3Ryb2tlPSIjZmZmZmZmIiBzdHJva2UtbGluZWpvaW49InJvdW5kIj48cGF0aCBkPSJNMjExLjU5OCwyODAuNDdsLTQzLjIxMywtMTc0Ljk0bDE3My4yMyw0OS44NzR6Ii8+PHBhdGggZD0iTTI1NC45NjgsMTMwLjQ3MmwyMS41OTEsODcuNDk2bC04Ni41NjcsLTI0Ljk0NXoiLz48cGF0aCBkPSJNMjMzLjQ4OCwyMDQuODlsLTEwLjcyNCwtNDMuNDY1bDQzLjAwOCwxMi4zNDZ6Ii8+PHBhdGggZD0iTTIxMi4wMzYsMTE4LjAxM2wxMC43MjQsNDMuNDY1bC00My4wMDgsLTEyLjM0NnoiLz48cGF0aCBkPSJNMjk4LjA0OCwxNDIuNzlsMTAuNzI0LDQzLjQ2NWwtNDMuMDA4LC0xMi4zNDZ6Ii8+PHBhdGggZD0iTTIzMy40OTMsMjA0LjkybDEwLjcyNCw0My40NjVsLTQzLjAwOCwtMTIuMzQ2eiIvPjwvZz48cGF0aCBkPSJNMjQwLDczYzU5LjA5NDQ3LDAgMTA3LDQ3LjkwNTUzIDEwNywxMDdjMCw1OS4wOTQ0NyAtNDcuOTA1NTMsMTA3IC0xMDcsMTA3Yy01OS4wOTQ0NywwIC0xMDcsLTQ3LjkwNTUzIC0xMDcsLTEwN2MwLC01OS4wOTQ0NyA0Ny45MDU1MywtMTA3IDEwNywtMTA3eiIgZmlsbD0ibm9uZSIgZmlsbC1ydWxlPSJub256ZXJvIiBzdHJva2U9IiM1Y2Q0OTgiIHN0cm9rZS1saW5lam9pbj0ibWl0ZXIiLz48L2c+PC9nPjwvc3ZnPg==";
 
   let THREE
@@ -233,19 +234,15 @@ async load() {
             ]},
             onoff: {acceptReporters: true, items: [{text: "on", value: "1"},{text: "off", value: "0"},]},
             modelsList: {acceptReporters: false, items: () => {
-              console.log("Menu refreshed!");
           const stage = runtime.getTargetForStage();
-              console.log(!!stage)
           if (!stage) return ["(loading...)"];
 
-          const list = stage.lookupVariableById("threeModels");
-          console.log(!!list)
-          if (!list) return [["Load a model!"]]
-          
-              console.log(list.value)
-
           // @ts-ignore
-          return list.value.map( (m) =>  [m.name, m.data] )
+          const models = Scratch.vm.runtime.getTargetForStage().getSounds()//.filter(c => c.hasOwnProperty("data"))
+          if (models.length < 1) return [["Load a model!"]]
+          
+          // @ts-ignore
+          return models.map( m =>  [m.name] )
         }
             }, 
         }
@@ -484,76 +481,99 @@ async load() {
     }
 
 
-    async loadGLTFModel(args) {
-      this.gltf.load(
-      args.FILE, 
-      function ( gltf ) { //onLoad
-        scene.add( gltf.scene );
-      },
-      undefined, 
-      function ( error ) {console.error( error );} 
-      );
+    async loadGLTFModel(args, util) {
+                this.gltf.load(
+                args.FILE, 
+                function ( gltf ) { //onLoad
+                  scene.add( gltf.scene );
+                },
+                undefined, 
+                function ( error ) {console.error( error );} 
+                );
 
-    }
+              }
 
-    loadModelFile(){
-      function openFileExplorer() {
-        return new Promise((resolve) => {
-          const input = document.createElement("input");
-            input.type = "file";
-            input.accept = ".gltf,.glb"
-            input.multiple = false;
-            input.onchange = () => {
-              resolve(input.files)
-              input.remove()
-            };
-            input.click(); // opens the file dialog
-        });}
+              async loadModelFile(args, util) {
+                async function openFileExplorer(args, util) {
+                  return new Promise((resolve) => {
+                    const input = document.createElement("input");
+                      input.type = "file";
+                      input.accept = ".gltf,.glb"
+                      input.multiple = false;
+                      input.onchange = () => {
+                        resolve(input.files)
+                        input.remove()
+                      };
+                      input.click(); // opens the file dialog
+                  });}
 
-      openFileExplorer().then(files => {
-        const file = files[0];
-        const reader = new FileReader();
-        reader.onload = (e) => {
-          // add to list!
-            if (!runtime.getTargetForStage().variables["threeModels"]){
-            // @ts-ignore
-            runtime.getTargetForStage().createVariable("threeModels", "GLTF Models loaded from ThreeD", "list")
-            alert(`A list called GLTF Models has been created!
-              Don't add new items! You can delete.
+                openFileExplorer().then(files => {
+            const file = files[0];
+            const reader = new FileReader();
+
+            reader.onload = async (e) => {
+              const arrayBuffer = e.target.result;
               
-              Oh, and to add your model, open the menu again!`)
+            { // From lily's assets
+
+                  // Thank you PenguinMod for providing this code.
+              {
+                const targetId = runtime.getTargetForStage().id; //util.target.id not working!
+                const assetName = Cast.toString(file.name);
+
+                //const res = await Scratch.fetch(args.URL);
+                //const buffer = await res.arrayBuffer();
+                const buffer = arrayBuffer
+
+                const storage = runtime.storage;
+                const asset = storage.createAsset(
+                  storage.AssetType.Sound,
+                  storage.DataFormat.MP3,
+                  new Uint8Array(buffer),
+                  null,
+                  true
+                );
+
+                try {
+                  await vm.addSound(
+                    {
+                      asset,
+                      md5: asset.assetId + "." + asset.dataFormat,
+                      name: assetName,
+                    },
+                    targetId
+                  );
+                  alert("Model loaded successfully!");
+                } catch (e) {
+                  console.error(e);
+                  alert("Error loading model.");
+                }
+              }
+              // End of PenguinMod
             }
-            const model = {name: file.name, data: e.target.result}
-            // @ts-ignore
-            if (runtime.getTargetForStage().variables["threeModels"].value.includes(model.name)) alert("model already in list, will add again!")
-            // @ts-ignore
-            runtime.getTargetForStage().variables["threeModels"].value.push(model)
-        };
-        reader.readAsDataURL(file); // or .readAsText for .gltf
-        console.log(reader.result)
-      });
+            };
+            alert("Loading model...")
+            reader.readAsArrayBuffer(file);
+          });
+
     }
 
     addModel(args) {
+    // Find the costume by name
+    const model = runtime.getTargetForStage().getSounds().find(c => c.name === args.ITEM /*&& c.dataFormat === "glb"*/);
+    if (!model) return;
+      console.log(model)
+      console.log(model.asset.data)
 
-      console.log(args.ITEM)
-      this.gltf.load(
-        
-        args.ITEM, 	//uri
-
-        function ( gltf ) {
-
-          scene.add( gltf.scene );
-
-          gltf.animations; // Array<THREE.AnimationClip>
-          gltf.scene; // THREE.Group
-          gltf.scenes; // Array<THREE.Group>
-          gltf.cameras; // Array<THREE.Camera>
-          gltf.asset; // Object
-
-	      },
-      )
-      
+      this.gltf.parse(
+        model.asset.data.buffer, 
+        "", 
+        gltf => {
+          console.log("added!")
+          scene.add(gltf.scene);
+        },
+        error => {console.error("Error parsing GLTF model:", error);}
+      );
     }
 
   }
