@@ -32,6 +32,7 @@
 
   let materials = {}
   let geometries = {}
+  let lights = {}
   
     //custom functions
     function vector3ToString(prop) {
@@ -127,11 +128,14 @@ async load() {
       threeRenderer = new THREE.WebGLRenderer({alpa: true})
       threeRenderer.setSize(480, 360)
       threeRenderer.setPixelRatio(window.devicePixelRatio * 1)
+
       renderer.addOverlay( threeRenderer.domElement, "scale" )
+      renderer.addOverlay(renderer.canvas, "manual")
+      renderer.setBackgroundColor(1, 1, 1, 0)
 
       this.gltf = new GLTFLoader.GLTFLoader()
 
-      this.defaultMaterial = new THREE.MeshBasicMaterial()
+      this.defaultMaterial = new THREE.MeshStandardMaterial()
       this.defaultGeometry = new THREE.BoxGeometry()
 
     }
@@ -141,9 +145,9 @@ async load() {
       return {
         id: "threeDjsExtension",
         name: Scratch.translate("Three-D"),
-        color1: "#191919",
-        color2: "#b9b9b9",
-        color3: "#5cd498",
+        color1: "#222222",
+        color2: "#169976",
+        color3: "#1DCD9F",
         menuIconURI,
 
         blocks: [
@@ -161,35 +165,40 @@ async load() {
             {opcode: "renderSceneCamera", blockType: Scratch.BlockType.COMMAND, text: "set Scene rendering camera to [CAMERA]", arguments: {CAMERA: {type: Scratch.ArgumentType.STRING, defaultValue: "myCamera"}}},
 
             {blockType: Scratch.BlockType.LABEL, text: "Camera"},
-            {opcode: "addCamera", blockType: Scratch.BlockType.COMMAND, text: "add [TYPE] [CAMERA] to scene", arguments: {CAMERA: {type: Scratch.ArgumentType.STRING, defaultValue: "myCamera"}, TYPE: {type: Scratch.ArgumentType.STRING, menu: "cameraTypes"}}},
-            {opcode: "setCamera", blockType: Scratch.BlockType.COMMAND, text: "set [PROPERTY] of [CAMERA] to [VALUE]", arguments: {CAMERA: {type: Scratch.ArgumentType.STRING, defaultValue: "myCamera"}, PROPERTY: {type: Scratch.ArgumentType.STRING, menu: "cameraProperties"}, VALUE: {type: Scratch.ArgumentType.STRING, defaultValue: "0"}}},
-            {opcode: "getCamera", blockType: Scratch.BlockType.REPORTER, text: "get [PROPERTY] of [CAMERA]", arguments: {CAMERA: {type: Scratch.ArgumentType.STRING, defaultValue: "myCamera"}, PROPERTY: {type: Scratch.ArgumentType.STRING, menu: "cameraProperties"}}},
+            {opcode: "addCamera", blockType: Scratch.BlockType.COMMAND, text: "add camera [TYPE] [CAMERA] to scene", arguments: {CAMERA: {type: Scratch.ArgumentType.STRING, defaultValue: "myCamera"}, TYPE: {type: Scratch.ArgumentType.STRING, menu: "cameraTypes"}}},
+            {opcode: "setCamera", blockType: Scratch.BlockType.COMMAND, text: "set camera [PROPERTY] of [CAMERA] to [VALUE]", arguments: {CAMERA: {type: Scratch.ArgumentType.STRING, defaultValue: "myCamera"}, PROPERTY: {type: Scratch.ArgumentType.STRING, menu: "cameraProperties"}, VALUE: {type: Scratch.ArgumentType.STRING, defaultValue: "0"}}},
+            {opcode: "getCamera", blockType: Scratch.BlockType.REPORTER, text: "get camera [PROPERTY] of [CAMERA]", arguments: {CAMERA: {type: Scratch.ArgumentType.STRING, defaultValue: "myCamera"}, PROPERTY: {type: Scratch.ArgumentType.STRING, menu: "cameraProperties"}}},
                         
 
             {blockType: Scratch.BlockType.LABEL, text: "Object"},
-            {opcode: "addObject", blockType: Scratch.BlockType.COMMAND, text: "add [OBJECT3D] to scene", arguments: {OBJECT3D: {type: Scratch.ArgumentType.STRING, defaultValue: "myObject"}}},
-            {opcode: "setObject", blockType: Scratch.BlockType.COMMAND, text: "set [PROPERTY] of [OBJECT3D] to [NAME]", arguments: {OBJECT3D: {type: Scratch.ArgumentType.STRING, defaultValue: "myObject"}, PROPERTY: {type: Scratch.ArgumentType.STRING, menu: "objectProperties"}, NAME: {type: Scratch.ArgumentType.STRING, defaultValue: "myMaterial"}}},
-            {opcode: "getObject", blockType: Scratch.BlockType.REPORTER, text: "get [PROPERTY] of [OBJECT3D]", arguments: {OBJECT3D: {type: Scratch.ArgumentType.STRING, defaultValue: "myObject"}, PROPERTY: {type: Scratch.ArgumentType.STRING, menu: "objectProperties"}}},
-            {opcode: "removeObject", blockType: Scratch.BlockType.COMMAND, text: "remove [OBJECT3D] from scene", arguments: {OBJECT3D: {type: Scratch.ArgumentType.STRING, defaultValue: "myObject"}}},
+            {opcode: "addObject", blockType: Scratch.BlockType.COMMAND, text: "add object [OBJECT3D] to scene", arguments: {OBJECT3D: {type: Scratch.ArgumentType.STRING, defaultValue: "myObject"}}},
+            {opcode: "setObject", blockType: Scratch.BlockType.COMMAND, text: "set object [PROPERTY] of [OBJECT3D] to [NAME]", arguments: {OBJECT3D: {type: Scratch.ArgumentType.STRING, defaultValue: "myObject"}, PROPERTY: {type: Scratch.ArgumentType.STRING, menu: "objectProperties"}, NAME: {type: Scratch.ArgumentType.STRING, defaultValue: "myMaterial"}}},
+            {opcode: "getObject", blockType: Scratch.BlockType.REPORTER, text: "get object [PROPERTY] of [OBJECT3D]", arguments: {OBJECT3D: {type: Scratch.ArgumentType.STRING, defaultValue: "myObject"}, PROPERTY: {type: Scratch.ArgumentType.STRING, menu: "objectProperties"}}},
+            {opcode: "removeObject", blockType: Scratch.BlockType.COMMAND, text: "remove object [OBJECT3D] from scene", arguments: {OBJECT3D: {type: Scratch.ArgumentType.STRING, defaultValue: "myObject"}}},
        
             {blockType: Scratch.BlockType.LABEL, text: "Transforms"},            
-            {opcode: "setObjectV3", blockType: Scratch.BlockType.COMMAND, text: "set [PROPERTY] of [OBJECT3D] to [VALUE]", arguments: {PROPERTY: {type: Scratch.ArgumentType.STRING, menu: "objectVector3", defaultValue: "position"}, OBJECT3D: {type: Scratch.ArgumentType.STRING, defaultValue: "myObject"}, VALUE: {type: Scratch.ArgumentType.STRING, defaultValue: "[0,0,0]"}}},           
-            {opcode: "changeObjectV3", blockType: Scratch.BlockType.COMMAND, text: "change [PROPERTY] of [OBJECT3D] by [VALUE]", arguments: {PROPERTY: {type: Scratch.ArgumentType.STRING, menu: "objectVector3", defaultValue: "position"}, OBJECT3D: {type: Scratch.ArgumentType.STRING, defaultValue: "myObject"}, VALUE: {type: Scratch.ArgumentType.STRING, defaultValue: "[1,1,1]"}}},
-            {opcode: "changeObjectXV3", blockType: Scratch.BlockType.COMMAND, text: "change [PROPERTY] [X] of [OBJECT3D] to [VALUE]", arguments: {PROPERTY: {type: Scratch.ArgumentType.STRING, menu: "objectVector3"},X: {type: Scratch.ArgumentType.STRING, menu: "XYZ"}, OBJECT3D: {type: Scratch.ArgumentType.STRING, defaultValue: "myObject"}, VALUE: {type: Scratch.ArgumentType.STRING, defaultValue: "1"}}},
+            {opcode: "setObjectV3", blockType: Scratch.BlockType.COMMAND, text: "set transform [PROPERTY] of [OBJECT3D] to [VALUE]", arguments: {PROPERTY: {type: Scratch.ArgumentType.STRING, menu: "objectVector3", defaultValue: "position"}, OBJECT3D: {type: Scratch.ArgumentType.STRING, defaultValue: "myObject"}, VALUE: {type: Scratch.ArgumentType.STRING, defaultValue: "[0,0,0]"}}},           
+            {opcode: "changeObjectV3", blockType: Scratch.BlockType.COMMAND, text: "change transform [PROPERTY] of [OBJECT3D] by [VALUE]", arguments: {PROPERTY: {type: Scratch.ArgumentType.STRING, menu: "objectVector3", defaultValue: "position"}, OBJECT3D: {type: Scratch.ArgumentType.STRING, defaultValue: "myObject"}, VALUE: {type: Scratch.ArgumentType.STRING, defaultValue: "[1,1,1]"}}},
+            {opcode: "changeObjectXV3", blockType: Scratch.BlockType.COMMAND, text: "change transform [PROPERTY] [X] of [OBJECT3D] to [VALUE]", arguments: {PROPERTY: {type: Scratch.ArgumentType.STRING, menu: "objectVector3"},X: {type: Scratch.ArgumentType.STRING, menu: "XYZ"}, OBJECT3D: {type: Scratch.ArgumentType.STRING, defaultValue: "myObject"}, VALUE: {type: Scratch.ArgumentType.STRING, defaultValue: "1"}}},
 
             {opcode: "getObjectV3", blockType: Scratch.BlockType.REPORTER, text: "get [PROPERTY] of [OBJECT3D]", arguments: {PROPERTY: {type: Scratch.ArgumentType.STRING, menu: "objectVector3", defaultValue: "position"}, OBJECT3D: {type: Scratch.ArgumentType.STRING, defaultValue: "myObject"}}},
             "---",
 
             {blockType: Scratch.BlockType.LABEL, text: "Materials"},
-            {opcode: "newMaterial", blockType: Scratch.BlockType.COMMAND, text: "new Material [NAME]", arguments: {NAME: {type: Scratch.ArgumentType.STRING, defaultValue: "myMaterial"}}},
-            {opcode: "setMaterial", blockType: Scratch.BlockType.COMMAND, text: "set [PROPERTY] of [NAME] to [VALUE]", arguments: {PROPERTY: {type: Scratch.ArgumentType.STRING, menu: "materialProperties"},NAME: {type: Scratch.ArgumentType.STRING, defaultValue: "myMaterial"}, VALUE: {type: Scratch.ArgumentType.STRING, defaultValue: "#ffff00"}}},
-            {opcode: "removeMaterial", blockType: Scratch.BlockType.COMMAND, text: "remove Material [NAME]", arguments: {NAME: {type: Scratch.ArgumentType.STRING, defaultValue: "myMaterial"}}},
+            {opcode: "newMaterial", blockType: Scratch.BlockType.COMMAND, text: "new material [NAME]", arguments: {NAME: {type: Scratch.ArgumentType.STRING, defaultValue: "myMaterial"}}},
+            {opcode: "setMaterial", blockType: Scratch.BlockType.COMMAND, text: "set material [PROPERTY] of [NAME] to [VALUE]", arguments: {PROPERTY: {type: Scratch.ArgumentType.STRING, menu: "materialProperties"},NAME: {type: Scratch.ArgumentType.STRING, defaultValue: "myMaterial"}, VALUE: {type: Scratch.ArgumentType.STRING, defaultValue: "#ffff00"}}},
+            {opcode: "removeMaterial", blockType: Scratch.BlockType.COMMAND, text: "remove material [NAME]", arguments: {NAME: {type: Scratch.ArgumentType.STRING, defaultValue: "myMaterial"}}},
             
             {blockType: Scratch.BlockType.LABEL, text: "Geometries"},
-            {opcode: "newGeometry", blockType: Scratch.BlockType.COMMAND, text: "new Geometry [NAME] [TYPE]", arguments: {NAME: {type: Scratch.ArgumentType.STRING, defaultValue: "myGeometry"}, TYPE: {type: Scratch.ArgumentType.STRING, menu: "geometryTypes", defaultValue: "BoxGeometry"}}},
-            {opcode: "setGeometry", blockType: Scratch.BlockType.COMMAND, text: "set [PROPERTY] of [NAME] to [VALUE]", arguments: {PROPERTY: {type: Scratch.ArgumentType.STRING, menu: "geometryProperties"},NAME: {type: Scratch.ArgumentType.STRING, defaultValue: "myGeometry"}, VALUE: {type: Scratch.ArgumentType.STRING, defaultValue: "1,1,1"}}},
-            {opcode: "removeGeometry", blockType: Scratch.BlockType.COMMAND, text: "remove Geometry [NAME]", arguments: {NAME: {type: Scratch.ArgumentType.STRING, defaultValue: "myGeometry"}, TYPE: {type: Scratch.ArgumentType.STRING, menu: "geometryTypes", defaultValue: "BoxGeometry"}}},
+            {opcode: "newGeometry", blockType: Scratch.BlockType.COMMAND, text: "new geometry [NAME] [TYPE]", arguments: {NAME: {type: Scratch.ArgumentType.STRING, defaultValue: "myGeometry"}, TYPE: {type: Scratch.ArgumentType.STRING, menu: "geometryTypes", defaultValue: "BoxGeometry"}}},
+            //{opcode: "setGeometry", blockType: Scratch.BlockType.COMMAND, text: "set geometry [PROPERTY] of [NAME] to [VALUE]", arguments: {PROPERTY: {type: Scratch.ArgumentType.STRING, menu: "geometryProperties"},NAME: {type: Scratch.ArgumentType.STRING, defaultValue: "myGeometry"}, VALUE: {type: Scratch.ArgumentType.STRING, defaultValue: "1,1,1"}}},
+            {opcode: "removeGeometry", blockType: Scratch.BlockType.COMMAND, text: "remove geometry [NAME]", arguments: {NAME: {type: Scratch.ArgumentType.STRING, defaultValue: "myGeometry"}, TYPE: {type: Scratch.ArgumentType.STRING, menu: "geometryTypes", defaultValue: "BoxGeometry"}}},
             
+            {blockType: Scratch.BlockType.LABEL, text: "Lights"},
+            {opcode: "newLight", blockType: Scratch.BlockType.COMMAND, text: "new light [NAME] type [TYPE]", arguments: {NAME: {type: Scratch.ArgumentType.STRING, defaultValue: "myLight"}, TYPE: {type: Scratch.ArgumentType.STRING, menu: "lightTypes"}}},
+            {opcode: "setLight", blockType: Scratch.BlockType.COMMAND, text: "set light [NAME][PROPERTY] to [VALUE]", arguments: {PROPERTY: {type: Scratch.ArgumentType.STRING, menu: "lightProperties"},NAME: {type: Scratch.ArgumentType.STRING, defaultValue: "myLight"}, VALUE: {type: Scratch.ArgumentType.STRING, defaultValue: "#ffffff"}}},
+            {opcode: "removeLight", blockType: Scratch.BlockType.COMMAND, text: "remove light [NAME]", arguments: {NAME: {type: Scratch.ArgumentType.STRING, defaultValue: "myLight"}}},
+
             {blockType: Scratch.BlockType.LABEL, text: "Utilities"},
             {opcode: "newColor", blockType: Scratch.BlockType.REPORTER, text: "New Color [HEX]", arguments: {HEX: {type: Scratch.ArgumentType.COLOR, defaultValue: "#9966ff"}}},
             {opcode: "newVector3", blockType: Scratch.BlockType.REPORTER, text: "New Vector [X] [Y] [Z]", arguments: {X: {type: Scratch.ArgumentType.NUMBER}, Y: {type: Scratch.ArgumentType.NUMBER}, Z: {type: Scratch.ArgumentType.NUMBER}}},
@@ -198,9 +207,9 @@ async load() {
             {opcode: "newCubeTexture", blockType: Scratch.BlockType.REPORTER, text: "New Cube Texture X+[COSTUMEX0]X-[COSTUMEX1]Y+[COSTUMEY0]Y-[COSTUMEY1]Z+[COSTUMEZ0]Z-[COSTUMEZ1] [MODE]", arguments: {"COSTUMEX0": {type: Scratch.ArgumentType.COSTUME},"COSTUMEX1": {type: Scratch.ArgumentType.COSTUME},"COSTUMEY0": {type: Scratch.ArgumentType.COSTUME},"COSTUMEY1": {type: Scratch.ArgumentType.COSTUME},"COSTUMEZ0": {type: Scratch.ArgumentType.COSTUME},"COSTUMEZ1": {type: Scratch.ArgumentType.COSTUME}, MODE: {type: Scratch.ArgumentType.STRING, menu: "textureModes"}}},
 
             {blockType: Scratch.BlockType.LABEL, text: "Addons"},
-            {opcode: "OrbitControl", blockType: Scratch.BlockType.COMMAND, text: "set [STATE] Orbit Control", arguments: {STATE: {type: Scratch.ArgumentType.STRING, menu: "onoff"},}},
-            {blockType: Scratch.BlockType.LABEL, text: "GLTF Load"},
-            {blockType: Scratch.BlockType.BUTTON, text: "Load GLTF/GLB File", func: "loadModelFile"},
+            {opcode: "OrbitControl", blockType: Scratch.BlockType.COMMAND, text: "set addon [STATE] Orbit Control", arguments: {STATE: {type: Scratch.ArgumentType.STRING, menu: "onoff"},}},
+            {blockType: Scratch.BlockType.LABEL, text: "GLB Load"},
+            {blockType: Scratch.BlockType.BUTTON, text: "Load GLB File", func: "loadModelFile"},
             {opcode: "addModel", blockType: Scratch.BlockType.COMMAND, text: "add [ITEM] to scene", arguments: {ITEM: {type: Scratch.ArgumentType.STRING, menu: "modelsList"}}},
         ],
         menus: {
@@ -208,12 +217,12 @@ async load() {
                 {text: "Background", value: "background"},{text: "Background Blurriness", value: "backgroundBlurriness"},{text: "Background Intensity", value: "backgroundIntensity"},{text: "Background Rotation", value: "backgroundRotation"},
                 {text: "Environment", value: "environment"},{text: "Environment Intensity", value: "environmentIntensity"},{text: "Environment Rotation", value: "environmentRotation"},{text: "Fog", value: "fog"},
             ]},
-            sceneThings: {acceptReporters: false, items: ["Objects", "Materials", "Geometries","Scene Properties"]},
+            sceneThings: {acceptReporters: false, items: ["Objects", "Materials", "Geometries","Lights","Scene Properties"]},
             objectVector3: {acceptReporters: false, items: [
                 {text: "Positon", value: "position"},{text: "Rotation", value: "rotation"},{text: "Scale", value: "scale"},{text: "Facing Direction (.up)", value: "up"}
             ]},
             objectProperties: {acceptReporters: false, items: [
-              {text: "Material", value: "material"},{text: "Geometry", value: "geometry"},
+              {text: "Material", value: "material"},{text: "Geometry", value: "geometry"},{text: "castShadow", value: "castShadow"},{text: "receiveShadow", value: "receiveShadow"}
             ]},
             cameraTypes: {acceptReporters: false, items: [
                 {text: "Perspective", value: "PerspectiveCamera"},{text: "Orthographic", value: "OrthographicCamera"}
@@ -223,34 +232,38 @@ async load() {
             ]},
             XYZ: {acceptReporters: false, items: [{text: "X", value: "x"},{text: "Y", value: "y"},{text: "Z", value: "z"}]},
             materialProperties: {acceptReporters: false, items: [
-              {text: "Color", value: "color"},{text: "Map (texture)", value: "map"},{text: "Reflectivity", value: "reflectivity"},
+              {text: "Color", value: "color"},{text: "Map (texture)", value: "map"},
             ]},
             textureModes: {acceptReporters: false, items: [{text: "Pixelate", value: "Pixelate"},{text: "Blur", value: "Blur"}]},
             geometryTypes: {acceptReporters: false, items: [
               {text: "Box Geometry", value: "BoxGeometry"},{text: "Sphere Geometry", value: "SphereGeometry"},{text: "Plane Geometry", value: "PlaneGeometry"},{text: "Circle Geometry", value: "CircleGeometry"},{text: "Torus Geometry", value: "TorusGeometry"},{text: "Torus Knot Geometry", value: "TorusKnotGeometry"},
             ]},
-            geometryProperties: {acceptReporters: false, items: [
+            /*geometryProperties: {acceptReporters: false, items: [
               {text: "BoxG", value: "BoxGeometry"},{text: "Sphere Geometry", value: "SphereGeometry"},
-            ]},
+            ]},*/
             onoff: {acceptReporters: true, items: [{text: "on", value: "1"},{text: "off", value: "0"},]},
             modelsList: {acceptReporters: false, items: () => {
-          const stage = runtime.getTargetForStage();
-          if (!stage) return ["(loading...)"];
+                  const stage = runtime.getTargetForStage();
+                  if (!stage) return ["(loading...)"];
 
-          // @ts-ignore
-          const models = Scratch.vm.runtime.getTargetForStage().getSounds()//.filter(c => c.hasOwnProperty("data"))
-          if (models.length < 1) return [["Load a model!"]]
-          
-          // @ts-ignore
-          return models.map( m =>  [m.name] )
-        }
-            }, 
+                  // @ts-ignore
+                  const models = Scratch.vm.runtime.getTargetForStage().getSounds()//.filter(c => c.hasOwnProperty("data"))
+                  if (models.length < 1) return [["Load a model!"]]
+                  
+                  // @ts-ignore
+                  return models.map( m =>  [m.name] )
+                }},
+            lightTypes: {acceptReporters: false, items: [
+              {text: "Ambient Light", value: "AmbientLight"},{text: "Directional Light", value: "DirectionalLight"},{text: "Point Light", value: "PointLight"},
+            ]},
+            lightProperties: {acceptReporters: false, items: [
+              {text: "Color", value: "color"},{text: "Intensity", value: "intensity"},
+            ]},
         }
       };
     }
     openDocs(){
       alert(`
-        The extension will overlay the current stage!
         Start by creating a scene. Add objects here.
         Add a camera, and set the rendering camera to that one. The stage should update.
 
@@ -278,7 +291,7 @@ async load() {
         return
       }
 
-      console.log("enabling orbit control might disable scratch's mouse detection!")
+      console.warn("enabling orbit control might disable scratch's mouse detection!")
       threeRenderer.domElement.style.pointerEvents = 'auto';
       this.controls = new OrbitControls.OrbitControls(camera, threeRenderer.domElement);
       this.controls.enableDamping = true; // smooth
@@ -286,9 +299,10 @@ async load() {
 
     // @ts-ignore
     // @ts-ignore
+    // @ts-ignore
     newScene(args) {
         scene = new THREE.Scene();
-        scene.background = new THREE.Color(0x808080)
+        scene.background = new THREE.Color("#222")
         //scene.add(new THREE.GridHelper(16, 16))
         materials = {}
         geometries = {}
@@ -308,10 +322,11 @@ async load() {
       }); 
     } 
     else if (args.THING === "Materials") return JSON.stringify(Object.keys(materials))
-    else if (args. THING === "Geometries") return JSON.stringify(Object.keys(geometries))
+    else if (args.THING === "Geometries") return JSON.stringify(Object.keys(geometries))
+    else if (args.THING === "Ligts") return JSON.stringify(Object.keys(lights)) 
     else if (args.THING === "Scene Properties") {console.log(scene); return "check console"}
 
-      return JSON.stringify(names);
+      return JSON.stringify(names); // if objects
     }
     renderSceneCamera(args) {
       getObject(args.CAMERA)
@@ -330,20 +345,19 @@ async load() {
     setCamera(args) {
       getObject(args.CAMERA)
       object[args.PROPERTY].set(...JSON.parse(args.VALUE));
-
     }
     getCamera(args) {
       getObject(args.CAMERA)
       const value = JSON.stringify(object[args.PROPERTY])
-
       return value
-
     }
 
     addObject(args) {
         const object = new THREE.Mesh();
         object.material = this.defaultMaterial
         object.geometry = this.defaultGeometry
+        object.castShadow = true
+        object.receiveShadow = true
 
         createObject(args.OBJECT3D, object)
     }
@@ -374,7 +388,6 @@ async load() {
     changeObjectXV3(args) {
         getObject(args.OBJECT3D)
         let value = args.VALUE
-
         if (args.PROPERTY === "rotation") value = value * Math.PI / 180
 
           object[args.PROPERTY][args.X] += value
@@ -385,37 +398,32 @@ async load() {
         if (args.PROPERTY === "rotation") {
           const toDeg = Math.PI/180
           values = [values[0]/toDeg,values[1]/toDeg,values[2]/toDeg,]
-          
         }
 
         return JSON.stringify(values)
-        
     }
-
 
     setObject(args){
       getObject(args.OBJECT3D)
       let value = args.VALUE
       if (args.PROPERTY === "material") value = materials[args.NAME]
       else if (args.PROPERTY === "geometry") value = geometries[args.NAME]
-      
 
       object[args.PROPERTY] = value
-      
     }
     getObject(args){
       getObject(args.OBJECT3D)
-      const value = object[args.PROPERTY].toJSON()
+      const value = object[args.PROPERTY]
+      console.log(value)
       return JSON.stringify(value)
     }
     removeObject(args) {
       removeObject(args.OBJECT3D)
     }
 
-
     newMaterial(args) {
       if (materials[args.NAME]) alert ("material already exists! will replace...")
-      const mat = new THREE.MeshBasicMaterial();
+      const mat = new THREE.MeshStandardMaterial();
       mat.name = args.NAME;
 
       materials[args.NAME] = mat;
@@ -451,6 +459,35 @@ async load() {
       delete(geometries[args.NAME])
     }
 
+    newLight(args) {
+      if (lights[args.NAME]) alert ("light already exists! will replace...")
+      const light = new THREE[args.TYPE](0xffffff, 1)
+      if (args.TYPE === "PointLight")
+      light.castShadow = true
+      light.name = args.NAME
+
+      scene.add(light)
+      lights[args.NAME] = light
+      console.log(lights)
+    }
+    setLight(args) {
+      const light = lights[args.NAME]
+      light[args.PROPERTY] = args.VALUE
+
+      light.needsUpdate = true
+      console.log(lights, light)
+    }
+    removeLight(args) {
+      const light = lights[args.NAME]
+      
+      scene.remove(light);
+      // Dispose shadow maps if any
+      if (light.shadow && light.shadow.map) {
+        light.shadow.map.dispose();
+      }
+
+      delete(lights[args.NAME])
+    }
 
     newColor(args) {
         return new THREE.Color(args.HEX);
@@ -480,99 +517,91 @@ async load() {
       return texture;
     }
 
-
-    async loadGLTFModel(args, util) {
-                this.gltf.load(
-                args.FILE, 
-                function ( gltf ) { //onLoad
-                  scene.add( gltf.scene );
-                },
-                undefined, 
-                function ( error ) {console.error( error );} 
-                );
-
-              }
-
-              async loadModelFile(args, util) {
-                async function openFileExplorer(args, util) {
-                  return new Promise((resolve) => {
-                    const input = document.createElement("input");
-                      input.type = "file";
-                      input.accept = ".gltf,.glb"
-                      input.multiple = false;
-                      input.onchange = () => {
-                        resolve(input.files)
-                        input.remove()
-                      };
-                      input.click(); // opens the file dialog
-                  });}
-
-                openFileExplorer().then(files => {
-            const file = files[0];
-            const reader = new FileReader();
-
-            reader.onload = async (e) => {
-              const arrayBuffer = e.target.result;
-              
-            { // From lily's assets
-
-                  // Thank you PenguinMod for providing this code.
-              {
-                const targetId = runtime.getTargetForStage().id; //util.target.id not working!
-                const assetName = Cast.toString(file.name);
-
-                //const res = await Scratch.fetch(args.URL);
-                //const buffer = await res.arrayBuffer();
-                const buffer = arrayBuffer
-
-                const storage = runtime.storage;
-                const asset = storage.createAsset(
-                  storage.AssetType.Sound,
-                  storage.DataFormat.MP3,
-                  new Uint8Array(buffer),
-                  null,
-                  true
-                );
-
-                try {
-                  await vm.addSound(
-                    {
-                      asset,
-                      md5: asset.assetId + "." + asset.dataFormat,
-                      name: assetName,
-                    },
-                    targetId
-                  );
-                  alert("Model loaded successfully!");
-                } catch (e) {
-                  console.error(e);
-                  alert("Error loading model.");
-                }
-              }
-              // End of PenguinMod
-            }
+    async loadModelFile(args, util) {
+      // @ts-ignore
+      async function openFileExplorer(args, util) {
+        return new Promise((resolve) => {
+          const input = document.createElement("input");
+            input.type = "file";
+            input.accept = ".glb"
+            input.multiple = false;
+            input.onchange = () => {
+              resolve(input.files)
+              input.remove()
             };
-            alert("Loading model...")
-            reader.readAsArrayBuffer(file);
-          });
+            input.click();
+        });}
+
+      openFileExplorer().then(files => {
+        const file = files[0];
+        const reader = new FileReader();
+
+        reader.onload = async (e) => {
+          const arrayBuffer = e.target.result;
+          
+        { // From lily's assets
+
+              // Thank you PenguinMod for providing this code.
+          {
+            const targetId = runtime.getTargetForStage().id; //util.target.id not working!
+            const assetName = Cast.toString(file.name);
+
+            //const res = await Scratch.fetch(args.URL);
+            //const buffer = await res.arrayBuffer();
+            const buffer = arrayBuffer
+
+            const storage = runtime.storage;
+            const asset = storage.createAsset(
+              storage.AssetType.Sound,
+              storage.DataFormat.MP3,
+              // @ts-ignore
+              new Uint8Array(buffer),
+              null,
+              true
+            );
+
+            try {
+              await vm.addSound(
+                // @ts-ignore
+                {
+                  asset,
+                  md5: asset.assetId + "." + asset.dataFormat,
+                  name: assetName,
+                },
+                targetId
+              );
+              alert("Model loaded successfully!");
+            } catch (e) {
+              console.error(e);
+              alert("Error loading model.");
+            }
+          }
+          // End of PenguinMod
+        }
+        };
+
+        reader.readAsArrayBuffer(file);
+      });
 
     }
 
     addModel(args) {
-    // Find the costume by name
     const model = runtime.getTargetForStage().getSounds().find(c => c.name === args.ITEM /*&& c.dataFormat === "glb"*/);
     if (!model) return;
       console.log(model)
+      // @ts-ignore
       console.log(model.asset.data)
 
       this.gltf.parse(
+        // @ts-ignore
         model.asset.data.buffer, 
         "", 
         gltf => {
           console.log("added!")
           scene.add(gltf.scene);
+          console.log(gltf)
         },
-        error => {console.error("Error parsing GLTF model:", error);}
+        error => {console.error("Error parsing GLB model:", error);}
       );
     }
 
