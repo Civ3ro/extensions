@@ -21,7 +21,7 @@
   const Cast = Scratch.Cast;
   const menuIconURI = "data:image/svg+xml;base64,PHN2ZyB2ZXJzaW9uPSIxLjEiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgeG1sbnM6eGxpbms9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkveGxpbmsiIHdpZHRoPSIyMTgiIGhlaWdodD0iMjE4IiB2aWV3Qm94PSIwLDAsMjE4LDIxOCI+PGcgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoLTEzMSwtNzEpIj48ZyBzdHJva2Utd2lkdGg9IjQiIHN0cm9rZS1taXRlcmxpbWl0PSIxMCI+PHBhdGggZD0iTTEzMywxODBjMCwtNTkuMDk0NDcgNDcuOTA1NTMsLTEwNyAxMDcsLTEwN2M1OS4wOTQ0NywwIDEwNyw0Ny45MDU1MyAxMDcsMTA3YzAsNTkuMDk0NDcgLTQ3LjkwNTUzLDEwNyAtMTA3LDEwN2MtNTkuMDk0NDcsMCAtMTA3LC00Ny45MDU1MyAtMTA3LC0xMDd6IiBmaWxsPSIjMTkxOTE5IiBmaWxsLXJ1bGU9Im5vbnplcm8iIHN0cm9rZT0iIzVjZDQ5OCIgc3Ryb2tlLWxpbmVqb2luPSJtaXRlciIvPjxnIGZpbGw9Im5vbmUiIGZpbGwtcnVsZT0iZXZlbm9kZCIgc3Ryb2tlPSIjZmZmZmZmIiBzdHJva2UtbGluZWpvaW49InJvdW5kIj48cGF0aCBkPSJNMjExLjU5OCwyODAuNDdsLTQzLjIxMywtMTc0Ljk0bDE3My4yMyw0OS44NzR6Ii8+PHBhdGggZD0iTTI1NC45NjgsMTMwLjQ3MmwyMS41OTEsODcuNDk2bC04Ni41NjcsLTI0Ljk0NXoiLz48cGF0aCBkPSJNMjMzLjQ4OCwyMDQuODlsLTEwLjcyNCwtNDMuNDY1bDQzLjAwOCwxMi4zNDZ6Ii8+PHBhdGggZD0iTTIxMi4wMzYsMTE4LjAxM2wxMC43MjQsNDMuNDY1bC00My4wMDgsLTEyLjM0NnoiLz48cGF0aCBkPSJNMjk4LjA0OCwxNDIuNzlsMTAuNzI0LDQzLjQ2NWwtNDMuMDA4LC0xMi4zNDZ6Ii8+PHBhdGggZD0iTTIzMy40OTMsMjA0LjkybDEwLjcyNCw0My40NjVsLTQzLjAwOCwtMTIuMzQ2eiIvPjwvZz48cGF0aCBkPSJNMjQwLDczYzU5LjA5NDQ3LDAgMTA3LDQ3LjkwNTUzIDEwNywxMDdjMCw1OS4wOTQ0NyAtNDcuOTA1NTMsMTA3IC0xMDcsMTA3Yy01OS4wOTQ0NywwIC0xMDcsLTQ3LjkwNTUzIC0xMDcsLTEwN2MwLC01OS4wOTQ0NyA0Ny45MDU1MywtMTA3IDEwNywtMTA3eiIgZmlsbD0ibm9uZSIgZmlsbC1ydWxlPSJub256ZXJvIiBzdHJva2U9IiM1Y2Q0OTgiIHN0cm9rZS1saW5lam9pbj0ibWl0ZXIiLz48L2c+PC9nPjwvc3ZnPg==";
 
-  let alerts = true
+  let alerts = false
 
   let THREE
   let GLTFLoader
@@ -57,7 +57,6 @@
       content.name = name
       content.rotation._order = "YXZ"
       parentName === scene.name ? object = scene : getObject(parentName)
-      console.log(parentName, scene.name, object.name)
 
       object.add(content)
     }
@@ -236,6 +235,8 @@ async load() {
             {opcode: "pauseAnimation", blockType: Scratch.BlockType.COMMAND, text: "set [TOGGLE] animation [ANAME] of [NAME]", arguments: {TOGGLE: {type: Scratch.ArgumentType.NUMBER, menu: "pauseUn"}, NAME: {type: Scratch.ArgumentType.STRING, defaultValue: "myModel"}, ANAME: {type: Scratch.ArgumentType.STRING, defaultValue: "walk"}}},
             {opcode: "stopAnimation", blockType: Scratch.BlockType.COMMAND, text: "stop animation [ANAME] of [NAME]", arguments: {NAME: {type: Scratch.ArgumentType.STRING, defaultValue: "myModel"}, ANAME: {type: Scratch.ArgumentType.STRING, defaultValue: "walk"}}},
 
+            {blockType: Scratch.BlockType.LABEL, text: " Physics"},
+            {opcode: "add physics to object"},
           ],
         menus: {
             sceneProperties: {acceptReporters: false, items: [
@@ -455,7 +456,6 @@ async load() {
       getObject(args.OBJECT3D)
       if (!object) return
       const value = object[args.PROPERTY]
-      console.log(object,value)
       return JSON.stringify(value)
     }
     removeObject(args) {
@@ -508,14 +508,12 @@ async load() {
 
       createObject(args.NAME, light, args.GROUP)
       lights[args.NAME] = light
-      console.log(lights)
     }
     setLight(args) {
       const light = lights[args.NAME]
       light[args.PROPERTY] = args.VALUE
 
       light.needsUpdate = true
-      console.log(lights, light)
     }
     removeLight(args) {
       const light = lights[args.NAME]
@@ -629,8 +627,6 @@ async load() {
     const model = runtime.getTargetForStage().getSounds().find(c => c.name === args.ITEM);
     if (!model) return;
       console.log(model)
-      // @ts-ignore
-      console.log(model.asset.data)
 
       this.gltf.parse(
         // @ts-ignore
@@ -638,18 +634,6 @@ async load() {
         "", 
         async gltf => {
           console.log(gltf)
-            // Create an AnimationMixer, and get the list of AnimationClip instances
-
-            /* Update the mixer on each frame
-            function update () {
-              mixer.update( deltaSeconds );
-            }*/
-
-            /*/ Play a specific animation
-            const clip = THREE.AnimationClip[0]
-            console.log(clip)
-            const action = mixer.clipAction( clip );
-            action.play();*/
 
             const model = gltf.scene
 
@@ -658,7 +642,6 @@ async load() {
             gltf.animations.forEach(clip => {
               actions[clip.name] = mixer.clipAction(clip)
               actions[clip.name].clampWhenFinished = true //freeze last frame instead of the first frame
-              
             });
 
             models[args.NAME] = {
@@ -673,7 +656,6 @@ async load() {
       )
     }
     getModel(args){
-      console.log(models)
       return Object.keys(models[args.NAME].actions).toString()
     }
 
