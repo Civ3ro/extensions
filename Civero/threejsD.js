@@ -20,8 +20,11 @@
   const renderer = Scratch.renderer;
   const Cast = Scratch.Cast;
   const menuIconURI = "data:image/svg+xml;base64,PHN2ZyB2ZXJzaW9uPSIxLjEiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgeG1sbnM6eGxpbms9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkveGxpbmsiIHdpZHRoPSIyMTgiIGhlaWdodD0iMjE4IiB2aWV3Qm94PSIwLDAsMjE4LDIxOCI+PGcgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoLTEzMSwtNzEpIj48ZyBzdHJva2Utd2lkdGg9IjQiIHN0cm9rZS1taXRlcmxpbWl0PSIxMCI+PHBhdGggZD0iTTEzMywxODBjMCwtNTkuMDk0NDcgNDcuOTA1NTMsLTEwNyAxMDcsLTEwN2M1OS4wOTQ0NywwIDEwNyw0Ny45MDU1MyAxMDcsMTA3YzAsNTkuMDk0NDcgLTQ3LjkwNTUzLDEwNyAtMTA3LDEwN2MtNTkuMDk0NDcsMCAtMTA3LC00Ny45MDU1MyAtMTA3LC0xMDd6IiBmaWxsPSIjMTkxOTE5IiBmaWxsLXJ1bGU9Im5vbnplcm8iIHN0cm9rZT0iIzVjZDQ5OCIgc3Ryb2tlLWxpbmVqb2luPSJtaXRlciIvPjxnIGZpbGw9Im5vbmUiIGZpbGwtcnVsZT0iZXZlbm9kZCIgc3Ryb2tlPSIjZmZmZmZmIiBzdHJva2UtbGluZWpvaW49InJvdW5kIj48cGF0aCBkPSJNMjExLjU5OCwyODAuNDdsLTQzLjIxMywtMTc0Ljk0bDE3My4yMyw0OS44NzR6Ii8+PHBhdGggZD0iTTI1NC45NjgsMTMwLjQ3MmwyMS41OTEsODcuNDk2bC04Ni41NjcsLTI0Ljk0NXoiLz48cGF0aCBkPSJNMjMzLjQ4OCwyMDQuODlsLTEwLjcyNCwtNDMuNDY1bDQzLjAwOCwxMi4zNDZ6Ii8+PHBhdGggZD0iTTIxMi4wMzYsMTE4LjAxM2wxMC43MjQsNDMuNDY1bC00My4wMDgsLTEyLjM0NnoiLz48cGF0aCBkPSJNMjk4LjA0OCwxNDIuNzlsMTAuNzI0LDQzLjQ2NWwtNDMuMDA4LC0xMi4zNDZ6Ii8+PHBhdGggZD0iTTIzMy40OTMsMjA0LjkybDEwLjcyNCw0My40NjVsLTQzLjAwOCwtMTIuMzQ2eiIvPjwvZz48cGF0aCBkPSJNMjQwLDczYzU5LjA5NDQ3LDAgMTA3LDQ3LjkwNTUzIDEwNywxMDdjMCw1OS4wOTQ0NyAtNDcuOTA1NTMsMTA3IC0xMDcsMTA3Yy01OS4wOTQ0NywwIC0xMDcsLTQ3LjkwNTUzIC0xMDcsLTEwN2MwLC01OS4wOTQ0NyA0Ny45MDU1MywtMTA3IDEwNywtMTA3eiIgZmlsbD0ibm9uZSIgZmlsbC1ydWxlPSJub256ZXJvIiBzdHJva2U9IiM1Y2Q0OTgiIHN0cm9rZS1saW5lam9pbj0ibWl0ZXIiLz48L2c+PC9nPjwvc3ZnPg==";
-
-  let alerts = false
+  
+  let alerts = true
+  if (vm.runtime.isPackaged) alerts = false
+  console.log("alerts are", alerts ? "enabled" : "disabled")
+  let isMouseDown = false
 
   let THREE
   let GLTFLoader
@@ -72,65 +75,94 @@
       object = scene.getObjectByName(name)
       if (!object && !isNew) {alerts ? alert(name + " does not exist! Add it to scene"):null; return;}
     }
+
     function encodeCostume (name) {
-      return Scratch.vm.editingTarget.sprite.costumes.find(c => c.name === name).asset.encodeDataURI();
+      return Scratch.vm.editingTarget.sprite.costumes.find(c => c.name === name).asset.encodeDataURI()
     }
-    function setTexutre (texture, mode) {
-      texture.colorSpace = THREE.SRGBColorSpace;
+    function setTexutre (texture, mode, style, x, y) {
+      texture.colorSpace = THREE.SRGBColorSpace
 
       if (mode === "Pixelate") {
       texture.minFilter = THREE.NearestFilter;
       texture.magFilter = THREE.NearestFilter;
       } else { //Blur
-      texture.minFilter = THREE.LinearMipMapLinearFilter;
-      texture.magFilter = THREE.LinearFilter;
+      texture.minFilter = THREE.LinearMipMapLinearFilter
+      texture.magFilter = THREE.LinearFilter
       }
+
+      if (style === "Repeat") {
+      texture.wrapS = THREE.RepeatWrapping
+      texture.wrapT = THREE.RepeatWrapping
+      texture.repeat.set(x, y)
+      }
+
       texture.generateMipmaps = true;
     }
-    async function resizeImageToSquare(uri, size = 128) {
+    async function resizeImageToSquare(uri, size = 256) {
     return new Promise((resolve) => {
-    const img = new Image();
+    const img = new Image()
     img.onload = () => {
-      const canvas = document.createElement('canvas');
-      canvas.width = size;
-      canvas.height = size;
-      const ctx = canvas.getContext('2d');
+      const canvas = document.createElement('canvas')
+      canvas.width = size
+      canvas.height = size
+      const ctx = canvas.getContext('2d')
       
       // clear + draw image scaled to fit canvas
-      ctx.clearRect(0, 0, size, size);
-      ctx.drawImage(img, 0, 0, size, size);
+      ctx.clearRect(0, 0, size, size)
+      ctx.drawImage(img, 0, 0, size, size)
 
-      resolve(canvas.toDataURL()); // return normalized Data URI
+      resolve(canvas.toDataURL()) // return normalized Data URI
     };
-    img.src = uri;
+    img.src = uri
   });
 }
 
 
 //
 class threeDjsExtension {
-  constructor() {  
-    this.ready = this.load();
-    this.startRenderLoop();
+  constructor() {
+    this.running = false
+    this.ready = this.load()
+
+    this.startRenderLoop()
+    Scratch.vm.runtime.on('PROJECT_START', () => this.startRenderLoop())
+    Scratch.vm.runtime.on('PROJECT_STOP_ALL', () => this.stopLoop())
+
     }
 
-  startRenderLoop() {
+startRenderLoop() {
+  if (this.running) return
+  this.running = true
+
   const loop = () => {
+    if (!this.running) return
+
     if (scene && camera) {
-      if (this.controls) this.controls.update(); // OrbitControl: keep controls synced
-        
-      const delta = this.clock.getDelta();
+      if (this.controls) this.controls.update()
 
-      Object.values(models).forEach(model => {
-        if (model) model.mixer.update(delta); //update animations
-      });
+      const delta = this.clock.getDelta()
+      Object.values(models).forEach( model => { if (model) model.mixer.update(delta) } )
 
-      threeRenderer.render(scene, camera);
+      threeRenderer.render(scene, camera)
     }
-    requestAnimationFrame(loop);
-  };
-  loop();
+
+    this.loopId = requestAnimationFrame(loop)
+  }
+
+  this.loopId = requestAnimationFrame(loop)
 }
+
+stopLoop() {
+  if (!this.running) return
+  this.running = false
+
+  if (this.loopId) {
+    cancelAnimationFrame(this.loopId)
+    this.loopId = null
+    if (threeRenderer) threeRenderer.clear();
+  }
+}
+
 
 async load() {
     if (!THREE) {
@@ -152,10 +184,10 @@ async load() {
 
       this.gltf = new GLTFLoader.GLTFLoader()
 
-      this.defaultMaterial = new THREE.MeshStandardMaterial()
-      this.defaultGeometry = new THREE.BoxGeometry()
       this.clock = new THREE.Clock();
 
+      window.addEventListener( "mousedown", () => { isMouseDown = true } )
+      window.addEventListener( "mouseup", () => { isMouseDown = false } )
     }
   }
 
@@ -191,8 +223,9 @@ async load() {
 
             {blockType: Scratch.BlockType.LABEL, text: "Objects"},
             {opcode: "addObject", blockType: Scratch.BlockType.COMMAND, text: "add object [OBJECT3D] to [GROUP]", arguments: {GROUP: {type: Scratch.ArgumentType.STRING, defaultValue: "scene"},OBJECT3D: {type: Scratch.ArgumentType.STRING, defaultValue: "myObject"}}},
-            {opcode: "setObject", blockType: Scratch.BlockType.COMMAND, text: "set object [PROPERTY] of [OBJECT3D] to [NAME]", arguments: {OBJECT3D: {type: Scratch.ArgumentType.STRING, defaultValue: "myObject"}, PROPERTY: {type: Scratch.ArgumentType.STRING, menu: "objectProperties"}, NAME: {type: Scratch.ArgumentType.STRING, defaultValue: "myMaterial"}}},
-            {opcode: "getObject", blockType: Scratch.BlockType.REPORTER, text: "get object [PROPERTY] of [OBJECT3D]", arguments: {OBJECT3D: {type: Scratch.ArgumentType.STRING, defaultValue: "myObject"}, PROPERTY: {type: Scratch.ArgumentType.STRING, menu: "objectProperties"}}},
+            {opcode: "setObject", blockType: Scratch.BlockType.COMMAND, text: "set [PROPERTY] of object [OBJECT3D] to [NAME]", arguments: {OBJECT3D: {type: Scratch.ArgumentType.STRING, defaultValue: "myObject"}, PROPERTY: {type: Scratch.ArgumentType.STRING, menu: "objectProperties"}, NAME: {type: Scratch.ArgumentType.STRING, defaultValue: "myMaterial"}}},
+            {opcode: "getObject", blockType: Scratch.BlockType.REPORTER, text: "get [PROPERTY] of object [OBJECT3D]", arguments: {OBJECT3D: {type: Scratch.ArgumentType.STRING, defaultValue: "myObject"}, PROPERTY: {type: Scratch.ArgumentType.STRING, menu: "objectProperties"}}},
+            {opcode: "doObject", blockType: Scratch.BlockType.COMMAND, text: "do method [METHOD][VALUE]in object [OBJECT3D]", arguments: {OBJECT3D: {type: Scratch.ArgumentType.STRING, defaultValue: "myObject"}, METHOD: {type: Scratch.ArgumentType.STRING, menu: "objectMethods"}, VALUE: {type: Scratch.ArgumentType.STRING, defaultValue: "[0,0,0]"}}},
             {opcode: "removeObject", blockType: Scratch.BlockType.COMMAND, text: "remove object [OBJECT3D] from scene", arguments: {OBJECT3D: {type: Scratch.ArgumentType.STRING, defaultValue: "myObject"}}},
        
             {blockType: Scratch.BlockType.LABEL, text: " ↳ Transforms"},            
@@ -222,8 +255,10 @@ async load() {
             {opcode: "newColor", blockType: Scratch.BlockType.REPORTER, text: "New Color [HEX]", arguments: {HEX: {type: Scratch.ArgumentType.COLOR, defaultValue: "#9966ff"}}},
             {opcode: "newVector3", blockType: Scratch.BlockType.REPORTER, text: "New Vector [X] [Y] [Z]", arguments: {X: {type: Scratch.ArgumentType.NUMBER}, Y: {type: Scratch.ArgumentType.NUMBER}, Z: {type: Scratch.ArgumentType.NUMBER}}},
             {opcode: "newFog", blockType: Scratch.BlockType.REPORTER, text: "New Fog [COLOR] [NEAR] [FAR]", arguments: {COLOR: {type: Scratch.ArgumentType.COLOR, defaultValue: "#9966ff"}, NEAR: {type: Scratch.ArgumentType.NUMBER}, FAR: {type: Scratch.ArgumentType.NUMBER, defaultValue: 10}}},
-            {opcode: "newTexture", blockType: Scratch.BlockType.REPORTER, text: "New Texture [COSTUME] [MODE]", arguments: {COSTUME: {type: Scratch.ArgumentType.COSTUME}, MODE: {type: Scratch.ArgumentType.STRING, menu: "textureModes"}}},
-            {opcode: "newCubeTexture", blockType: Scratch.BlockType.REPORTER, text: "New Cube Texture X+[COSTUMEX0]X-[COSTUMEX1]Y+[COSTUMEY0]Y-[COSTUMEY1]Z+[COSTUMEZ0]Z-[COSTUMEZ1] [MODE]", arguments: {"COSTUMEX0": {type: Scratch.ArgumentType.COSTUME},"COSTUMEX1": {type: Scratch.ArgumentType.COSTUME},"COSTUMEY0": {type: Scratch.ArgumentType.COSTUME},"COSTUMEY1": {type: Scratch.ArgumentType.COSTUME},"COSTUMEZ0": {type: Scratch.ArgumentType.COSTUME},"COSTUMEZ1": {type: Scratch.ArgumentType.COSTUME}, MODE: {type: Scratch.ArgumentType.STRING, menu: "textureModes"}}},
+            {opcode: "newTexture", blockType: Scratch.BlockType.REPORTER, text: "New Texture [COSTUME] [MODE] [STYLE] repeat [X][Y]", arguments: {COSTUME: {type: Scratch.ArgumentType.COSTUME}, MODE: {type: Scratch.ArgumentType.STRING, menu: "textureModes"},STYLE: {type: Scratch.ArgumentType.STRING, menu: "textureStyles"}, X: {type: Scratch.ArgumentType.NUMBER, defaultValue: 1},Y: {type: Scratch.ArgumentType.NUMBER,defaultValue: 1}}},
+            {opcode: "newCubeTexture", blockType: Scratch.BlockType.REPORTER, text: "New Cube Texture X+[COSTUMEX0]X-[COSTUMEX1]Y+[COSTUMEY0]Y-[COSTUMEY1]Z+[COSTUMEZ0]Z-[COSTUMEZ1] [MODE] [STYLE] repeat [X][Y]", arguments: {"COSTUMEX0": {type: Scratch.ArgumentType.COSTUME},"COSTUMEX1": {type: Scratch.ArgumentType.COSTUME},"COSTUMEY0": {type: Scratch.ArgumentType.COSTUME},"COSTUMEY1": {type: Scratch.ArgumentType.COSTUME},"COSTUMEZ0": {type: Scratch.ArgumentType.COSTUME},"COSTUMEZ1": {type: Scratch.ArgumentType.COSTUME}, MODE: {type: Scratch.ArgumentType.STRING, menu: "textureModes"},STYLE: {type: Scratch.ArgumentType.STRING, menu: "textureStyles"}, X: {type: Scratch.ArgumentType.NUMBER,defaultValue: 1},Y: {type: Scratch.ArgumentType.NUMBER,defaultValue: 1}}},
+
+            {opcode:"mouseDown", blockType: Scratch.BlockType.BOOLEAN, text: "mouse down?"},
 
             {blockType: Scratch.BlockType.LABEL, text: "Addons"},
             {opcode: "OrbitControl", blockType: Scratch.BlockType.COMMAND, text: "set addon [STATE] Orbit Control", arguments: {STATE: {type: Scratch.ArgumentType.STRING, menu: "onoff"},}},
@@ -250,19 +285,23 @@ async load() {
             objectProperties: {acceptReporters: false, items: [
               {text: "Material", value: "material"},{text: "Geometry", value: "geometry"},
             ]},
+            objectMethods: {acceptReporters: false, items: [
+              {text: "Look at (v3)", value: "lookAt"},
+            ]},
             cameraTypes: {acceptReporters: false, items: [
-                {text: "Perspective", value: "PerspectiveCamera"},{text: "Orthographic", value: "OrthographicCamera"}
+                {text: "Perspective", value: "PerspectiveCamera"},{text: "Orthographic (not done yet!)", value: "OrthographicCamera"}
             ]},
             cameraProperties: {acceptReporters: false, items: [
-                {text: "Near", value: "near"},{text: "Far", value: "far"},{text: "FOV", value: "fov"},{text: "Focus", value: "focus"},{text: "Zoom", value: "zoom"},
+                {text: "Near", value: "near"},{text: "Far", value: "far"},{text: "FOV", value: "fov"},{text: "Focus (nothing...)", value: "focus"},{text: "Zoom", value: "zoom"},
             ]},
             XYZ: {acceptReporters: false, items: [{text: "X", value: "x"},{text: "Y", value: "y"},{text: "Z", value: "z"}]},
             materialProperties: {acceptReporters: false, items: [
-              {text: "Color", value: "color"},{text: "Map (texture)", value: "map"},
+              {text: "Color", value: "color"},{text: "Map (texture)", value: "map"},{text: "Alpha Map (texture)", value: "alphaMap"},{text: "Alpha Test (0-1)", value: "alphaTest"},{text: "Side (front/back/double)", value: "side"},
             ]},
-            textureModes: {acceptReporters: false, items: [{text: "Pixelate", value: "Pixelate"},{text: "Blur", value: "Blur"}]},
+            textureModes: {acceptReporters: false, items: ["Pixelate","Blur"]},
+            textureStyles: {acceptReporters: false, items: ["Repeat","Clamp"]},
             geometryTypes: {acceptReporters: false, items: [
-              {text: "Box Geometry", value: "BoxGeometry"},{text: "Sphere Geometry", value: "SphereGeometry"},{text: "Plane Geometry", value: "PlaneGeometry"},{text: "Circle Geometry", value: "CircleGeometry"},{text: "Torus Geometry", value: "TorusGeometry"},{text: "Torus Knot Geometry", value: "TorusKnotGeometry"},
+              {text: "Box Geometry", value: "BoxGeometry"},{text: "Sphere Geometry", value: "SphereGeometry"},{text: "Cylinder Geometry", value: "CylinderGeometry"},{text: "Plane Geometry", value: "PlaneGeometry"},{text: "Circle Geometry", value: "CircleGeometry"},{text: "Torus Geometry", value: "TorusGeometry"},{text: "Torus Knot Geometry", value: "TorusKnotGeometry"},
             ]},
             /*geometryProperties: {acceptReporters: false, items: [
               {text: "BoxG", value: "BoxGeometry"},{text: "Sphere Geometry", value: "SphereGeometry"},
@@ -294,6 +333,8 @@ async load() {
     }
     openDocs(){
       alert(`
+        IF YOU STOP THE PROJECT, THE RENDERER WON'T DRAW AGAIN UNTIL THE FLAG IS PRESSED.
+
         Start by creating a scene. Add objects here.
         Add a camera, and set the rendering camera to that one. The stage should update.
 
@@ -317,9 +358,11 @@ async load() {
         When project stop button is pressed, stop requesting frames to update => stop/freeze rendering
         Physics!!!
         Postprocesing? Focal thing would be cool! Godrays, and more...
+        seems that scratch's mouse down doesnt work with the extension
         `)
     }
-    alerts() {alerts = !alerts; alerts ? alert("Alerts are enabled!") : alert("Alerts are disabled!")}
+    alerts() {alerts = !alerts; alerts ? alert("Alerts have been enabled!") : alert("Alerts have been disabled!")}
+    mouseDown() {return isMouseDown}
 
     setRendererRatio(args) {
       threeRenderer.setPixelRatio(window.devicePixelRatio * args.VALUE)
@@ -394,8 +437,7 @@ async load() {
 
     addObject(args) {
         const object = new THREE.Mesh();
-        object.material = this.defaultMaterial
-        object.geometry = this.defaultGeometry
+
         object.castShadow = true
         object.receiveShadow = true
 
@@ -452,6 +494,12 @@ async load() {
 
       object[args.PROPERTY] = value
     }
+    doObject(args){
+      getObject(args.OBJECT3D)
+      let values = JSON.parse(args.VALUE)
+      console.log(...values)
+      if (args.METHOD === "lookAt") object[args.METHOD](new THREE.Vector3(...values))
+    }
     getObject(args){
       getObject(args.OBJECT3D)
       if (!object) return
@@ -471,8 +519,13 @@ async load() {
     }
     async setMaterial(args) {
       const mat = materials[args.NAME]
-      mat[args.PROPERTY] = await (args.VALUE)
-
+      let value = args.VALUE
+      if  (args.PROPERTY === "side") { console.log("setting side!")
+      value = (value === "double" ? THREE.DoubleSide : value === "back" ? THREE.BackSide : THREE.FrontSide) //default if unknown
+    console.log("to", value)
+      }
+      
+      mat[args.PROPERTY] = await (value)
       mat.needsUpdate = true;
     }
     removeMaterial(args){
@@ -541,7 +594,7 @@ async load() {
       const texture = await new THREE.TextureLoader().loadAsync(textureURI);
       texture.name = args.COSTUME;
 
-      setTexutre(texture, args.MODE)
+      setTexutre(texture, args.MODE, args.STYLE, args.X, args.Y)
       return texture;
     }
     async newCubeTexture(args) {
@@ -551,7 +604,7 @@ async load() {
       
       texture.name = "CubeTexture" + args.COSTUMEX0;
 
-      setTexutre(texture, args.MODE)
+      setTexutre(texture, args.MODE, args.STYLE, args.X, args.Y)
       return texture;
     }
 
