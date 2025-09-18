@@ -123,6 +123,24 @@
   });
 }
 
+function updateShadowFrustum(light, focusPos) {
+  const d = 20; // half size of shadow box (larger = covers more area, softer shadows)
+  
+  light.shadow.camera.left   = -d;
+  light.shadow.camera.right  =  d;
+  light.shadow.camera.top    =  d;
+  light.shadow.camera.bottom = -d;
+  light.shadow.camera.near   = 0.5;
+  light.shadow.camera.far    = 100;
+
+  // Move the *shadow camera* center near the focus position (e.g. camera or player)
+  light.position.copy(focusPos.clone().add(light.pos)); // offset light
+  light.target.position.copy(focusPos);
+  light.target.updateMatrixWorld();
+
+  light.shadow.camera.updateProjectionMatrix();
+}
+
 
 function startRenderLoop() {
   if (running) return
@@ -137,7 +155,7 @@ function startRenderLoop() {
       const delta = clock.getDelta()
       Object.values(models).forEach( model => { if (model) model.mixer.update(delta) } )
 
-      //Object.values(lights).forEach(light => {})
+      Object.values(lights).forEach(light => updateShadowFrustum(light, camera.position))
 
       threeRenderer.render(scene, camera)
     }
@@ -466,7 +484,7 @@ constructor() {
           values = values.map(v => v * Math.PI / 180);
           object.rotation.set(0,0,0)
         }
-        if (object.isLight == true) {object = object.target; console.log(true)}
+        if (object.isLight == true) {object.pos = new THREE.Vector3(...values); console.log(true); return}
           object[args.PROPERTY].set(...values);
     }
     changeObjectV3(args) {
@@ -598,25 +616,18 @@ constructor() {
       addLight(args) {
       if (lights[args.NAME] && alerts) alert ("light already exists! will replace...")
       const light = new THREE[args.TYPE](0xffffff, 1)
+      light.castShadow = true
 
       createObject(args.NAME, light, args.GROUP)
       light.target.position.set(0, 0, 0)
       scene.add(light.target)
       lights[args.NAME] = light
+      light.pos = new THREE.Vector3(0,0,0)
 
-      light.shadow.mapSize.width = 2048
+      light.shadow.mapSize.width = 4096
       light.shadow.mapSize.height = 2048
 
-      const d = 10; // half-size of shadow frustum
-      light.shadow.camera.left   = -d;
-      light.shadow.camera.right  =  d;
-      light.shadow.camera.top    =  d;
-      light.shadow.camera.bottom = -d;
-      light.shadow.camera.near   = 0.5;
-      light.shadow.camera.far    = 50;
-      light.shadow.camera.updateProjectionMatrix();
-
-      scene.add(new THREE.CameraHelper(light.shadow.camera))
+      //scene.add(new THREE.CameraHelper(light.shadow.camera))
     }
 
     setLight(args) {
