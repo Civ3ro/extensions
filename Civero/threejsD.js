@@ -137,6 +137,8 @@ function startRenderLoop() {
       const delta = clock.getDelta()
       Object.values(models).forEach( model => { if (model) model.mixer.update(delta) } )
 
+      //Object.values(lights).forEach(light => {})
+
       threeRenderer.render(scene, camera)
     }
 
@@ -171,6 +173,9 @@ async function load() {
       threeRenderer.setSize(480, 360)
       threeRenderer.setPixelRatio(window.devicePixelRatio * 1)
 
+      threeRenderer.shadowMap.enabled = true;
+      threeRenderer.shadowMap.type = THREE.PCFSoftShadowMap; // (optional, nicer shadows)
+
       renderer.addOverlay( threeRenderer.domElement, "scale" )
       renderer.addOverlay(renderer.canvas, "manual")
       renderer.setBackgroundColor(1, 1, 1, 0)
@@ -193,7 +198,9 @@ async function load() {
 
 
 class threejsExtension {
-constructor() {load()}
+constructor() {
+  load()
+}
     getInfo() {
       return {
         id: "threejsExtension",
@@ -230,6 +237,7 @@ constructor() {load()}
         Creating Objects with an exsisting name will replace them.
         
         To do:
+        Instancing or cloneing objects/groups 
         Physics?
         Postprocesing? Focal thing would be cool! Godrays, and more...
         `)
@@ -257,6 +265,7 @@ constructor() {load()}
 
     setRendererRatio(args) {
       threeRenderer.setPixelRatio(window.devicePixelRatio * args.VALUE)
+
     }
 
 
@@ -385,12 +394,16 @@ constructor() {load()}
         color3: "#222222",
 
         blocks: [
-          {opcode: "addObject", blockType: Scratch.BlockType.COMMAND, text: "add object [OBJECT3D] to [GROUP]", arguments: {GROUP: {type: Scratch.ArgumentType.STRING, defaultValue: "scene"},OBJECT3D: {type: Scratch.ArgumentType.STRING, defaultValue: "myObject"}}},
+            {opcode: "addObject", blockType: Scratch.BlockType.COMMAND, text: "add object [OBJECT3D] to [GROUP]", arguments: {GROUP: {type: Scratch.ArgumentType.STRING, defaultValue: "scene"},OBJECT3D: {type: Scratch.ArgumentType.STRING, defaultValue: "myObject"}}},
+            {opcode: "cloneObject", blockType: Scratch.BlockType.COMMAND, text: "clone object [OBJECT3D] as [NAME] & add to [GROUP]", arguments: {GROUP: {type: Scratch.ArgumentType.STRING, defaultValue: "scene"},NAME: {type: Scratch.ArgumentType.STRING, defaultValue: "myClone"},OBJECT3D: {type: Scratch.ArgumentType.STRING, defaultValue: "myObject"}}},
+            "---",
             {opcode: "setObject", blockType: Scratch.BlockType.COMMAND, text: "set [PROPERTY] of object [OBJECT3D] to [NAME]", arguments: {OBJECT3D: {type: Scratch.ArgumentType.STRING, defaultValue: "myObject"}, PROPERTY: {type: Scratch.ArgumentType.STRING, menu: "objectProperties"}, NAME: {type: Scratch.ArgumentType.STRING, defaultValue: "myMaterial"}}},
             {opcode: "getObject", blockType: Scratch.BlockType.REPORTER, text: "get [PROPERTY] of object [OBJECT3D]", arguments: {OBJECT3D: {type: Scratch.ArgumentType.STRING, defaultValue: "myObject"}, PROPERTY: {type: Scratch.ArgumentType.STRING, menu: "objectProperties"}}},
+            "---",
             {opcode: "doObject", blockType: Scratch.BlockType.COMMAND, text: "do method [METHOD][VALUE]in object [OBJECT3D]", arguments: {OBJECT3D: {type: Scratch.ArgumentType.STRING, defaultValue: "myObject"}, METHOD: {type: Scratch.ArgumentType.STRING, menu: "objectMethods"}, VALUE: {type: Scratch.ArgumentType.STRING, defaultValue: "[0,0,0]"}}},
+            "---",
             {opcode: "removeObject", blockType: Scratch.BlockType.COMMAND, text: "remove object [OBJECT3D] from scene", arguments: {OBJECT3D: {type: Scratch.ArgumentType.STRING, defaultValue: "myObject"}}},
-       
+
             {blockType: Scratch.BlockType.LABEL, text: " ↳ Transforms"},            
             {opcode: "setObjectV3",extensions: ["colours_motion"], blockType: Scratch.BlockType.COMMAND, text: "set transform [PROPERTY] of [OBJECT3D] to [VALUE]", arguments: {PROPERTY: {type: Scratch.ArgumentType.STRING, menu: "objectVector3", defaultValue: "position"}, OBJECT3D: {type: Scratch.ArgumentType.STRING, defaultValue: "myObject"}, VALUE: {type: Scratch.ArgumentType.STRING, defaultValue: "[0,0,0]"}}},           
             {opcode: "changeObjectV3",extensions: ["colours_motion"], blockType: Scratch.BlockType.COMMAND, text: "change transform [PROPERTY] of [OBJECT3D] by [VALUE]", arguments: {PROPERTY: {type: Scratch.ArgumentType.STRING, menu: "objectVector3", defaultValue: "position"}, OBJECT3D: {type: Scratch.ArgumentType.STRING, defaultValue: "myObject"}, VALUE: {type: Scratch.ArgumentType.STRING, defaultValue: "[1,1,1]"}}},
@@ -429,7 +442,8 @@ constructor() {load()}
 
         }
       }}
-       addObject(args) {
+
+    addObject(args) {
         const object = new THREE.Mesh();
 
         object.castShadow = true
@@ -437,6 +451,13 @@ constructor() {load()}
 
         createObject(args.OBJECT3D, object, args.GROUP)
     }
+    cloneObject(args) {
+      getObject(args.OBJECT3D)
+      const clone = object.clone(true)
+      clone.name
+      createObject(args.NAME, clone, args.GROUP)
+    }
+
     setObjectV3(args) {
         getObject(args.OBJECT3D)
         let values = JSON.parse(args.VALUE)
@@ -445,6 +466,7 @@ constructor() {load()}
           values = values.map(v => v * Math.PI / 180);
           object.rotation.set(0,0,0)
         }
+        if (object.isLight == true) {object = object.target; console.log(true)}
           object[args.PROPERTY].set(...values);
     }
     changeObjectV3(args) {
@@ -479,7 +501,6 @@ constructor() {load()}
 
         return JSON.stringify(values)
     }
-
     setObject(args){
       getObject(args.OBJECT3D)
       let value = args.VALUE
@@ -503,6 +524,7 @@ constructor() {load()}
       removeObject(args.OBJECT3D)
     }
 
+//defines
     newMaterial(args) {
       if (materials[args.NAME] && alerts) alert ("material already exists! will replace...")
       const mat = new THREE.MeshStandardMaterial();
@@ -572,15 +594,31 @@ constructor() {load()}
             ]},
         }
       }}
+
       addLight(args) {
       if (lights[args.NAME] && alerts) alert ("light already exists! will replace...")
       const light = new THREE[args.TYPE](0xffffff, 1)
-      if (args.TYPE === "PointLight")
-      light.castShadow = true
 
       createObject(args.NAME, light, args.GROUP)
+      light.target.position.set(0, 0, 0)
+      scene.add(light.target)
       lights[args.NAME] = light
+
+      light.shadow.mapSize.width = 2048
+      light.shadow.mapSize.height = 2048
+
+      const d = 10; // half-size of shadow frustum
+      light.shadow.camera.left   = -d;
+      light.shadow.camera.right  =  d;
+      light.shadow.camera.top    =  d;
+      light.shadow.camera.bottom = -d;
+      light.shadow.camera.near   = 0.5;
+      light.shadow.camera.far    = 50;
+      light.shadow.camera.updateProjectionMatrix();
+
+      scene.add(new THREE.CameraHelper(light.shadow.camera))
     }
+
     setLight(args) {
       const light = lights[args.NAME]
       light[args.PROPERTY] = args.VALUE
@@ -836,7 +874,7 @@ constructor() {load()}
         color3: "#222222",
 
         blocks: [
-            {blockType: Scratch.BlockType.LABEL, text: "Addons"},
+            {blockType: Scratch.BlockType.LABEL, text: "Orbit Control"},
             {opcode: "OrbitControl", blockType: Scratch.BlockType.COMMAND, text: "set addon [STATE] Orbit Control", arguments: {STATE: {type: Scratch.ArgumentType.STRING, menu: "onoff"},}},
 
         ],
