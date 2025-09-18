@@ -124,7 +124,7 @@
 }
 
 function updateShadowFrustum(light, focusPos) {
-  if (light.type === "AmbientLight") return
+  if (light.type === "AmbientLight" || "PointLight") return
   const d = 20; // half size of shadow box (larger = covers more area, softer shadows)
   
   light.shadow.camera.left   = -d;
@@ -485,7 +485,7 @@ constructor() {
           values = values.map(v => v * Math.PI / 180);
           object.rotation.set(0,0,0)
         }
-        if (object.isLight == true) {object.pos = new THREE.Vector3(...values); console.log(true); return}
+        if (object.isDirectionalLight == true) {object.pos = new THREE.Vector3(...values); console.log(true); return}
           object[args.PROPERTY].set(...values);
     }
     changeObjectV3(args) {
@@ -615,7 +615,6 @@ constructor() {
       }}
 
       addLight(args) {
-      if (lights[args.NAME] && alerts) alert ("light already exists! will replace...")
       const light = new THREE[args.TYPE](0xffffff, 1)
 
       createObject(args.NAME, light, args.GROUP)
@@ -623,6 +622,7 @@ constructor() {
       if (light.type === "AmbientLight") return
       
       light.castShadow = true
+      if (light.type === "PointLight") return
 
       light.target.position.set(0, 0, 0)
       scene.add(light.target)
@@ -773,7 +773,6 @@ constructor() {
             const model = gltf.scene
 
             model.traverse(child => {
-              child.name = args.NAME + "_" + child.name
               console.log(child.name)
               if (child.isMesh) {
                 child.castShadow = true;
@@ -805,10 +804,10 @@ constructor() {
 
     playAnimation(args) {
       const model = models[args.NAME]
-      if (!model) return
+      if (!model) {console.log("no model!"); return}
 
       const action = model.actions[args.ANAME]
-      if (!action) return
+      if (!action) {console.log("no action!"); return}
 
         args.TIMES > 0 ? action.setLoop(THREE.LoopRepeat, args.TIMES) : action.setLoop(THREE.LoopRepeat, Infinity)
 
