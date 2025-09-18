@@ -124,6 +124,7 @@
 }
 
 function updateShadowFrustum(light, focusPos) {
+  if (light.type === "AmbientLight") return
   const d = 20; // half size of shadow box (larger = covers more area, softer shadows)
   
   light.shadow.camera.left   = -d;
@@ -616,12 +617,16 @@ constructor() {
       addLight(args) {
       if (lights[args.NAME] && alerts) alert ("light already exists! will replace...")
       const light = new THREE[args.TYPE](0xffffff, 1)
-      light.castShadow = true
 
       createObject(args.NAME, light, args.GROUP)
+      lights[args.NAME] = light
+      if (light.type === "AmbientLight") return
+      
+      light.castShadow = true
+
       light.target.position.set(0, 0, 0)
       scene.add(light.target)
-      lights[args.NAME] = light
+
       light.pos = new THREE.Vector3(0,0,0)
 
       light.shadow.mapSize.width = 4096
@@ -752,8 +757,12 @@ constructor() {
     }
 
     async addModel(args) {
-    const model = runtime.getTargetForStage().getSounds().find(c => c.name === args.ITEM);
-    if (!model) return;
+      const model = runtime.getTargetForStage().getSounds().find(c => c.name === args.ITEM);
+      if (!model) return;
+
+      const group = new THREE.Group()
+
+      createObject(args.NAME, group, args.GROUP)
     
       gltf.parse(
         // @ts-ignore
@@ -762,6 +771,15 @@ constructor() {
         async gltf => {
 
             const model = gltf.scene
+
+            model.traverse(child => {
+              child.name = args.NAME + "_" + child.name
+              console.log(child.name)
+              if (child.isMesh) {
+                child.castShadow = true;
+                child.receiveShadow = true;
+              }
+            });
 
             const mixer = new THREE.AnimationMixer(gltf.scene);
             const actions = {};
@@ -775,8 +793,8 @@ constructor() {
               mixer: mixer,
               actions: actions
             };
-            model.name = args.NAME
-            await scene.add(gltf.scene);
+
+            group.add(gltf.scene);
         },
         error => {console.error("Error parsing GLB model:", error);}
       )
@@ -813,7 +831,7 @@ constructor() {
     }
 
   }
-  Scratch.extensions.register(new ThreeGLB())
+  Scratch.extensions.register(new ThreeGLB()) //create a group then add the loaded glb there? so no errors while loading.
 
     class ThreeUtilities {
     getInfo() {
