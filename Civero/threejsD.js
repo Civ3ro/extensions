@@ -808,10 +808,7 @@ constructor() {
       const model = models[args.NAME]
       if (!model) {console.log("no model!"); return}
 
-      if (!(args.ANAME in model.actions[args.ANAME])) {
-        console.log("no action!");
-        return;
-      }
+      //if (!(args.ANAME in model.actions[args.ANAME])) {console.log("no action!"); return;}
 
       const action = model.actions[args.ANAME]
 
