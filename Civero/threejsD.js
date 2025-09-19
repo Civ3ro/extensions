@@ -124,7 +124,8 @@
 }
 
 function updateShadowFrustum(light, focusPos) {
-  if (light.type === "AmbientLight" || "PointLight") return
+  if (light.type === "AmbientLight" || light.type === "PointLight") return;
+
   const d = 20; // half size of shadow box (larger = covers more area, softer shadows)
   
   light.shadow.camera.left   = -d;
@@ -485,7 +486,7 @@ constructor() {
           values = values.map(v => v * Math.PI / 180);
           object.rotation.set(0,0,0)
         }
-        if (object.isDirectionalLight == true) {object.pos = new THREE.Vector3(...values); console.log(true); return}
+        if (object.isDirectionalLight == true) {object.pos = new THREE.Vector3(...values); console.log(true, values, object.pos); return}
           object[args.PROPERTY].set(...values);
     }
     changeObjectV3(args) {
@@ -799,6 +800,7 @@ constructor() {
       )
     }
     getModel(args){
+      if (!models[args.NAME]) return;
       return Object.keys(models[args.NAME].actions).toString()
     }
 
@@ -806,8 +808,12 @@ constructor() {
       const model = models[args.NAME]
       if (!model) {console.log("no model!"); return}
 
+      if (!(args.ANAME in model.actions[args.ANAME])) {
+        console.log("no action!");
+        return;
+      }
+
       const action = model.actions[args.ANAME]
-      if (!action) {console.log("no action!"); return}
 
         args.TIMES > 0 ? action.setLoop(THREE.LoopRepeat, args.TIMES) : action.setLoop(THREE.LoopRepeat, Infinity)
 
