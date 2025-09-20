@@ -452,7 +452,7 @@ constructor() {
             ]},
             XYZ: {acceptReporters: false, items: [{text: "X", value: "x"},{text: "Y", value: "y"},{text: "Z", value: "z"}]},
             materialProperties: {acceptReporters: false, items: [
-              {text: "Color", value: "color"},{text: "Map (texture)", value: "map"},{text: "Alpha Map (texture)", value: "alphaMap"},{text: "Alpha Test (0-1)", value: "alphaTest"},{text: "Side (front/back/double)", value: "side"},{text: "Bump Map (texture)", value: "bumpMap"},{text: "Bump Scale", value: "bumpScale"},
+              {text: "Color", value: "color"},{text: "Map (texture)", value: "map"},{text: "Alpha Map (texture)", value: "alphaMap"},{text: "Alpha Test (0-1)", value: "alphaTest"},{text: "Side (front/back/double)", value: "side"},{text: "Bump Map (texture)", value: "bumpMap"},{text: "Bump Scale", value: "bumpScale"},{text: "Metalness", value: "metalness"},{text: "Metalness Map (texture)", value: "metalnessMap"},{text: "Roughness", value: "roughness"},{text: "Roughness Map (texture)", value: "roughnessMap"},{text: "Emissive Color", value: "emissive"},{text: "Emissive Intensity", value: "emissiveIntensity"},{text: "Emissive Map (texture)", value: "emissiveMap"},{text: "Normal Map (texture)", value: "normalMap"},{text: "Normal Scale (v2)", value: "normalScale"},{text: "Wireframe?", value: "wireframe"},
             ]},
             textureModes: {acceptReporters: false, items: ["Pixelate","Blur"]},
             textureStyles: {acceptReporters: false, items: ["Repeat","Clamp"]},
@@ -557,9 +557,13 @@ constructor() {
       let value = args.VALUE
       if  (args.PROPERTY === "side") {
       value = (value === "double" ? THREE.DoubleSide : value === "back" ? THREE.BackSide : THREE.FrontSide)
-      }
+      } else if (args.PROPERTY === "normalScale") value = new THREE.Vector2(...(JSON.parse(value))); console.log(value)
+
+      value === "true" ? value = true : value === "false" ? value = false : null
+
       
       mat[args.PROPERTY] = await (value)
+      if (args.PROPERTY === "wireframe") mat.wireframeLinecap = "butt"; mat.wireframeLinejoin = "bevel"
       mat.needsUpdate = true;
     }
     removeMaterial(args){
@@ -808,9 +812,11 @@ constructor() {
       const model = models[args.NAME]
       if (!model) {console.log("no model!"); return}
 
-      //if (!(args.ANAME in model.actions[args.ANAME])) {console.log("no action!"); return;}
-
-      const action = model.actions[args.ANAME]
+      const action = model.actions[args.ANAME] //clones of models dont have a stored actions!
+      if (!action) {
+        console.log("no action!")
+        return
+      }
 
         args.TIMES > 0 ? action.setLoop(THREE.LoopRepeat, args.TIMES) : action.setLoop(THREE.LoopRepeat, Infinity)
 
@@ -845,8 +851,10 @@ constructor() {
         color3: "#222222",
 
         blocks: [
-            {opcode: "newColor", blockType: Scratch.BlockType.REPORTER, text: "New Color [HEX]", arguments: {HEX: {type: Scratch.ArgumentType.COLOR, defaultValue: "#9966ff"}}},
+            {opcode: "newVector2", blockType: Scratch.BlockType.REPORTER, text: "New Vector [X] [Y]", arguments: {X: {type: Scratch.ArgumentType.NUMBER}, Y: {type: Scratch.ArgumentType.NUMBER}}},
             {opcode: "newVector3", blockType: Scratch.BlockType.REPORTER, text: "New Vector [X] [Y] [Z]", arguments: {X: {type: Scratch.ArgumentType.NUMBER}, Y: {type: Scratch.ArgumentType.NUMBER}, Z: {type: Scratch.ArgumentType.NUMBER}}},
+            "---",
+            {opcode: "newColor", blockType: Scratch.BlockType.REPORTER, text: "New Color [HEX]", arguments: {HEX: {type: Scratch.ArgumentType.COLOR, defaultValue: "#9966ff"}}},
             {opcode: "newFog", blockType: Scratch.BlockType.REPORTER, text: "New Fog [COLOR] [NEAR] [FAR]", arguments: {COLOR: {type: Scratch.ArgumentType.COLOR, defaultValue: "#9966ff"}, NEAR: {type: Scratch.ArgumentType.NUMBER}, FAR: {type: Scratch.ArgumentType.NUMBER, defaultValue: 10}}},
             {opcode: "newTexture", blockType: Scratch.BlockType.REPORTER, text: "New Texture [COSTUME] [MODE] [STYLE] repeat [X][Y]", arguments: {COSTUME: {type: Scratch.ArgumentType.COSTUME}, MODE: {type: Scratch.ArgumentType.STRING, menu: "textureModes"},STYLE: {type: Scratch.ArgumentType.STRING, menu: "textureStyles"}, X: {type: Scratch.ArgumentType.NUMBER, defaultValue: 1},Y: {type: Scratch.ArgumentType.NUMBER,defaultValue: 1}}},
             {opcode: "newCubeTexture", blockType: Scratch.BlockType.REPORTER, text: "New Cube Texture X+[COSTUMEX0]X-[COSTUMEX1]Y+[COSTUMEY0]Y-[COSTUMEY1]Z+[COSTUMEZ0]Z-[COSTUMEZ1] [MODE] [STYLE] repeat [X][Y]", arguments: {"COSTUMEX0": {type: Scratch.ArgumentType.COSTUME},"COSTUMEX1": {type: Scratch.ArgumentType.COSTUME},"COSTUMEY0": {type: Scratch.ArgumentType.COSTUME},"COSTUMEY1": {type: Scratch.ArgumentType.COSTUME},"COSTUMEZ0": {type: Scratch.ArgumentType.COSTUME},"COSTUMEZ1": {type: Scratch.ArgumentType.COSTUME}, MODE: {type: Scratch.ArgumentType.STRING, menu: "textureModes"},STYLE: {type: Scratch.ArgumentType.STRING, menu: "textureStyles"}, X: {type: Scratch.ArgumentType.NUMBER,defaultValue: 1},Y: {type: Scratch.ArgumentType.NUMBER,defaultValue: 1}}},
@@ -869,6 +877,9 @@ constructor() {
     }
     newVector3(args) {
         return JSON.stringify([args.X, args.Y, args.Z])
+    }
+    newVector2(args) {
+        return JSON.stringify([args.X, args.Y])
     }
     newFog(args) {
         return new THREE.Fog(args.COLOR, args.NEAR, args.FAR)
