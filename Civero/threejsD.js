@@ -44,6 +44,8 @@
   let geometries = {}
   let lights = {}
   let models = {}
+
+  let raycastResult = []
   
 //utility
     function vector3ToString(prop) {
@@ -143,6 +145,16 @@ function updateShadowFrustum(light, focusPos) {
   light.shadow.camera.updateProjectionMatrix();
 }
 
+function getMouseNDC(event) {
+  // Use threeRenderer.domElement for correct offset
+  const rect = threeRenderer.domElement.getBoundingClientRect();
+  const x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+  const y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+  return [x, y];
+}
+
+let mouseNDC = [0, 0];
+
 
 function startRenderLoop() {
   if (running) return
@@ -196,6 +208,8 @@ async function load() {
       threeRenderer.shadowMap.enabled = true;
       threeRenderer.shadowMap.type = THREE.PCFSoftShadowMap; // (optional, nicer shadows)
 
+      threeRenderer.domElement.style.pointerEvents = 'auto' //will disable turbowarp mouse events, but enable threejs's
+
       renderer.addOverlay( threeRenderer.domElement, "scale" )
       renderer.addOverlay(renderer.canvas, "manual")
       renderer.setBackgroundColor(1, 1, 1, 0)
@@ -206,6 +220,10 @@ async function load() {
 
       window.addEventListener( "mousedown", () => { isMouseDown = true } )
       window.addEventListener( "mouseup", () => { isMouseDown = false } )
+
+      threeRenderer.domElement.addEventListener('mousemove', (event) => {
+        mouseNDC = getMouseNDC(event);
+      });
 
         running = false
         ready = load()
@@ -858,8 +876,14 @@ constructor() {
             {opcode: "newFog", blockType: Scratch.BlockType.REPORTER, text: "New Fog [COLOR] [NEAR] [FAR]", arguments: {COLOR: {type: Scratch.ArgumentType.COLOR, defaultValue: "#9966ff"}, NEAR: {type: Scratch.ArgumentType.NUMBER}, FAR: {type: Scratch.ArgumentType.NUMBER, defaultValue: 10}}},
             {opcode: "newTexture", blockType: Scratch.BlockType.REPORTER, text: "New Texture [COSTUME] [MODE] [STYLE] repeat [X][Y]", arguments: {COSTUME: {type: Scratch.ArgumentType.COSTUME}, MODE: {type: Scratch.ArgumentType.STRING, menu: "textureModes"},STYLE: {type: Scratch.ArgumentType.STRING, menu: "textureStyles"}, X: {type: Scratch.ArgumentType.NUMBER, defaultValue: 1},Y: {type: Scratch.ArgumentType.NUMBER,defaultValue: 1}}},
             {opcode: "newCubeTexture", blockType: Scratch.BlockType.REPORTER, text: "New Cube Texture X+[COSTUMEX0]X-[COSTUMEX1]Y+[COSTUMEY0]Y-[COSTUMEY1]Z+[COSTUMEZ0]Z-[COSTUMEZ1] [MODE] [STYLE] repeat [X][Y]", arguments: {"COSTUMEX0": {type: Scratch.ArgumentType.COSTUME},"COSTUMEX1": {type: Scratch.ArgumentType.COSTUME},"COSTUMEY0": {type: Scratch.ArgumentType.COSTUME},"COSTUMEY1": {type: Scratch.ArgumentType.COSTUME},"COSTUMEZ0": {type: Scratch.ArgumentType.COSTUME},"COSTUMEZ1": {type: Scratch.ArgumentType.COSTUME}, MODE: {type: Scratch.ArgumentType.STRING, menu: "textureModes"},STYLE: {type: Scratch.ArgumentType.STRING, menu: "textureStyles"}, X: {type: Scratch.ArgumentType.NUMBER,defaultValue: 1},Y: {type: Scratch.ArgumentType.NUMBER,defaultValue: 1}}},
-
+            "---",
             {opcode:"mouseDown",extensions: ["colours_sensing"], blockType: Scratch.BlockType.BOOLEAN, text: "mouse down?"},
+            {opcode: "mousePos",extensions: ["colours_sensing"], blockType: Scratch.BlockType.REPORTER, text: "mouse position", arguments: {}},
+            "---",
+            {opcode: "getItem",extensions: ["colours_data_lists"], blockType: Scratch.BlockType.REPORTER, text: "get item [ITEM] of [ARRAY]", arguments: {ITEM: {type: Scratch.ArgumentType.STRING, defaultValue: "1"}, ARRAY: {type: Scratch.ArgumentType.STRING, defaultValue: `["myObject", "myLight"]`}}},
+            {blockType: Scratch.BlockType.LABEL, text: "↳ Raycasting"},
+            {opcode: "raycast", blockType: Scratch.BlockType.COMMAND, text: "raycast from [V3] in direction [D3]", arguments: {V3: {type: Scratch.ArgumentType.STRING, defaultValue: "[0,0,3]"}, D3: {type: Scratch.ArgumentType.STRING, defaultValue: "[0,0,0]"}}},
+            {opcode: "getRaycast", blockType: Scratch.BlockType.REPORTER, text: "get raycast [PROPERTY]", arguments: {PROPERTY: {type: Scratch.ArgumentType.STRING, menu: "raycastProperties"}}},
 
         ],
         menus: {
@@ -868,9 +892,15 @@ constructor() {
             ]},
             textureModes: {acceptReporters: false, items: ["Pixelate","Blur"]},
             textureStyles: {acceptReporters: false, items: ["Repeat","Clamp"]},
+            raycastProperties: {acceptReporters: false, items: [
+              {text: "Intersected Object Names", value: "name"},{text: "Number of Objects", value: "number"},{text: "Intersected Objects distances", value: "distance"},
+            ]}
         }
       }}
     mouseDown() {return isMouseDown}
+    mousePos(event) {
+      return JSON.stringify(mouseNDC)
+    }
 
     newColor(args) {
         return new THREE.Color(args.HEX);
@@ -903,6 +933,31 @@ constructor() {
       return texture;
     }
 
+    getItem(args) {
+      const items = JSON.parse(args.ARRAY)
+      return items[args.ITEM - 1]
+    }
+
+    raycast(args) {
+      const origin = new THREE.Vector3(...JSON.parse(args.V3))
+      const target = new THREE.Vector3(...JSON.parse(args.D3))
+      const direction = target.clone().sub(origin).normalize()
+
+      const raycaster = new THREE.Raycaster()
+      //const camera = getObject(args.CAMERA)
+      raycaster.set( origin, direction );
+
+      const intersects = raycaster.intersectObjects( scene.children, true )
+
+      console.log(intersects)
+      raycastResult = intersects
+    }
+    getRaycast(args) {
+      if (args.PROPERTY === "number") return raycastResult.length
+      if (args.PROPERTY === "distance") return JSON.stringify(raycastResult.map(i => i.distance))
+      return JSON.stringify(raycastResult.map(i => i.object[args.PROPERTY]))
+    }
+
   }
   Scratch.extensions.register(new ThreeUtilities())
 
@@ -929,12 +984,8 @@ constructor() {
       OrbitControl(args) {
       if (!args.STATE) {
         controls.enabled = false; 
-        threeRenderer.domElement.style.pointerEvents = 'none';
         return
       }
-
-      console.warn("enabling orbit control might disable scratch's mouse detection!")
-      threeRenderer.domElement.style.pointerEvents = 'auto';
       controls = new OrbitControls.OrbitControls(camera, threeRenderer.domElement);
       controls.enableDamping = true; // smooth
     }
