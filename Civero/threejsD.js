@@ -30,15 +30,21 @@
     let running
     let ready
     let loopId
+  //Addons
   let GLTFLoader
     let gltf
   let OrbitControls
     let controls
+  let BokehPass
 
   let threeRenderer
   let scene
   let camera
   let object
+  
+  let composer
+  let renderPass
+  let passes = {}
 
   let materials = {}
   let geometries = {}
@@ -70,10 +76,14 @@
       parentName === scene.name ? object = scene : getObject(parentName)
 
       object.add(content)
+
+      updateComposers()
     }
     function removeObject(name) {
       getObject(name)
       scene.remove(object)
+      renderPass.scene = newScene //update!
+      renderPass.camera = camera
     }
     function getObject(name, isNew) {
       object = null
@@ -125,7 +135,7 @@
   });
 }
 
-function updateShadowFrustum(light, focusPos) {
+function updateShadowFrustum(light, focusPos) { //should better this!
   if (light.type === "AmbientLight" || light.type === "PointLight") return;
 
   const d = 20; // half size of shadow box (larger = covers more area, softer shadows)
@@ -144,6 +154,25 @@ function updateShadowFrustum(light, focusPos) {
 
   light.shadow.camera.updateProjectionMatrix();
 }
+function updateComposers() {
+      renderPass.scene = scene //update!
+      renderPass.camera = camera
+
+      if (camera){
+
+      if (!passes["Bokeh"]) {
+        passes["Bokeh"] = new BokehPass.BokehPass(scene, camera, {
+          focus: 2.5,        // distance to focal plane
+          aperture: 0,   // size of blur; larger = more blur //disabled by default!
+          maxblur: 5     // cap for blur
+        })
+      }
+      else {
+      passes["Bokeh"].scene = scene
+      passes["Bokeh"].camera = camera
+      }
+  }
+}
 
 function getMouseNDC(event) {
   // Use threeRenderer.domElement for correct offset
@@ -153,32 +182,7 @@ function getMouseNDC(event) {
   return [x, y];
 }
 
-let mouseNDC = [0, 0];
-
-
-function startRenderLoop() {
-  if (running) return
-  running = true
-
-  const loop = () => {
-    if (!running) return
-
-    if (scene && camera) {
-      if (controls) controls.update()
-
-      const delta = clock.getDelta()
-      Object.values(models).forEach( model => { if (model) model.mixer.update(delta) } )
-
-      Object.values(lights).forEach(light => updateShadowFrustum(light, camera.position))
-
-      threeRenderer.render(scene, camera)
-    }
-
-    loopId = requestAnimationFrame(loop)
-  }
-
-  loopId = requestAnimationFrame(loop)
-}
+let mouseNDC = [0, 0]
 
 function stopLoop() {
   if (!running) return
@@ -195,28 +199,86 @@ async function load() {
     if (!THREE) {
       
       // @ts-ignore
-      THREE = await import("https://esm.sh/three@0.180.0");
-      // @ts-ignore
-      GLTFLoader = await import("https://esm.sh/three@0.180.0/examples/jsm/loaders/GLTFLoader.js");
-      // @ts-ignore
-      OrbitControls = await import("https://esm.sh/three@0.180.0/examples/jsm/controls/OrbitControls.js");
+      THREE = await import("https://esm.sh/three@0.180.0")
+      //Addons
+      GLTFLoader = await import("https://esm.sh/three@0.180.0/examples/jsm/loaders/GLTFLoader.js")
+      OrbitControls = await import("https://esm.sh/three@0.180.0/examples/jsm/controls/OrbitControls.js")
 
-      threeRenderer = new THREE.WebGLRenderer({alpa: true})
-      threeRenderer.setSize(480, 360)
-      threeRenderer.setPixelRatio(window.devicePixelRatio * 1)
+      const {EffectComposer} = await import("https://esm.sh/three@0.180.0/examples/jsm/postprocessing/EffectComposer.js")
+      const{RenderPass} = await import("https://esm.sh/three@0.180.0/examples/jsm/postprocessing/RenderPass.js")
+      const {ShaderPass} = await import("https://esm.sh/three@0.180.0/examples/jsm/postprocessing/ShaderPass.js")
+      const {UnrealBloomPass} = await import("https://esm.sh/three@0.180.0/examples/jsm/postprocessing/UnrealBloomPass.js")
+      BokehPass = await import("https://esm.sh/three@0.180.0/examples/jsm/postprocessing/BokehPass.js")
+      const {OutputPass} = await import("https://esm.sh/three@0.180.0/examples/jsm/postprocessing/OutputPass.js")
 
-      threeRenderer.shadowMap.enabled = true;
-      threeRenderer.shadowMap.type = THREE.PCFSoftShadowMap; // (optional, nicer shadows)
+      const {RGBShiftShader} = await import("https://esm.sh/three@0.180.0/examples/jsm/shaders/RGBShiftShader.js")
+      const {ColorCorrectionShader} = await import("https://esm.sh/three@0.180.0/examples/jsm/shaders/ColorCorrectionShader.js")
+      const {DotScreenShader} = await import("https://esm.sh/three@0.180.0/examples/jsm/shaders/DotScreenShader.js")
 
+      threeRenderer = new THREE.WebGLRenderer({
+        antialias: true,
+        alpha: true
+      })
+      threeRenderer.setPixelRatio(window.devicePixelRatio)
+      threeRenderer.setSize(renderer.canvas.width, renderer.canvas.height)
+      threeRenderer.outputColorSpace = THREE.SRGBColorSpace // correct colors
+      threeRenderer.toneMapping = THREE.ACESFilmicToneMapping // HDR look (test)
+      threeRenderer.toneMappingExposure = 1.0 //(test)
+
+      threeRenderer.shadowMap.enabled = true
+      threeRenderer.shadowMap.type = THREE.PCFSoftShadowMap // (optional)
       threeRenderer.domElement.style.pointerEvents = 'auto' //will disable turbowarp mouse events, but enable threejs's
+
+      gltf = new GLTFLoader.GLTFLoader()
+      clock = new THREE.Clock()
+      
+
+      composer = new EffectComposer(threeRenderer)
+      renderPass = new RenderPass(scene, camera)
+      const outputPass = new OutputPass()
+      composer.setSize(renderer.canvas.width*2, renderer.canvas.height*2) //should set this to the pixel ratio?
+      
+      const bloomPass = new UnrealBloomPass(
+        new THREE.Vector2(renderer.canvas.width, renderer.canvas.height),1,1,1)
+        bloomPass.enabled = false
+      
+      const rgbShiftPass = new ShaderPass(RGBShiftShader)
+        rgbShiftPass.uniforms['amount'].value = 0.00
+        rgbShiftPass.enabled = false
+
+      const colorCorrectionPass = new ShaderPass(ColorCorrectionShader)
+        colorCorrectionPass.uniforms['powRGB'].value.set(1, 1, 1)
+        colorCorrectionPass.uniforms['mulRGB'].value.set(1.0, 1.0, 1.0)
+        colorCorrectionPass.enabled = false
+
+      const dotPass = new ShaderPass(DotScreenShader)
+        dotPass.uniforms['scale'].value = 4.0
+        dotPass.uniforms["center"].value.set(0.5, 0.5)
+        dotPass.enabled = false
+
+      
+      composer.addPass(renderPass) //necesary!
+      /*composer.addPass(bloomPass)
+      composer.addPass(rgbShiftPass)
+      composer.addPass(colorCorrectionPass)
+
+      composer.addPass(outputPass)
+      composer.addPass(dotPass)
+      //dotPass.renderToScreen = false; // should be fine
+      //outputPass.renderToScreen = true; // ensures final output 
+      */
+      passes["Render"] = renderPass
+      passes["Output"] = outputPass
+      passes["Bloom"] = bloomPass
+      passes["Bokeh"] = null
+      passes["RGB Shift"] = rgbShiftPass
+      passes["Color Correction"] = colorCorrectionPass
+      
+      passes["Dotted"] = dotPass
 
       renderer.addOverlay( threeRenderer.domElement, "scale" )
       renderer.addOverlay(renderer.canvas, "manual")
       renderer.setBackgroundColor(1, 1, 1, 0)
-
-      gltf = new GLTFLoader.GLTFLoader()
-
-      clock = new THREE.Clock();
 
       window.addEventListener( "mousedown", () => { isMouseDown = true } )
       window.addEventListener( "mouseup", () => { isMouseDown = false } )
@@ -234,6 +296,29 @@ async function load() {
     }
   }
 
+function startRenderLoop() {
+  if (running) return
+  running = true
+
+  const loop = () => {
+    if (!running) return
+
+    if (scene && camera) {
+        if (controls) controls.update()
+
+      const delta = clock.getDelta()
+      Object.values(models).forEach( model => { if (model) model.mixer.update(delta) } )
+
+      Object.values(lights).forEach(light => updateShadowFrustum(light, camera.position))
+
+      composer.render(delta)
+    }
+
+    loopId = requestAnimationFrame(loop)
+  }
+
+  loopId = requestAnimationFrame(loop)
+}
 
 class threejsExtension {
 constructor() {
@@ -404,6 +489,7 @@ constructor() {
         object.position.z = 3
  
         createObject(args.CAMERA, object, args.GROUP)
+
     }
     setCamera(args) {
       getObject(args.CAMERA)
@@ -817,6 +903,7 @@ constructor() {
             };
 
             group.add(gltf.scene);
+            updateComposers()
         },
         error => {console.error("Error parsing GLB model:", error);}
       )
@@ -935,13 +1022,18 @@ constructor() {
 
     getItem(args) {
       const items = JSON.parse(args.ARRAY)
-      return items[args.ITEM - 1]
+      const item = items[args.ITEM - 1]
+      if (!item) return "0"
+      return item
     }
 
     raycast(args) {
       const origin = new THREE.Vector3(...JSON.parse(args.V3))
-      const target = new THREE.Vector3(...JSON.parse(args.D3))
-      const direction = target.clone().sub(origin).normalize()
+        // rotation is in degrees => convert to radians first
+        const rot = JSON.parse(args.D3).map(v => v * Math.PI / 180)
+
+        const euler = new THREE.Euler(rot[0], rot[1], rot[2], "YXZ")
+        const direction = new THREE.Vector3(0, 0, -1).applyEuler(euler).normalize()
 
       const raycaster = new THREE.Raycaster()
       //const camera = getObject(args.CAMERA)
@@ -949,7 +1041,6 @@ constructor() {
 
       const intersects = raycaster.intersectObjects( scene.children, true )
 
-      console.log(intersects)
       raycastResult = intersects
     }
     getRaycast(args) {
@@ -972,22 +1063,102 @@ constructor() {
 
         blocks: [
             {blockType: Scratch.BlockType.LABEL, text: "Orbit Control"},
-            {opcode: "OrbitControl", blockType: Scratch.BlockType.COMMAND, text: "set addon [STATE] Orbit Control", arguments: {STATE: {type: Scratch.ArgumentType.STRING, menu: "onoff"},}},
+            {opcode: "OrbitControl", blockType: Scratch.BlockType.COMMAND, text: "set addon Orbit Control [STATE]", arguments: {STATE: {type: Scratch.ArgumentType.STRING, menu: "onoff"},}},
+            
+            {blockType: Scratch.BlockType.LABEL, text: "Composer"},
+            {opcode: "resetComposer",extensions: ["colours_operators"], blockType: Scratch.BlockType.COMMAND, text: "reset composer"},
+            
+            {opcode: "addComposer",extensions: ["colours_operators"], blockType: Scratch.BlockType.COMMAND, text: "add pass [PASS] to composer", arguments: {PASS: {type: Scratch.ArgumentType.STRING, menu: "passes"},}},
+            {opcode: "setPass",extensions: ["colours_operators"], blockType: Scratch.BlockType.COMMAND, text: "set pass [PASS] [STATE]", arguments: {PASS: {type: Scratch.ArgumentType.STRING, menu: "passes"},STATE: {type: Scratch.ArgumentType.STRING, menu: "onoff"}}},
+            
+
+            {blockType: Scratch.BlockType.LABEL, text: "Post Processing"},
+            {opcode: "bloom", blockType: Scratch.BlockType.COMMAND, text: "set bloom [PROPERTY] to [VALUE]", arguments: {PROPERTY: {type: Scratch.ArgumentType.STRING, menu: "bloomProperties"},VALUE: {type: Scratch.ArgumentType.NUMBER, defaultValue: 1},}},
+            {opcode: "bokeh", blockType: Scratch.BlockType.COMMAND, text: "set bokeh [PROPERTY] to [VALUE]", arguments: {PROPERTY: {type: Scratch.ArgumentType.STRING, menu: "bokehProperties"},VALUE: {type: Scratch.ArgumentType.NUMBER, defaultValue: 2.5},}},
+            
+            {blockType: Scratch.BlockType.LABEL, text: "Shaders"},
+            {opcode: "rgbShift", blockType: Scratch.BlockType.COMMAND, text: "set RGB Shift [PROPERTY] to [VALUE]", arguments: {PROPERTY: {type: Scratch.ArgumentType.STRING, menu: "rgbShiftProperties"},VALUE: {type: Scratch.ArgumentType.NUMBER, defaultValue: 0.03},}},
+            {opcode: "colorCorrection", blockType: Scratch.BlockType.COMMAND, text: "set Color Correction [PROPERTY] to [VALUE]", arguments: {PROPERTY: {type: Scratch.ArgumentType.STRING, menu: "colorCorrectionProperties"},VALUE: {type: Scratch.ArgumentType.NUMBER, defaultValue: 1},}},
+            {opcode: "dot", blockType: Scratch.BlockType.COMMAND, text: "set Dotted [PROPERTY] to [VALUE]", arguments: {PROPERTY: {type: Scratch.ArgumentType.STRING, menu: "dotProperties"},VALUE: {type: Scratch.ArgumentType.NUMBER, defaultValue: 4},}},
 
         ],
         menus: {            
-          onoff: {acceptReporters: true, items: [{text: "on", value: "1"},{text: "off", value: "0"},]},
+          onoff: {acceptReporters: true, items: [{text: "enabled", value: "1"},{text: "disabled", value: "0"},]},
+          passes: {acceptReporters: false, items: 'getPasses' },
+          bokehProperties: {acceptReporters: false, items: [
+            {text: "Focus", value: "focus"},{text: "Aperture", value: "aperture"},{text: "Max Blur", value: "maxblur"}
+          ]},
+          bloomProperties: {acceptReporters: false, items: [
+            {text: "Strength", value: "strength"},{text: "Radius", value: "radius"},{text: "Threshold", value: "threshold"}
+          ]},
+          rgbShiftProperties: {acceptReporters: false, items: [
+            {text: "Amount", value: "amount"},{text: "Angle", value: "angle"}
+          ]},
+          colorCorrectionProperties: {acceptReporters: false, items: [
+            {text: "Tone (RGB v3)", value: "powRGB"},{text: "Brightness (RGB v3)", value: "mulRGB"}
+          ]},
+          dotProperties: {acceptReporters: false, items: [
+            {text: "Scale", value: "scale"},{text: "Angle", value: "angle"},{text: "Center (v2)", value: "center"}
+          ]},
 
         }
       }}
 
-      OrbitControl(args) {
-      if (!args.STATE) {
-        controls.enabled = false; 
-        return
+      getPasses() {const keys = Object.keys(passes).filter(key => passes[key] !== null)
+        if (keys.length < 1) return ["open me!"]
+        return keys.sort()
       }
-      controls = new OrbitControls.OrbitControls(camera, threeRenderer.domElement);
-      controls.enableDamping = true; // smooth
+
+      OrbitControl(args) {
+        if (!controls) {
+          console.log("creating...", OrbitControls)
+          controls = new OrbitControls.OrbitControls(camera, threeRenderer.domElement);
+          controls.enableDamping = true
+        }
+        controls.enabled = !!args.STATE
+        console.log(controls)
+    }
+
+    resetComposer() {
+      composer.passes = []
+      threeRenderer.clear()
+    }
+
+    addComposer(args) {
+      composer.addPass(passes[args.PASS])
+      console.log(passes)
+    }
+
+    setPass(args) {
+      passes[args.PASS].enabled = !!args.STATE
+    }
+
+    bokeh(args) {
+      if (!passes["Bokeh"]) updateComposers()
+      if (!camera) {alerts ? alert("Add a camera to the scene to update the renderer!") : null; return;}
+      let value = args.VALUE
+
+      passes["Bokeh"].uniforms[args.PROPERTY].value = value
+    }
+
+    bloom(args) {
+      let value = args.VALUE
+      passes["Bloom"][args.PROPERTY] = value
+    }
+
+    rgbShift(args) {
+      let value = args.VALUE
+      passes["RGB Shift"].uniforms[args.PROPERTY].value = value
+    }
+
+    colorCorrection(args) {
+      let value = args.VALUE
+      passes["Color Correction"].uniforms[args.PROPERTY].value = JSON.parse(value)
+    }
+
+    dot(args) {
+      let value = args.VALUE
+      passes["Dotted"].uniforms[args.PROPERTY].value = JSON.parse(value)
     }
 
 
