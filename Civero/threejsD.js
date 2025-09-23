@@ -1029,13 +1029,15 @@ constructor() {
        
             {blockType: Scratch.BlockType.LABEL, text: "Post Processing"},
             {opcode: "resetComposer",extensions: ["colours_operators"], blockType: Scratch.BlockType.COMMAND, text: "reset composer"},
-            {opcode: "bloom", blockType: Scratch.BlockType.COMMAND, text: "add bloom i:[I] s:[S] t:[T]", arguments: {I: {type: Scratch.ArgumentType.NUMBER, defaultValue: 1}, S:{type: Scratch.ArgumentType.NUMBER, defaultValue: 0.5}, T:{type: Scratch.ArgumentType.NUMBER, defaultValue: 0.5}}},
+            {opcode: "bloom", blockType: Scratch.BlockType.COMMAND, text: "add bloom intensity:[I] smoothing:[S] threshold:[T] | blend: [BLEND]", arguments: {I: {type: Scratch.ArgumentType.NUMBER, defaultValue: 1}, S:{type: Scratch.ArgumentType.NUMBER, defaultValue: 0.5}, T:{type: Scratch.ArgumentType.NUMBER, defaultValue: 0.5}, BLEND: {type: Scratch.ArgumentType.STRING, menu: "blendModes"}}},
             {opcode: "godRays", blockType: Scratch.BlockType.COMMAND, text: "add god rays object:[NAME] density:[DENS] decay:[DEC] weight:[WEI] exposition:[EXP] | resolution:[RES] samples:[SAMP]", arguments: {NAME: {type: Scratch.ArgumentType.STRING, defaultValue: "myObject"}, DEC:{type: Scratch.ArgumentType.NUMBER, defaultValue: 0.5}, DENS:{type: Scratch.ArgumentType.NUMBER, defaultValue: 0.9},EXP:{type: Scratch.ArgumentType.NUMBER, defaultValue: 0.5},WEI:{type: Scratch.ArgumentType.NUMBER, defaultValue: 0.5},RES:{type: Scratch.ArgumentType.NUMBER, defaultValue: 0.5},SAMP:{type: Scratch.ArgumentType.NUMBER, defaultValue: 0.5},}},
             {opcode: "dots", blockType: Scratch.BlockType.COMMAND, text: "add dots scale:[S] angle:[A]", arguments: {S:{type: Scratch.ArgumentType.NUMBER, defaultValue: 1}, A: {type: Scratch.ArgumentType.ANGLE, defaultValue: 0}}}
         ],
         menus: {            
           onoff: {acceptReporters: true, items: [{text: "enabled", value: "1"},{text: "disabled", value: "0"},]},
-          passes: {acceptReporters: false, items: 'getPasses' },
+          blendModes: {acceptReporters: false, items: [
+            "none yet!"
+          ]}
         }
       }}
 
