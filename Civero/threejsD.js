@@ -149,15 +149,23 @@ function updateShadowFrustum(light, focusPos) { //should better this!
 
   light.shadow.camera.updateProjectionMatrix();
 }
+
 function updateComposers() {
-  if (!camera || !scene) return
-    passes["Render"] = new RenderPass(scene, camera)
-    console.log(composer) 
-    if (getPasses().map(p=>p.name).includes("RenderPass")) console.log(true)
-      else composer.addPass(passes["Render"])
+  if (!camera || !scene) return;                     // nothing to do yet
+
+  // always recreate the RenderPass to point to the current scene/camera
+  passes["Render"] = new RenderPass(scene, camera);
+
+  // ensure composer has a RenderPass as the first pass
+  const hasRender = composer.passes.some(p => p && p.scene);
+  if (!hasRender) composer.addPass(passes["Render"]);
+  else {
+    // if composer already has one, replace it so it references current scene/camera
+    const idx = composer.passes.findIndex(p => p && p.scene);
+    composer.passes[idx] = passes["Render"];
+  }
 }
 
-function getPasses() {return composer.passes}
 
 function getMouseNDC(event) {
   // Use threeRenderer.domElement for correct offset
@@ -212,8 +220,10 @@ async function load() {
 
 
       threeRenderer = new THREE.WebGLRenderer({
-        antialias: true,
-        alpha: true
+        powerPreference: "high-performance",
+        antialias: false,
+        stencil: false,
+        depth: true
       })
       threeRenderer.setPixelRatio(window.devicePixelRatio)
       threeRenderer.setSize(renderer.canvas.width, renderer.canvas.height)
@@ -386,7 +396,7 @@ constructor() {
         geometries = {}
         lights = {}
         models = {}
-        camera = null
+        camera = undefined
 
         composer.reset()
         updateComposers()
@@ -1029,15 +1039,20 @@ constructor() {
        
             {blockType: Scratch.BlockType.LABEL, text: "Post Processing"},
             {opcode: "resetComposer",extensions: ["colours_operators"], blockType: Scratch.BlockType.COMMAND, text: "reset composer"},
-            {opcode: "bloom", blockType: Scratch.BlockType.COMMAND, text: "add bloom intensity:[I] smoothing:[S] threshold:[T] | blend: [BLEND]", arguments: {I: {type: Scratch.ArgumentType.NUMBER, defaultValue: 1}, S:{type: Scratch.ArgumentType.NUMBER, defaultValue: 0.5}, T:{type: Scratch.ArgumentType.NUMBER, defaultValue: 0.5}, BLEND: {type: Scratch.ArgumentType.STRING, menu: "blendModes"}}},
-            {opcode: "godRays", blockType: Scratch.BlockType.COMMAND, text: "add god rays object:[NAME] density:[DENS] decay:[DEC] weight:[WEI] exposition:[EXP] | resolution:[RES] samples:[SAMP]", arguments: {NAME: {type: Scratch.ArgumentType.STRING, defaultValue: "myObject"}, DEC:{type: Scratch.ArgumentType.NUMBER, defaultValue: 0.5}, DENS:{type: Scratch.ArgumentType.NUMBER, defaultValue: 0.9},EXP:{type: Scratch.ArgumentType.NUMBER, defaultValue: 0.5},WEI:{type: Scratch.ArgumentType.NUMBER, defaultValue: 0.5},RES:{type: Scratch.ArgumentType.NUMBER, defaultValue: 0.5},SAMP:{type: Scratch.ArgumentType.NUMBER, defaultValue: 0.5},}},
-            {opcode: "dots", blockType: Scratch.BlockType.COMMAND, text: "add dots scale:[S] angle:[A]", arguments: {S:{type: Scratch.ArgumentType.NUMBER, defaultValue: 1}, A: {type: Scratch.ArgumentType.ANGLE, defaultValue: 0}}}
+            {opcode: "bloom", blockType: Scratch.BlockType.COMMAND, text: "add bloom intensity:[I] smoothing:[S] threshold:[T] | blend: [BLEND]", arguments: {I: {type: Scratch.ArgumentType.NUMBER, defaultValue: 1}, S:{type: Scratch.ArgumentType.NUMBER, defaultValue: 0.5}, T:{type: Scratch.ArgumentType.NUMBER, defaultValue: 0.5}, BLEND: {type: Scratch.ArgumentType.STRING, menu: "blendModes", defaultValue: "SCREEN"}}},
+            {opcode: "godRays", blockType: Scratch.BlockType.COMMAND, text: "add god rays object:[NAME] density:[DENS] decay:[DEC] weight:[WEI] exposition:[EXP] | resolution:[RES] samples:[SAMP] | blend: [BLEND]", arguments: {NAME: {type: Scratch.ArgumentType.STRING, defaultValue: "myObject"},BLEND: {type: Scratch.ArgumentType.STRING, menu: "blendModes", defaultValue: "SCREEN"}, DEC:{type: Scratch.ArgumentType.NUMBER, defaultValue: 0.5}, DENS:{type: Scratch.ArgumentType.NUMBER, defaultValue: 0.9},EXP:{type: Scratch.ArgumentType.NUMBER, defaultValue: 0.5},WEI:{type: Scratch.ArgumentType.NUMBER, defaultValue: 0.5},RES:{type: Scratch.ArgumentType.NUMBER, defaultValue: 0.5},SAMP:{type: Scratch.ArgumentType.NUMBER, defaultValue: 0.5},}},
+            {opcode: "dots", blockType: Scratch.BlockType.COMMAND, text: "add dots scale:[S] angle:[A] | blend: [BLEND]", arguments: {S:{type: Scratch.ArgumentType.NUMBER, defaultValue: 1}, A: {type: Scratch.ArgumentType.ANGLE, defaultValue: 0},BLEND: {type: Scratch.ArgumentType.STRING, menu: "blendModes", defaultValue: "SCREEN"}}}
         ],
         menus: {            
           onoff: {acceptReporters: true, items: [{text: "enabled", value: "1"},{text: "disabled", value: "0"},]},
           blendModes: {acceptReporters: false, items: [
-            "none yet!"
-          ]}
+            "SKIP","SET","ADD","ALPHA","AVERAGE","COLOR","COLOR_BURN","COLOR_DODGE",
+            "DARKEN","DIFFERENCE","DIVIDE","DST","EXCLUSION","HARD_LIGHT","HARD_MIX",
+            "HUE","INVERT","INVERT_RGB","LIGHTEN","LINEAR_BURN","LINEAR_DODGE",
+            "LINEAR_LIGHT","LUMINOSITY","MULTIPLY","NEGATION","NORMAL","OVERLAY",
+            "PIN_LIGHT","REFLECT","SCREEN","SRC","SATURATION","SOFT_LIGHT","SUBTRACT",
+            "VIVID_LIGHT"
+          ]},
         }
       }}
 
@@ -1052,58 +1067,54 @@ constructor() {
     }
 
     resetComposer() {
-      composer.reset()
+      composer.passes = []
+      passes = {}
       updateComposers()
     }
 
     bloom(args) {
-// Remove old BloomPass if it exists
-    if (passes["Bloom"]) composer.removePass(passes["Bloom"]);
-
-    const bloom = new BloomEffect({
+    if (!camera || !scene) {if (alerts) alert("set a camera!"); return}
+    const bloomEffect = new BloomEffect({
         intensity: args.I,
         luminanceThreshold: args.T,   // ← correct key
         luminanceSmoothing: args.S,
-        blendFunction: BlendFunction.SCREEN
-    });
+        blendFunction: BlendFunction[args.BLEND]
+    })
 
+    const bloomPass = new EffectPass(camera, bloomEffect)
 
-    const bloomPass = new EffectPass(camera, bloom);
-
-    composer.addPass(bloomPass);
-    passes["Bloom"] = bloomPass;
+    composer.addPass(bloomPass)
     }
 
     godRays(args) {
+    if (!camera || !scene) {if (alerts) alert("set a camera!"); return}
       getObject(args.NAME)
-const sun = object
+      const sun = object
 
-const godRays = new GodRaysEffect(camera, sun, {
-  resolutionScale: args.RES,    // downscale factor (performance vs quality)
-  density: args.DENS,           // ray density
-  decay: args.DEC,             // fade out
-  weight: args.WEI,             // brightness of rays
-  exposure: args.EXP,           // overall exposure
-  samples: args.SAMP              // number of samples (higher = smoother but slower)
-})
+      const godRays = new GodRaysEffect(camera, sun, {
+        resolutionScale: args.RES,    // downscale factor (performance vs quality)
+        density: args.DENS,           // ray density
+        decay: args.DEC,             // fade out
+        weight: args.WEI,             // brightness of rays
+        exposure: args.EXP,           // overall exposure
+        samples: args.SAMP,             // number of samples (higher = smoother but slower)
+        blendFunction: BlendFunction[args.BLEND]
+      })
 
-const godRaysPass = new EffectPass(camera, godRays)
-composer.addPass(godRaysPass)
-passes["godRays"] = godRays
+      const godRaysPass = new EffectPass(camera, godRays)
+      composer.addPass(godRaysPass)
     }
 
     dots(args) {
+    if (!camera || !scene) {if (alerts) alert("set a camera!"); return}
       // create effect + pass
-const dot = new DotScreenEffect({
-  angle: args.A,
-  scale: args.S,
-  blendFunction: BlendFunction.NORMAL
-});
-const dotPass = new EffectPass(camera, dot);
-composer.addPass(dotPass);
-
-// store
-passes["DotScreen"] = dotPass;
+      const dot = new DotScreenEffect({
+        angle: args.A,
+        scale: args.S,
+        blendFunction: BlendFunction[args.BLEND]
+      });
+      const dotPass = new EffectPass(camera, dot);
+      composer.addPass(dotPass);
     }
 
 
