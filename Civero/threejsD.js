@@ -1039,11 +1039,6 @@ constructor() {
         }
       }}
 
-      getPasses() {const keys = Object.keys(passes).filter(key => passes[key] !== null)
-        if (keys.length < 1) return ["open me!"]
-        return keys.sort()
-      }
-
       OrbitControl(args) {
 
         console.log("creating...", OrbitControls)
@@ -1056,7 +1051,7 @@ constructor() {
 
     resetComposer() {
       composer.reset()
-      composer.addPass(passes["Render"])
+      updateComposers()
     }
 
     bloom(args) {
