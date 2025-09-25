@@ -206,6 +206,7 @@ async function load() {
         BloomEffect,
         GodRaysEffect,
         DotScreenEffect,
+        DepthOfFieldEffect,
 
         BlendFunction
       } = POSTPROCESSING;
@@ -216,6 +217,7 @@ async function load() {
         window.BloomEffect = BloomEffect;
         window.GodRaysEffect = GodRaysEffect;
         window.DotScreenEffect = DotScreenEffect;
+        window.DepthOfFieldEffect = DepthOfFieldEffect;
         window.BlendFunction = BlendFunction;
 
 
@@ -243,8 +245,8 @@ async function load() {
       composer.setSize(renderer.canvas.width, renderer.canvas.height)
 
       renderer.addOverlay( threeRenderer.domElement, "scale" )
-      //renderer.addOverlay(renderer.canvas, "manual")
-      //renderer.setBackgroundColor(1, 1, 1, 0)
+      renderer.addOverlay(renderer.canvas, "manual")
+      renderer.setBackgroundColor(1, 1, 1, 0)
 
       window.addEventListener( "mousedown", () => { isMouseDown = true } )
       window.addEventListener( "mouseup", () => { isMouseDown = false } )
@@ -334,7 +336,6 @@ constructor() {
     alerts() {alerts = !alerts; alerts ? alert("Alerts have been enabled!") : alert("Alerts have been disabled!")}
 }
   Scratch.extensions.register(new threejsExtension())
-
 
   class ThreeRenderer {
     getInfo() {
@@ -1041,8 +1042,10 @@ constructor() {
             {opcode: "resetComposer",extensions: ["colours_operators"], blockType: Scratch.BlockType.COMMAND, text: "reset composer"},
             {opcode: "bloom", blockType: Scratch.BlockType.COMMAND, text: "add bloom intensity:[I] smoothing:[S] threshold:[T] | blend: [BLEND] opacity:[OP]", arguments: {OP: {type: Scratch.ArgumentType.NUMBER, defaultValue: 1},I: {type: Scratch.ArgumentType.NUMBER, defaultValue: 1}, S:{type: Scratch.ArgumentType.NUMBER, defaultValue: 0.5}, T:{type: Scratch.ArgumentType.NUMBER, defaultValue: 0.5}, BLEND: {type: Scratch.ArgumentType.STRING, menu: "blendModes", defaultValue: "SCREEN"}}},
             {opcode: "godRays", blockType: Scratch.BlockType.COMMAND, text: "add god rays object:[NAME] density:[DENS] decay:[DEC] weight:[WEI] exposition:[EXP] | resolution:[RES] samples:[SAMP] | blend: [BLEND] opacity:[OP]", arguments: {OP: {type: Scratch.ArgumentType.NUMBER, defaultValue: 1},NAME: {type: Scratch.ArgumentType.STRING, defaultValue: "myObject"},BLEND: {type: Scratch.ArgumentType.STRING, menu: "blendModes", defaultValue: "SCREEN"}, DEC:{type: Scratch.ArgumentType.NUMBER, defaultValue: 0.95}, DENS:{type: Scratch.ArgumentType.NUMBER, defaultValue: 1},EXP:{type: Scratch.ArgumentType.NUMBER, defaultValue: 0.1},WEI:{type: Scratch.ArgumentType.NUMBER, defaultValue: 0.4},RES:{type: Scratch.ArgumentType.NUMBER, defaultValue: 1},SAMP:{type: Scratch.ArgumentType.NUMBER, defaultValue: 64},}},
-            {opcode: "dots", blockType: Scratch.BlockType.COMMAND, text: "add dots scale:[S] angle:[A] | blend: [BLEND] opacity:[OP]", arguments: {OP: {type: Scratch.ArgumentType.NUMBER, defaultValue: 1},S:{type: Scratch.ArgumentType.NUMBER, defaultValue: 1}, A: {type: Scratch.ArgumentType.ANGLE, defaultValue: 0},BLEND: {type: Scratch.ArgumentType.STRING, menu: "blendModes", defaultValue: "SCREEN"}}}
-        ],
+            {opcode: "dots", blockType: Scratch.BlockType.COMMAND, text: "add dots scale:[S] angle:[A] | blend: [BLEND] opacity:[OP]", arguments: {OP: {type: Scratch.ArgumentType.NUMBER, defaultValue: 1},S:{type: Scratch.ArgumentType.NUMBER, defaultValue: 1}, A: {type: Scratch.ArgumentType.ANGLE, defaultValue: 0},BLEND: {type: Scratch.ArgumentType.STRING, menu: "blendModes", defaultValue: "SCREEN"}}},
+            {opcode: "depth", blockType: Scratch.BlockType.COMMAND, text: "add depth of field focusDistance:[FD] focalLength:[FL] bokehScale:[BS] | height:[H] | blend: [BLEND] opacity:[OP]", arguments: {FD: {type: Scratch.ArgumentType.NUMBER, defaultValue: (3)},FL: {type: Scratch.ArgumentType.NUMBER, defaultValue: (0.001)},BS: {type: Scratch.ArgumentType.NUMBER, defaultValue: 4},H: {type: Scratch.ArgumentType.NUMBER, defaultValue: 240},OP: {type: Scratch.ArgumentType.NUMBER, defaultValue: 1},BLEND: {type: Scratch.ArgumentType.STRING, menu: "blendModes", defaultValue: "NORMAL"}}}
+        
+          ],
         menus: {            
           onoff: {acceptReporters: true, items: [{text: "enabled", value: "1"},{text: "disabled", value: "0"},]},
           blendModes: {acceptReporters: false, items: [
@@ -1116,6 +1119,21 @@ constructor() {
       dot.blendMode.opacity.value = args.OP
       const pass = new EffectPass(camera, dot)
       composer.addPass(pass)
+    }
+
+    depth(args) {
+      if (!camera || !scene) {if (alerts) alert("set a camera!"); return}
+      const dofEffect = new DepthOfFieldEffect(camera, {
+        focusDistance: (args.FD - camera.near) / (camera.far - camera.near),     // how far from camera things are sharp (0 = near, 1 = far)
+        focalLength: args.FL,      // lens focal length in meters
+        bokehScale: args.BS,      // strength/size of the blur circles
+        height: args.H,          // resolution hint (affects quality/perf)
+        blendFunction: BlendFunction[args.BLEND],
+      })
+      dofEffect.blendMode.opacity.value = args.OP
+
+      const dofPass = new EffectPass(camera, dofEffect)
+      composer.addPass(dofPass)
     }
 
 
