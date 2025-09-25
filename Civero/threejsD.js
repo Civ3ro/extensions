@@ -228,7 +228,7 @@ async function load() {
         depth: true
       })
       threeRenderer.setPixelRatio(window.devicePixelRatio)
-      threeRenderer.setSize(renderer.canvas.width, renderer.canvas.height)
+      threeRenderer.setSize(renderer.canvas.width * 1, renderer.canvas.height * 1)
       threeRenderer.outputColorSpace = THREE.SRGBColorSpace // correct colors
       threeRenderer.toneMapping = THREE.ACESFilmicToneMapping // HDR look (test)
       //threeRenderer.toneMappingExposure = 1.0 //(test)
@@ -242,7 +242,7 @@ async function load() {
       
       // Example: create a composer
       composer = new EffectComposer(threeRenderer, {frameBufferType: THREE.HalfFloatType})
-      composer.setSize(renderer.canvas.width, renderer.canvas.height)
+      composer.setSize(renderer.canvas.width * 1, renderer.canvas.height * 1)
 
       renderer.addOverlay( threeRenderer.domElement, "scale" )
       renderer.addOverlay(renderer.canvas, "manual")
