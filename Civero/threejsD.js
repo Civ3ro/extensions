@@ -220,7 +220,8 @@ async function load() {
         window.DepthOfFieldEffect = DepthOfFieldEffect;
         window.BlendFunction = BlendFunction;
 
-
+        //const AMMO = await import("https://cdn.jsdelivr.net/npm/ammojs@0.0.2/ammo.js") //physics!
+  
       threeRenderer = new THREE.WebGLRenderer({
         powerPreference: "high-performance",
         antialias: false,
@@ -497,8 +498,6 @@ constructor() {
             {opcode: "setObject", blockType: Scratch.BlockType.COMMAND, text: "set [PROPERTY] of object [OBJECT3D] to [NAME]", arguments: {OBJECT3D: {type: Scratch.ArgumentType.STRING, defaultValue: "myObject"}, PROPERTY: {type: Scratch.ArgumentType.STRING, menu: "objectProperties"}, NAME: {type: Scratch.ArgumentType.STRING, defaultValue: "myMaterial"}}},
             {opcode: "getObject", blockType: Scratch.BlockType.REPORTER, text: "get [PROPERTY] of object [OBJECT3D]", arguments: {OBJECT3D: {type: Scratch.ArgumentType.STRING, defaultValue: "myObject"}, PROPERTY: {type: Scratch.ArgumentType.STRING, menu: "objectProperties"}}},
             "---",
-            {opcode: "doObject", blockType: Scratch.BlockType.COMMAND, text: "do method [METHOD][VALUE]in object [OBJECT3D]", arguments: {OBJECT3D: {type: Scratch.ArgumentType.STRING, defaultValue: "myObject"}, METHOD: {type: Scratch.ArgumentType.STRING, menu: "objectMethods"}, VALUE: {type: Scratch.ArgumentType.STRING, defaultValue: "[0,0,0]"}}},
-            "---",
             {opcode: "removeObject", blockType: Scratch.BlockType.COMMAND, text: "remove object [OBJECT3D] from scene", arguments: {OBJECT3D: {type: Scratch.ArgumentType.STRING, defaultValue: "myObject"}}},
 
             {blockType: Scratch.BlockType.LABEL, text: " ↳ Transforms"},            
@@ -508,8 +507,10 @@ constructor() {
             {opcode: "getObjectV3",extensions: ["colours_motion"], blockType: Scratch.BlockType.REPORTER, text: "get [PROPERTY] of [OBJECT3D]", arguments: {PROPERTY: {type: Scratch.ArgumentType.STRING, menu: "objectVector3", defaultValue: "position"}, OBJECT3D: {type: Scratch.ArgumentType.STRING, defaultValue: "myObject"}}},
 
             {blockType: Scratch.BlockType.LABEL, text: "↳ Materials"},
-            {opcode: "newMaterial",extensions: ["colours_looks"], blockType: Scratch.BlockType.COMMAND, text: "new material [NAME]", arguments: {NAME: {type: Scratch.ArgumentType.STRING, defaultValue: "myMaterial"}}},
+            {opcode: "newMaterial",extensions: ["colours_looks"], blockType: Scratch.BlockType.COMMAND, text: "new material [NAME] [TYPE]", arguments: {NAME: {type: Scratch.ArgumentType.STRING, defaultValue: "myMaterial"}, TYPE: {type: Scratch.ArgumentType.STRING, menu: "materialTypes", defaultValue: "MeshStandardMaterial"}}},
             {opcode: "setMaterial",extensions: ["colours_looks"], blockType: Scratch.BlockType.COMMAND, text: "set material [PROPERTY] of [NAME] to [VALUE]", arguments: {PROPERTY: {type: Scratch.ArgumentType.STRING, menu: "materialProperties"},NAME: {type: Scratch.ArgumentType.STRING, defaultValue: "myMaterial"}, VALUE: {type: Scratch.ArgumentType.STRING, defaultValue: "new Color()",exemptFromNormalization: true}}},
+            {opcode: "setBlending",extensions: ["colours_looks"], blockType: Scratch.BlockType.COMMAND, text: "set material [NAME] blending to [VALUE]", arguments: {NAME: {type: Scratch.ArgumentType.STRING, defaultValue: "myMaterial"}, VALUE: {type: Scratch.ArgumentType.STRING, menu: "blendModes"}}},
+            {opcode: "setDepth",extensions: ["colours_looks"], blockType: Scratch.BlockType.COMMAND, text: "set material [NAME] depth to [VALUE]", arguments: {NAME: {type: Scratch.ArgumentType.STRING, defaultValue: "myMaterial"}, VALUE: {type: Scratch.ArgumentType.STRING, menu: "depthModes"}}},
             {opcode: "removeMaterial",extensions: ["colours_looks"], blockType: Scratch.BlockType.COMMAND, text: "remove material [NAME]", arguments: {NAME: {type: Scratch.ArgumentType.STRING, defaultValue: "myMaterial"}}},
             
             {blockType: Scratch.BlockType.LABEL, text: "↳ Geometries"},
@@ -522,14 +523,20 @@ constructor() {
                 {text: "Positon", value: "position"},{text: "Rotation", value: "rotation"},{text: "Scale", value: "scale"},{text: "Facing Direction (.up)", value: "up"}
             ]},
             objectProperties: {acceptReporters: false, items: [
-              {text: "Material", value: "material"},{text: "Geometry", value: "geometry"},
-            ]},
-            objectMethods: {acceptReporters: false, items: [
-              {text: "Look at (v3)", value: "lookAt"},
+              {text: "Material", value: "material"},{text: "Geometry", value: "geometry"},{text: "Visible (true/false)", value: "visible"},
             ]},
             XYZ: {acceptReporters: false, items: [{text: "X", value: "x"},{text: "Y", value: "y"},{text: "Z", value: "z"}]},
             materialProperties: {acceptReporters: false, items: [
               {text: "Color", value: "color"},{text: "Map (texture)", value: "map"},{text: "Alpha Map (texture)", value: "alphaMap"},{text: "Alpha Test (0-1)", value: "alphaTest"},{text: "Side (front/back/double)", value: "side"},{text: "Bump Map (texture)", value: "bumpMap"},{text: "Bump Scale", value: "bumpScale"},{text: "Metalness", value: "metalness"},{text: "Metalness Map (texture)", value: "metalnessMap"},{text: "Roughness", value: "roughness"},{text: "Roughness Map (texture)", value: "roughnessMap"},{text: "Emissive Color", value: "emissive"},{text: "Emissive Intensity", value: "emissiveIntensity"},{text: "Emissive Map (texture)", value: "emissiveMap"},{text: "Normal Map (texture)", value: "normalMap"},{text: "Normal Scale (v2)", value: "normalScale"},{text: "Wireframe?", value: "wireframe"},
+            ]},
+            blendModes: {acceptReporters: false, items: [
+              { text: "No Blending", value: "NoBlending" },{ text: "Normal Blending", value: "NormalBlending" },{ text: "Additive Blending", value: "AdditiveBlending" },{ text: "Subtractive Blending", value: "SubtractiveBlending" },{ text: "Multiply Blending", value: "MultiplyBlending" },{ text: "Custom Blending", value: "CustomBlending" }
+            ]},
+            depthModes: {acceptReporters: false, items: [
+            { text: "Never Depth", value: "NeverDepth" },{ text: "Always Depth", value: "AlwaysDepth" },{ text: "Equal Depth", value: "EqualDepth" },{ text: "Less Depth", value: "LessDepth" },{ text: "Less Equal Depth", value: "LessEqualDepth" },{ text: "Greater Equal Depth", value: "GreaterEqualDepth" },{ text: "Greater Depth", value: "GreaterDepth" },{ text: "Not Equal Depth", value: "NotEqualDepth" }
+            ]},
+            materialTypes:{acceptReporters: false, items: [
+              {text:"Mesh Basic Material",value:"MeshBasicMaterial"},{text:"Mesh Standard Material",value:"MeshStandardMaterial"},{text:"Mesh Physical Material",value:"MeshPhysicalMaterial"},{text:"Mesh Lambert Material",value:"MeshLambertMaterial"},{text:"Mesh Phong Material",value:"MeshPhongMaterial"},{text:"Mesh Depth Material",value:"MeshDepthMaterial"},{text:"Mesh Normal Material",value:"MeshNormalMaterial"},{text:"Mesh Matcap Material",value:"MeshMatcapMaterial"},{text:"Mesh Toon Material",value:"MeshToonMaterial"},{text:"Line Basic Material",value:"LineBasicMaterial"},{text:"Line Dashed Material",value:"LineDashedMaterial"},{text:"Points Material",value:"PointsMaterial"},{text:"Sprite Material",value:"SpriteMaterial"},{text:"Shadow Material",value:"ShadowMaterial"}
             ]},
             textureModes: {acceptReporters: false, items: ["Pixelate","Blur"]},
             textureStyles: {acceptReporters: false, items: ["Repeat","Clamp"]},
@@ -603,13 +610,9 @@ constructor() {
       let value = args.VALUE
       if (args.PROPERTY === "material") value = materials[args.NAME]
       else if (args.PROPERTY === "geometry") value = geometries[args.NAME]
+      else if (args.PROPERTY === "visible") value = !!value
 
       object[args.PROPERTY] = value
-    }
-    doObject(args){
-      getObject(args.OBJECT3D)
-      let values = JSON.parse(args.VALUE)
-      if (args.METHOD === "lookAt") object[args.METHOD](new THREE.Vector3(...values))
     }
     getObject(args){
       getObject(args.OBJECT3D)
@@ -624,7 +627,7 @@ constructor() {
 //defines
     newMaterial(args) {
       if (materials[args.NAME] && alerts) alert ("material already exists! will replace...")
-      const mat = new THREE.MeshStandardMaterial();
+      const mat = new THREE[args.TYPE]();
       mat.name = args.NAME;
 
       materials[args.NAME] = mat;
@@ -642,6 +645,16 @@ constructor() {
       mat[args.PROPERTY] = await (value)
       if (args.PROPERTY === "wireframe") mat.wireframeLinecap = "butt"; mat.wireframeLinejoin = "bevel"
       mat.needsUpdate = true;
+    }
+    setBlending(args) {
+      const mat = materials[args.NAME]
+      mat.blending = THREE[args.VALUE]
+      mat.needsUpdate = true
+    }
+    setDepth(args) {
+      const mat = materials[args.NAME]
+      mat.depthFunc = THREE[args.VALUE]
+      mat.needsUpdate = true
     }
     removeMaterial(args){
       const mat = materials[args.NAME]
@@ -932,6 +945,9 @@ constructor() {
             {opcode: "newVector2", blockType: Scratch.BlockType.REPORTER, text: "New Vector [X] [Y]", arguments: {X: {type: Scratch.ArgumentType.NUMBER}, Y: {type: Scratch.ArgumentType.NUMBER}}},
             {opcode: "newVector3", blockType: Scratch.BlockType.REPORTER, text: "New Vector [X] [Y] [Z]", arguments: {X: {type: Scratch.ArgumentType.NUMBER}, Y: {type: Scratch.ArgumentType.NUMBER}, Z: {type: Scratch.ArgumentType.NUMBER}}},
             "---",
+            {opcode: "moveVector3", blockType: Scratch.BlockType.REPORTER, text: "move [S] vector [V3] in direction [D3]", arguments: {S: {type: Scratch.ArgumentType.NUMBER},V3: {type: Scratch.ArgumentType.STRING, defaultValue: "[0,0,0]"}, D3: {type: Scratch.ArgumentType.STRING, defaultValue: "[0,0,0]"}}},
+            {opcode: "directionTo", blockType: Scratch.BlockType.REPORTER, text: "direction from [V3] to [T3]", arguments: {V3: {type: Scratch.ArgumentType.STRING, defaultValue: "[0,0,3]"}, T3: {type: Scratch.ArgumentType.STRING, defaultValue: "[0,0,0]"}}},
+            "---",
             {opcode: "newColor", blockType: Scratch.BlockType.REPORTER, text: "New Color [HEX]", arguments: {HEX: {type: Scratch.ArgumentType.COLOR, defaultValue: "#9966ff"}}},
             {opcode: "newFog", blockType: Scratch.BlockType.REPORTER, text: "New Fog [COLOR] [NEAR] [FAR]", arguments: {COLOR: {type: Scratch.ArgumentType.COLOR, defaultValue: "#9966ff", exemptFromNormalization: true}, NEAR: {type: Scratch.ArgumentType.NUMBER}, FAR: {type: Scratch.ArgumentType.NUMBER, defaultValue: 10}}},
             {opcode: "newTexture", blockType: Scratch.BlockType.REPORTER, text: "New Texture [COSTUME] [MODE] [STYLE] repeat [X][Y]", arguments: {COSTUME: {type: Scratch.ArgumentType.COSTUME}, MODE: {type: Scratch.ArgumentType.STRING, menu: "textureModes"},STYLE: {type: Scratch.ArgumentType.STRING, menu: "textureStyles"}, X: {type: Scratch.ArgumentType.NUMBER, defaultValue: 1},Y: {type: Scratch.ArgumentType.NUMBER,defaultValue: 1}}},
@@ -971,6 +987,39 @@ constructor() {
     newVector2(args) {
         return JSON.stringify([args.X, args.Y])
     }
+
+    moveVector3(args) {
+        // Starting position
+        const v3 = new THREE.Vector3(...JSON.parse(args.V3))
+
+        // Parse yaw, pitch, roll from args.D3 (degrees → radians)
+        const [yawDeg, pitchDeg, rollDeg] = JSON.parse(args.D3).map(Number)
+        const yaw   = THREE.MathUtils.degToRad(yawDeg)
+        const pitch = THREE.MathUtils.degToRad(pitchDeg)
+        const roll  = THREE.MathUtils.degToRad(rollDeg)
+
+        const euler = new THREE.Euler(pitch, yaw, roll, "YXZ")
+        const direction = new THREE.Vector3(0, 0, -1).applyEuler(euler).normalize()
+
+        const pos = v3.clone().add(direction.multiplyScalar(args.S))
+        return JSON.stringify([pos.x, pos.y, pos.z])
+    }
+
+    directionTo(args) {
+      const v3 = new THREE.Vector3(...JSON.parse(args.V3))
+      const toV3 = new THREE.Vector3(...JSON.parse(args.T3))
+
+      const direction = toV3.clone().sub(v3).normalize()
+
+      // Yaw (Y)
+      const yaw = Math.atan2(direction.x, direction.z);
+      // Pitch (X)
+      const pitch = Math.asin(-direction.y);
+      //roll is always 0
+
+      return JSON.stringify([THREE.MathUtils.radToDeg(yaw), THREE.MathUtils.radToDeg(pitch), THREE.MathUtils.radToDeg(0)])
+    }
+
     newFog(args) {
         return new THREE.Fog(args.COLOR, args.NEAR, args.FAR)
     }
