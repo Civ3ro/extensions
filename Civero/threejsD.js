@@ -492,7 +492,7 @@ constructor() {
         color3: "#222222",
 
         blocks: [
-            {opcode: "addObject", blockType: Scratch.BlockType.COMMAND, text: "add object [OBJECT3D] to [GROUP]", arguments: {GROUP: {type: Scratch.ArgumentType.STRING, defaultValue: "scene"},OBJECT3D: {type: Scratch.ArgumentType.STRING, defaultValue: "myObject"}}},
+            {opcode: "addObject", blockType: Scratch.BlockType.COMMAND, text: "add object [OBJECT3D] [TYPE] to [GROUP]", arguments: {GROUP: {type: Scratch.ArgumentType.STRING, defaultValue: "scene"},TYPE: {type: Scratch.ArgumentType.STRING, menu: "objectTypes"},OBJECT3D: {type: Scratch.ArgumentType.STRING, defaultValue: "myObject"}}},
             {opcode: "cloneObject", blockType: Scratch.BlockType.COMMAND, text: "clone object [OBJECT3D] as [NAME] & add to [GROUP]", arguments: {GROUP: {type: Scratch.ArgumentType.STRING, defaultValue: "scene"},NAME: {type: Scratch.ArgumentType.STRING, defaultValue: "myClone"},OBJECT3D: {type: Scratch.ArgumentType.STRING, defaultValue: "myObject"}}},
             "---",
             {opcode: "setObject", blockType: Scratch.BlockType.COMMAND, text: "set [PROPERTY] of object [OBJECT3D] to [NAME]", arguments: {OBJECT3D: {type: Scratch.ArgumentType.STRING, defaultValue: "myObject"}, PROPERTY: {type: Scratch.ArgumentType.STRING, menu: "objectProperties"}, NAME: {type: Scratch.ArgumentType.STRING, defaultValue: "myMaterial"}}},
@@ -525,6 +525,9 @@ constructor() {
             objectProperties: {acceptReporters: false, items: [
               {text: "Material", value: "material"},{text: "Geometry", value: "geometry"},{text: "Visible (true/false)", value: "visible"},
             ]},
+            objectTypes: { acceptReporters: false, items: [
+              { text: "Mesh", value: "Mesh" }, { text: "Sprite", value: "Sprite" }, { text: "Points", value: "Points" }, { text: "Line", value: "Line" }, { text: "Group", value: "Group" }
+            ]},
             XYZ: {acceptReporters: false, items: [{text: "X", value: "x"},{text: "Y", value: "y"},{text: "Z", value: "z"}]},
             materialProperties: {acceptReporters: false, items: [
               {text: "Color", value: "color"},{text: "Map (texture)", value: "map"},{text: "Alpha Map (texture)", value: "alphaMap"},{text: "Alpha Test (0-1)", value: "alphaTest"},{text: "Side (front/back/double)", value: "side"},{text: "Bump Map (texture)", value: "bumpMap"},{text: "Bump Scale", value: "bumpScale"},{text: "Metalness", value: "metalness"},{text: "Metalness Map (texture)", value: "metalnessMap"},{text: "Roughness", value: "roughness"},{text: "Roughness Map (texture)", value: "roughnessMap"},{text: "Emissive Color", value: "emissive"},{text: "Emissive Intensity", value: "emissiveIntensity"},{text: "Emissive Map (texture)", value: "emissiveMap"},{text: "Normal Map (texture)", value: "normalMap"},{text: "Normal Scale (v2)", value: "normalScale"},{text: "Wireframe?", value: "wireframe"},
@@ -548,7 +551,7 @@ constructor() {
       }}
 
     addObject(args) {
-        const object = new THREE.Mesh();
+        const object = new THREE[args.TYPE]();
 
         object.castShadow = true
         object.receiveShadow = true
