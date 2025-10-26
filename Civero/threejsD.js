@@ -35,6 +35,9 @@
     let gltf
   let OrbitControls
     let controls
+  //Physics
+  let RAPIER
+    let physicsWorld
 
   let threeRenderer
   let scene
@@ -73,12 +76,14 @@
       content.name = name
       content.rotation._order = "YXZ"
       parentName === scene.name ? object = scene : getObject(parentName)
+      content.physics = false
 
       object.add(content)
     }
     function removeObject(name) {
       getObject(name)
       scene.remove(object)
+      physicsWorld.removeRigidBody(object.rigidBody)
     }
     function getObject(name, isNew) {
       object = null
@@ -129,18 +134,18 @@
     img.src = uri
   });
 }
-
+//light
 function updateShadowFrustum(light, focusPos) { //should better this!
   if (light.type === "AmbientLight" || light.type === "PointLight") return;
-
+  
   const d = 20; // half size of shadow box (larger = covers more area, softer shadows)
   
   light.shadow.camera.left   = -d;
   light.shadow.camera.right  =  d;
   light.shadow.camera.top    =  d;
   light.shadow.camera.bottom = -d;
-  light.shadow.camera.near   = 0.5;
-  light.shadow.camera.far    = 100;
+  light.shadow.camera.near   = 0.1;
+  light.shadow.camera.far    = 500;
 
   // Move the *shadow camera* center near the focus position (e.g. camera or player)
   light.position.copy(focusPos.clone().add(light.pos)); // offset light
@@ -149,7 +154,7 @@ function updateShadowFrustum(light, focusPos) { //should better this!
 
   light.shadow.camera.updateProjectionMatrix();
 }
-
+//composer
 function updateComposers() {
   if (!camera || !scene) return;                     // nothing to do yet
 
@@ -165,8 +170,7 @@ function updateComposers() {
     composer.passes[idx] = passes["Render"];
   }
 }
-
-
+//utility
 function getMouseNDC(event) {
   // Use threeRenderer.domElement for correct offset
   const rect = threeRenderer.domElement.getBoundingClientRect();
@@ -174,9 +178,42 @@ function getMouseNDC(event) {
   const y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
   return [x, y];
 }
+//physics
+function computeWorldBoundingBox(mesh) {
+    // Create a Box3 in world coordinates
+    const box = new THREE.Box3().setFromObject(mesh);
+    const size = new THREE.Vector3();
+    box.getSize(size);
+    const center = new THREE.Vector3();
+    box.getCenter(center);
+    return { size, center };
+}
+function createCuboidCollider(mesh) {
+    const { size, center } = computeWorldBoundingBox(mesh);
+    const collider = RAPIER.ColliderDesc.cuboid(
+        size.x / 2,
+        size.y / 2,
+        size.z / 2
+    );
+    return collider;
+}
+function createBallCollider(mesh) {
+    const { size, center } = computeWorldBoundingBox(mesh);
+    // radius = 1/2 of the largest verticie
+    const radius = Math.max(size.x, size.y, size.z) / 2;
+    const collider = RAPIER.ColliderDesc.ball(radius);
+    return collider;
+}
+function createConvexHullCollider(mesh) {
+    const collider = RAPIER.ColliderDesc.convexHull(
+        mesh.geometry.attributes.position.array
+    );
+    return collider;
+}
+
 
 let mouseNDC = [0, 0]
-
+//loops/init
 function stopLoop() {
   if (!running) return
   running = false
@@ -187,7 +224,6 @@ function stopLoop() {
     if (threeRenderer) threeRenderer.clear();
   }
 }
-
 async function load() {
     if (!THREE) {
       
@@ -220,7 +256,8 @@ async function load() {
         window.DepthOfFieldEffect = DepthOfFieldEffect;
         window.BlendFunction = BlendFunction;
 
-        //const AMMO = await import("https://cdn.jsdelivr.net/npm/ammojs@0.0.2/ammo.js") //physics!
+      RAPIER = await import("https://esm.sh/@dimforge/rapier3d-compat@0.19.0")
+      await RAPIER.init()
   
       threeRenderer = new THREE.WebGLRenderer({
         powerPreference: "high-performance",
@@ -264,14 +301,25 @@ async function load() {
         runtime.on('PROJECT_STOP_ALL', () => stopLoop())
     }
   }
-
 function startRenderLoop() {
   if (running) return
   running = true
 
   const loop = () => {
     if (!running) return
+    //RAPIER
+    if (physicsWorld && scene) {
+      physicsWorld.step()
 
+      scene.children.forEach(obj => {
+        if (!(obj.isMesh) || !(obj.physics)) return;
+        if (obj.rigidBody) {
+            obj.position.copy(obj.rigidBody.translation());
+            obj.quaternion.copy(obj.rigidBody.rotation());
+        }
+      })
+
+    }
     if (scene && camera) {
         if (controls) controls.update()
 
@@ -482,7 +530,7 @@ constructor() {
   }
   Scratch.extensions.register(new ThreeCameras())
 
-    class ThreeObjects {
+  class ThreeObjects {
     getInfo() {
       return {
         id: "threeObjects",
@@ -502,8 +550,8 @@ constructor() {
 
             {blockType: Scratch.BlockType.LABEL, text: " ↳ Transforms"},            
             {opcode: "setObjectV3",extensions: ["colours_motion"], blockType: Scratch.BlockType.COMMAND, text: "set transform [PROPERTY] of [OBJECT3D] to [VALUE]", arguments: {PROPERTY: {type: Scratch.ArgumentType.STRING, menu: "objectVector3", defaultValue: "position"}, OBJECT3D: {type: Scratch.ArgumentType.STRING, defaultValue: "myObject"}, VALUE: {type: Scratch.ArgumentType.STRING, defaultValue: "[0,0,0]"}}},           
-            {opcode: "changeObjectV3",extensions: ["colours_motion"], blockType: Scratch.BlockType.COMMAND, text: "change transform [PROPERTY] of [OBJECT3D] by [VALUE]", arguments: {PROPERTY: {type: Scratch.ArgumentType.STRING, menu: "objectVector3", defaultValue: "position"}, OBJECT3D: {type: Scratch.ArgumentType.STRING, defaultValue: "myObject"}, VALUE: {type: Scratch.ArgumentType.STRING, defaultValue: "[1,1,1]"}}},
-            {opcode: "changeObjectXV3",extensions: ["colours_motion"], blockType: Scratch.BlockType.COMMAND, text: "change transform [PROPERTY] [X] of [OBJECT3D] to [VALUE]", arguments: {PROPERTY: {type: Scratch.ArgumentType.STRING, menu: "objectVector3"},X: {type: Scratch.ArgumentType.STRING, menu: "XYZ"}, OBJECT3D: {type: Scratch.ArgumentType.STRING, defaultValue: "myObject"}, VALUE: {type: Scratch.ArgumentType.STRING, defaultValue: "1"}}},
+            //{opcode: "changeObjectV3",extensions: ["colours_motion"], blockType: Scratch.BlockType.COMMAND, text: "change transform [PROPERTY] of [OBJECT3D] by [VALUE]", arguments: {PROPERTY: {type: Scratch.ArgumentType.STRING, menu: "objectVector3", defaultValue: "position"}, OBJECT3D: {type: Scratch.ArgumentType.STRING, defaultValue: "myObject"}, VALUE: {type: Scratch.ArgumentType.STRING, defaultValue: "[1,1,1]"}}},
+            //{opcode: "changeObjectXV3",extensions: ["colours_motion"], blockType: Scratch.BlockType.COMMAND, text: "change transform [PROPERTY] [X] of [OBJECT3D] to [VALUE]", arguments: {PROPERTY: {type: Scratch.ArgumentType.STRING, menu: "objectVector3"},X: {type: Scratch.ArgumentType.STRING, menu: "XYZ"}, OBJECT3D: {type: Scratch.ArgumentType.STRING, defaultValue: "myObject"}, VALUE: {type: Scratch.ArgumentType.STRING, defaultValue: "1"}}},
             {opcode: "getObjectV3",extensions: ["colours_motion"], blockType: Scratch.BlockType.REPORTER, text: "get [PROPERTY] of [OBJECT3D]", arguments: {PROPERTY: {type: Scratch.ArgumentType.STRING, menu: "objectVector3", defaultValue: "position"}, OBJECT3D: {type: Scratch.ArgumentType.STRING, defaultValue: "myObject"}}},
 
             {blockType: Scratch.BlockType.LABEL, text: "↳ Materials"},
@@ -569,6 +617,37 @@ constructor() {
         getObject(args.OBJECT3D)
         let values = JSON.parse(args.VALUE)
 
+        function degToRad(deg) {
+          return deg * Math.PI / 180;
+        }
+
+
+        if (object.rigidBody) {
+          const x = values[0]
+          const y = values[1]
+          const z = values[2]
+          if (args.PROPERTY === "rotation") {
+            const euler = new THREE.Euler(
+              degToRad(x),
+              degToRad(y),
+              degToRad(z),
+              'YXZ'
+            )
+            const quaternion = new THREE.Quaternion()
+            quaternion.setFromEuler(euler)
+
+            object.rigidBody.setRotation({
+              x: quaternion.x,
+              y: quaternion.y,
+              z: quaternion.z,
+              w: quaternion.w
+            });
+          } else if (args.PROPERTY === "position") {
+            object.rigidBody.setTranslation({ x: x, y: y, z: z }, true)
+          }
+          return
+        }
+
         if (args.PROPERTY === "rotation") {
           values = values.map(v => v * Math.PI / 180);
           object.rotation.set(0,0,0)
@@ -576,6 +655,7 @@ constructor() {
         if (object.isDirectionalLight == true) {object.pos = new THREE.Vector3(...values); console.log(true, values, object.pos); return}
           object[args.PROPERTY].set(...values);
     }
+    /*
     changeObjectV3(args) {
         getObject(args.OBJECT3D)
         let values = JSON.parse(args.VALUE)
@@ -597,6 +677,7 @@ constructor() {
 
           object[args.PROPERTY][args.X] += value
     }
+    */
     getObjectV3(args) {
         getObject(args.OBJECT3D)
         if (!object) return
@@ -613,7 +694,7 @@ constructor() {
       let value = args.VALUE
       if (args.PROPERTY === "material") value = materials[args.NAME]
       else if (args.PROPERTY === "geometry") value = geometries[args.NAME]
-      else if (args.PROPERTY === "visible") value = !!value
+      else value = !!value
 
       object[args.PROPERTY] = value
     }
@@ -687,7 +768,7 @@ constructor() {
   }
   Scratch.extensions.register(new ThreeObjects())
 
-    class ThreeLights {
+  class ThreeLights {
     getInfo() {
       return {
         id: "threeLights",
@@ -750,7 +831,7 @@ constructor() {
   }
   Scratch.extensions.register(new ThreeLights())
 
-    class ThreeGLB {
+  class ThreeGLB {
     getInfo() {
       return {
         id: "threeGLB",
@@ -935,7 +1016,7 @@ constructor() {
   }
   Scratch.extensions.register(new ThreeGLB()) //create a group then add the loaded glb there? so no errors while loading.
 
-    class ThreeUtilities {
+  class ThreeUtilities {
     getInfo() {
       return {
         id: "threeUtility",
@@ -1008,20 +1089,19 @@ constructor() {
         return JSON.stringify([pos.x, pos.y, pos.z])
     }
 
-    directionTo(args) {
-      const v3 = new THREE.Vector3(...JSON.parse(args.V3))
-      const toV3 = new THREE.Vector3(...JSON.parse(args.T3))
+directionTo(args) {
+  const v3 = new THREE.Vector3(...JSON.parse(args.V3))
+  const toV3 = new THREE.Vector3(...JSON.parse(args.T3))
 
-      const direction = toV3.clone().sub(v3).normalize()
+  const direction = toV3.clone().sub(v3).normalize();
+  // Pitch (X)
+  const pitch = Math.atan2(-direction.y, Math.sqrt(direction.x*direction.x + direction.z*direction.z));
+  // Yaw (Y)
+  const yaw = Math.atan2(direction.x, direction.z);
 
-      // Yaw (Y)
-      const yaw = Math.atan2(direction.x, direction.z);
-      // Pitch (X)
-      const pitch = Math.asin(-direction.y);
-      //roll is always 0
-
-      return JSON.stringify([THREE.MathUtils.radToDeg(yaw), THREE.MathUtils.radToDeg(pitch), THREE.MathUtils.radToDeg(0)])
-    }
+  // Roll always 0
+  return JSON.stringify([180+THREE.MathUtils.radToDeg(pitch),THREE.MathUtils.radToDeg(yaw),0])
+}
 
     newFog(args) {
         return new THREE.Fog(args.COLOR, args.NEAR, args.FAR)
@@ -1077,7 +1157,7 @@ constructor() {
   }
   Scratch.extensions.register(new ThreeUtilities())
 
-    class ThreeAddons {
+  class ThreeAddons {
     getInfo() {
       return {
         id: "threeAddons",
@@ -1191,6 +1271,128 @@ constructor() {
 
   }
   Scratch.extensions.register(new ThreeAddons())
+
+  class RapierPhysics {
+      getInfo() {
+        return {
+          id: "rapierPhysics",
+          name: "RAPIER Physics",
+          color1: "#222222",
+          color2: "#203024ff",
+          color3: "#78f07eff",
+          blocks: [
+            {opcode: "createWorld", blockType: Scratch.BlockType.COMMAND, text: "create world | gravity:[G]", arguments: {G: {type: Scratch.ArgumentType.STRING, defaultValue: "[0,-9.81,0]"}}},
+            {opcode: "getWorld", blockType: Scratch.BlockType.REPORTER, text: "get world [PROPERTY]", arguments: {PROPERTY: {type: Scratch.ArgumentType.STRING, menu: "wProp"}}},
+            "---",
+            {opcode: "objectPhysics", blockType: Scratch.BlockType.COMMAND, text: "enable physics for object [OBJECT] [state] | rigidBody [type] | collider [collider] density [density] friction [friction] sensor [state2]", arguments: {state2: {type: Scratch.ArgumentType.STRING, menu: "state2"},state: {type: Scratch.ArgumentType.STRING, menu: "state", defaultValue: "true"}, type: {type: Scratch.ArgumentType.STRING, menu: "objectTypes", defaultValue: "dynamic"}, collider: {type: Scratch.ArgumentType.STRING, menu: "colliderTypes", defaultValue: "cuboid"}, OBJECT: {type: Scratch.ArgumentType.STRING, defaultValue: "myObject"},density: {type: Scratch.ArgumentType.STRING, defaultValue: "1"},friction: {type: Scratch.ArgumentType.STRING, defaultValue: "0.5"}}},
+            {opcode: "getObject", blockType: Scratch.BlockType.REPORTER, text: "get object [OBJECT] [PROPERTY]", arguments: {PROPERTY: {type: Scratch.ArgumentType.STRING, menu: "oProp", defaultValue: "physics"}, OBJECT: {type: Scratch.ArgumentType.STRING, defaultValue: "myObject"}}},
+            "---",
+            {opcode: "enableCCD", blockType: Scratch.BlockType.COMMAND, text: "enable Continuous collision detection for [OBJECT] [state]", arguments: {state: {type: Scratch.ArgumentType.STRING, menu: "state", defaultValue: "true"},PROPERTY: {type: Scratch.ArgumentType.STRING, menu: "oPropS", defaultValue: "physics"}, OBJECT: {type: Scratch.ArgumentType.STRING, defaultValue: "myObject"}}},
+            {opcode: "addForce", blockType: Scratch.BlockType.COMMAND, text: "set [PROPERTY] to [OBJECT] with [VALUE] in [SPACE] space", arguments: {VALUE: {type: Scratch.ArgumentType.STRING, defaultValue: "[0,10,0]"},PROPERTY: {type: Scratch.ArgumentType.STRING, menu: "forces", defaultValue: "addForce"},SPACE: {type: Scratch.ArgumentType.STRING, menu: "spaces", defaultValue: "world"}, OBJECT: {type: Scratch.ArgumentType.STRING, defaultValue: "myObject"}}},
+            {opcode: "resetForces", blockType: Scratch.BlockType.COMMAND, text: "reset [PROPERTY] of [OBJECT]", arguments: {PROPERTY: {type: Scratch.ArgumentType.STRING, menu: "resetF", defaultValue: "resetForces"}, OBJECT: {type: Scratch.ArgumentType.STRING, defaultValue: "myObject"}}},
+            
+          ],
+          menus: {
+            wProp: {acceptReporters: false, items: [
+              {text: "Gravity", value: "gravity"}, {text: "log to console", value: "log"}
+            ]},
+            oProp: {acceptReporters: false, items: [
+              {text: "Physics enabled?", value: "physics"},{text: "Linear Velocity", value: "rigidBody.linvel()"},{text: "Angular Velocity", value: "rigidBody.angvel()"},
+            ]},
+            state: {acceptReporters: true, items: [{text: "on", value: "true"},{text: "off", value: "false"}]},
+            state2: {acceptReporters: true, items: [{text: "false", value: "false"},{text: "true (must be fixed)", value: "true"}]},
+            spaces: {acceptReporters: false, items: [{text: "World", value: "world"},{text: "Local", value: "local"}]},
+            objectTypes: {acceptReporters: false, items: [{text: "Dynamic", value: "dynamic"},{text: "Fixed", value: "fixed"},{text: "Kinematic Position Based",value: "kinematicPositionBased"}]},
+            colliderTypes: {acceptReporters: false, items: [{text: "Box, Rectangle, cuboid", value: "cuboid"},{text: "Sphere, ball", value: "ball"},{text: "Custom, convexHull", value: "convexHull"},]},
+            forces: {acceptReporters: false, items: [{text: "Force", value: "addForce"},{text: "Torque (rotation)", value: "addTorque"},{text: "Apply Impulse", value: "applyImpulse"},{text: "Apply Torque Impulse (rotation)", value: "applyTorqueImpulse"},{text: "Linear Velocity", value: "setLinvel"},{text: "Angular Velocity", value: "setAngvel"},]},
+            resetF: {acceptReporters: false, items: [{text:"Reset Forces", value: "resetForces"},{text:"Reset Torques", value: "resetTorques"},]}
+          }
+        }
+      }
+
+      createWorld(args) {
+        const v3 = JSON.parse(args.G).map(Number)
+        const gravity = { x: v3[0], y: v3[1], z: v3[2]}
+        physicsWorld = new RAPIER.World(gravity)
+
+        console.log(physicsWorld)
+      }
+
+      getWorld(args) {
+        if (args.PROPERTY === "log") {console.log(physicsWorld); return "logged"}
+        return JSON.stringify(physicsWorld[args.PROPERTY])
+      }
+      getObject(args) {
+        getObject(args.OBJECT)
+        console.log(object)
+        if (args.PROPERTY === "physics") return object.physics
+        return JSON.stringify(object.rigidBody[args.PROPERTY])
+      }
+
+      objectPhysics(args) {
+        getObject(args.OBJECT)
+        object.physics = JSON.parse(args.state)
+
+        if (JSON.parse(args.state)) {
+          //if already exists delete:
+          if (object.rigidBody) {
+            physicsWorld.removeRigidBody(object.rigidBody)
+            object.rigidBody = null
+            object.collider = null
+          }
+          /*asing a rigidbody and collider to object and add them to physicsWorld*/
+        let rigidBodyDesc = RAPIER.RigidBodyDesc[args.type]()
+            .setTranslation(object.position.x, object.position.y, object.position.z)
+            .setRotation({w: object.quaternion._w, x: object.quaternion._x, y: object.quaternion._y, z: object.quaternion._z})
+
+        let colliderDesc
+        switch(args.collider) {
+            case "cuboid": colliderDesc = createCuboidCollider(object); break
+            case "ball": colliderDesc = createBallCollider(object); break
+            case "convexHull": colliderDesc = createConvexHullCollider(object); break
+        }
+        colliderDesc.setSensor(args.state2).setDensity(args.density).setFriction(args.friction)
+        
+        let rigidBody = physicsWorld.createRigidBody(rigidBodyDesc)
+        let collider = physicsWorld.createCollider(colliderDesc, rigidBody)
+
+        object.rigidBody = rigidBody
+        object.collider = collider
+        } else {
+          /*if disabling physics, delete rigidbody and collider from physicsWorld and object*/
+          physicsWorld.removeRigidBody(object.rigidBody)
+          object.rigidBody = null
+          object.collider = null
+        }
+
+      }
+
+      enableCCD(args) {
+        getObject(args.OBJECT)
+        if (object.physics) {
+          let rigidBody = object.rigidBody
+          rigidBody.enableCcd(JSON.parse(args.state))
+        }
+     }
+
+     addForce(args) {
+      getObject(args.OBJECT)
+      const vector = JSON.parse(args.VALUE).map(Number)
+      
+      let force = new THREE.Vector3(vector[0],vector[1],vector[2])
+        if (args.SPACE === "local") {
+          force.applyQuaternion(object.quaternion);
+        }
+
+      object.rigidBody[args.PROPERTY](force,true)
+     }
+
+     resetForces(args) {
+      rigidBody[args.PROPERTY](true)
+     }
+
+    }
+  Scratch.extensions.register(new RapierPhysics())
 
 
 })(Scratch);
