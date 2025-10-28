@@ -23,7 +23,8 @@
   let alerts = true
   if (vm.runtime.isPackaged) alerts = false
   console.log("alerts are "+ (alerts ? "enabled" : "disabled"))
-  let isMouseDown = false
+
+  let isMouseDown = { left: false, middle: false, right: false };
 
   let THREE
     let clock
@@ -188,26 +189,26 @@ function computeWorldBoundingBox(mesh) {
     box.getCenter(center);
     return { size, center };
 }
-function createCuboidCollider(mesh) {
+function createCuboidCollider(mesh, sensor) {
     const { size, center } = computeWorldBoundingBox(mesh);
     const collider = RAPIER.ColliderDesc.cuboid(
         size.x / 2,
         size.y / 2,
         size.z / 2
-    );
+    )
     return collider;
 }
-function createBallCollider(mesh) {
+function createBallCollider(mesh, sensor) {
     const { size, center } = computeWorldBoundingBox(mesh);
     // radius = 1/2 of the largest verticie
     const radius = Math.max(size.x, size.y, size.z) / 2;
-    const collider = RAPIER.ColliderDesc.ball(radius);
+    const collider = RAPIER.ColliderDesc.ball(radius)
     return collider;
 }
-function createConvexHullCollider(mesh) {
+function createConvexHullCollider(mesh, sensor) {
     const collider = RAPIER.ColliderDesc.convexHull(
         mesh.geometry.attributes.position.array
-    );
+    )
     return collider;
 }
 
@@ -286,8 +287,18 @@ async function load() {
       renderer.addOverlay(renderer.canvas, "manual")
       renderer.setBackgroundColor(1, 1, 1, 0)
 
-      window.addEventListener( "mousedown", () => { isMouseDown = true } )
-      window.addEventListener( "mouseup", () => { isMouseDown = false } )
+      window.addEventListener("mousedown", e => {
+        if (e.button === 0) isMouseDown.left = true
+        if (e.button === 1) isMouseDown.middle = true
+        if (e.button === 2) isMouseDown.right = true
+      })
+      window.addEventListener("mouseup", e => {
+        if (e.button === 0) isMouseDown.left = false
+        if (e.button === 1) isMouseDown.middle = false
+        if (e.button === 2) isMouseDown.right = false
+      })
+      // prevent contextmenu on right click
+      window.addEventListener("contextmenu", e => e.preventDefault());
 
       threeRenderer.domElement.addEventListener('mousemove', (event) => {
         mouseNDC = getMouseNDC(event);
@@ -1037,7 +1048,7 @@ constructor() {
             {opcode: "newTexture", blockType: Scratch.BlockType.REPORTER, text: "New Texture [COSTUME] [MODE] [STYLE] repeat [X][Y]", arguments: {COSTUME: {type: Scratch.ArgumentType.COSTUME}, MODE: {type: Scratch.ArgumentType.STRING, menu: "textureModes"},STYLE: {type: Scratch.ArgumentType.STRING, menu: "textureStyles"}, X: {type: Scratch.ArgumentType.NUMBER, defaultValue: 1},Y: {type: Scratch.ArgumentType.NUMBER,defaultValue: 1}}},
             {opcode: "newCubeTexture", blockType: Scratch.BlockType.REPORTER, text: "New Cube Texture X+[COSTUMEX0]X-[COSTUMEX1]Y+[COSTUMEY0]Y-[COSTUMEY1]Z+[COSTUMEZ0]Z-[COSTUMEZ1] [MODE] [STYLE] repeat [X][Y]", arguments: {"COSTUMEX0": {type: Scratch.ArgumentType.COSTUME},"COSTUMEX1": {type: Scratch.ArgumentType.COSTUME},"COSTUMEY0": {type: Scratch.ArgumentType.COSTUME},"COSTUMEY1": {type: Scratch.ArgumentType.COSTUME},"COSTUMEZ0": {type: Scratch.ArgumentType.COSTUME},"COSTUMEZ1": {type: Scratch.ArgumentType.COSTUME}, MODE: {type: Scratch.ArgumentType.STRING, menu: "textureModes"},STYLE: {type: Scratch.ArgumentType.STRING, menu: "textureStyles"}, X: {type: Scratch.ArgumentType.NUMBER,defaultValue: 1},Y: {type: Scratch.ArgumentType.NUMBER,defaultValue: 1}}},
             "---",
-            {opcode:"mouseDown",extensions: ["colours_sensing"], blockType: Scratch.BlockType.BOOLEAN, text: "mouse down?"},
+            {opcode:"mouseDown",extensions: ["colours_sensing"], blockType: Scratch.BlockType.BOOLEAN, text: "mouse [BUTTON] down?", arguments: {BUTTON: {type: Scratch.ArgumentType.STRING, menu: "mouseButtons"}}},
             {opcode: "mousePos",extensions: ["colours_sensing"], blockType: Scratch.BlockType.REPORTER, text: "mouse position", arguments: {}},
             "---",
             {opcode: "getItem",extensions: ["colours_data_lists"], blockType: Scratch.BlockType.REPORTER, text: "get item [ITEM] of [ARRAY]", arguments: {ITEM: {type: Scratch.ArgumentType.STRING, defaultValue: "1"}, ARRAY: {type: Scratch.ArgumentType.STRING, defaultValue: `["myObject", "myLight"]`}}},
@@ -1054,10 +1065,11 @@ constructor() {
             textureStyles: {acceptReporters: false, items: ["Repeat","Clamp"]},
             raycastProperties: {acceptReporters: false, items: [
               {text: "Intersected Object Names", value: "name"},{text: "Number of Objects", value: "number"},{text: "Intersected Objects distances", value: "distance"},
-            ]}
+            ]},
+            mouseButtons: {acceptReporters: false, items: ["left","middle","right"]}
         }
       }}
-    mouseDown() {return isMouseDown}
+    mouseDown(args) {return isMouseDown[args.BUTTON]}
     mousePos(event) {
       return JSON.stringify(mouseNDC)
     }
@@ -1285,19 +1297,83 @@ directionTo(args) {
             {opcode: "getWorld", blockType: Scratch.BlockType.REPORTER, text: "get world [PROPERTY]", arguments: {PROPERTY: {type: Scratch.ArgumentType.STRING, menu: "wProp"}}},
             "---",
             {opcode: "objectPhysics", blockType: Scratch.BlockType.COMMAND, text: "enable physics for object [OBJECT] [state] | rigidBody [type] | collider [collider] density [density] friction [friction] sensor [state2]", arguments: {state2: {type: Scratch.ArgumentType.STRING, menu: "state2"},state: {type: Scratch.ArgumentType.STRING, menu: "state", defaultValue: "true"}, type: {type: Scratch.ArgumentType.STRING, menu: "objectTypes", defaultValue: "dynamic"}, collider: {type: Scratch.ArgumentType.STRING, menu: "colliderTypes", defaultValue: "cuboid"}, OBJECT: {type: Scratch.ArgumentType.STRING, defaultValue: "myObject"},density: {type: Scratch.ArgumentType.STRING, defaultValue: "1"},friction: {type: Scratch.ArgumentType.STRING, defaultValue: "0.5"}}},
-            {opcode: "getObject", blockType: Scratch.BlockType.REPORTER, text: "get object [OBJECT] [PROPERTY]", arguments: {PROPERTY: {type: Scratch.ArgumentType.STRING, menu: "oProp", defaultValue: "physics"}, OBJECT: {type: Scratch.ArgumentType.STRING, defaultValue: "myObject"}}},
             "---",
-            {opcode: "enableCCD", blockType: Scratch.BlockType.COMMAND, text: "enable Continuous collision detection for [OBJECT] [state]", arguments: {state: {type: Scratch.ArgumentType.STRING, menu: "state", defaultValue: "true"},PROPERTY: {type: Scratch.ArgumentType.STRING, menu: "oPropS", defaultValue: "physics"}, OBJECT: {type: Scratch.ArgumentType.STRING, defaultValue: "myObject"}}},
-            {opcode: "addForce", blockType: Scratch.BlockType.COMMAND, text: "set [PROPERTY] to [OBJECT] with [VALUE] in [SPACE] space", arguments: {VALUE: {type: Scratch.ArgumentType.STRING, defaultValue: "[0,10,0]"},PROPERTY: {type: Scratch.ArgumentType.STRING, menu: "forces", defaultValue: "addForce"},SPACE: {type: Scratch.ArgumentType.STRING, menu: "spaces", defaultValue: "world"}, OBJECT: {type: Scratch.ArgumentType.STRING, defaultValue: "myObject"}}},
+            {blockType: Scratch.BlockType.LABEL, text: "- RigidBody"},
+            {opcode: "setRB", blockType: Scratch.BlockType.COMMAND, text: "set rigidbody [PROPERTY] of [OBJECT] to [VALUE]", arguments: {PROPERTY: {type: Scratch.ArgumentType.STRING, menu: "rigidBodySets"}, OBJECT: {type: Scratch.ArgumentType.STRING, defaultValue: "myObject"}, VALUE: {type: Scratch.ArgumentType.STRING, defaultValue: "1"}}},
+            {opcode: "getRB", blockType: Scratch.BlockType.REPORTER, text: "get rigidbody [PROPERTY] of [OBJECT]", arguments: {PROPERTY: {type: Scratch.ArgumentType.STRING, menu: "rigidBodyProperties"}, OBJECT: {type: Scratch.ArgumentType.STRING, defaultValue: "myObject"}}},
+            "---",
+            {opcode: "addForce", blockType: Scratch.BlockType.COMMAND, text: "set [PROPERTY] of [OBJECT] to [VALUE] in [SPACE] space", arguments: {VALUE: {type: Scratch.ArgumentType.STRING, defaultValue: "[0,10,0]"},PROPERTY: {type: Scratch.ArgumentType.STRING, menu: "forces", defaultValue: "addForce"},SPACE: {type: Scratch.ArgumentType.STRING, menu: "spaces", defaultValue: "world"}, OBJECT: {type: Scratch.ArgumentType.STRING, defaultValue: "myObject"}}},
             {opcode: "resetForces", blockType: Scratch.BlockType.COMMAND, text: "reset [PROPERTY] of [OBJECT]", arguments: {PROPERTY: {type: Scratch.ArgumentType.STRING, menu: "resetF", defaultValue: "resetForces"}, OBJECT: {type: Scratch.ArgumentType.STRING, defaultValue: "myObject"}}},
-            
+            "---",
+            {blockType: Scratch.BlockType.LABEL, text: "- Collider"},
+            {opcode: "setC", blockType: Scratch.BlockType.COMMAND, text: "set collider [PROPERTY] of [OBJECT] to [VALUE]", arguments: {PROPERTY: {type: Scratch.ArgumentType.STRING, menu: "colliderSets"}, OBJECT: {type: Scratch.ArgumentType.STRING, defaultValue: "myObject"}, VALUE: {type: Scratch.ArgumentType.STRING, defaultValue: "1"}}},
+            {opcode: "getC", blockType: Scratch.BlockType.REPORTER, text: "get collider [PROPERTY] of [OBJECT]", arguments: {PROPERTY: {type: Scratch.ArgumentType.STRING, menu: "colliderProperties"}, OBJECT: {type: Scratch.ArgumentType.STRING, defaultValue: "myObject"}}},
+            {opcode: "enableCCD", blockType: Scratch.BlockType.COMMAND, text: "enable Continuous collision detection for [OBJECT] [state]", arguments: {state: {type: Scratch.ArgumentType.STRING, menu: "state", defaultValue: "true"},PROPERTY: {type: Scratch.ArgumentType.STRING, menu: "oPropS", defaultValue: "physics"}, OBJECT: {type: Scratch.ArgumentType.STRING, defaultValue: "myObject"}}},
+            "---",
+            {opcode: "sensorSingle", blockType: Scratch.BlockType.BOOLEAN, text: "is sensor [SENSOR] touching [OBJECT]?", arguments: {SENSOR: {type: Scratch.ArgumentType.STRING, defaultValue: "mySensor"}, OBJECT: {type: Scratch.ArgumentType.STRING, defaultValue: "myObject"}}},
+            {opcode: "sensorAll", blockType: Scratch.BlockType.REPORTER, text: "objects touching sensor [SENSOR]", arguments: {SENSOR: {type: Scratch.ArgumentType.STRING, defaultValue: "mySensor"}}}
           ],
           menus: {
             wProp: {acceptReporters: false, items: [
               {text: "Gravity", value: "gravity"}, {text: "log to console", value: "log"}
             ]},
-            oProp: {acceptReporters: false, items: [
-              {text: "Physics enabled?", value: "physics"},{text: "Linear Velocity", value: "rigidBody.linvel()"},{text: "Angular Velocity", value: "rigidBody.angvel()"},
+            rigidBodyProperties: {acceptReporters: false, items: [
+              {text: "Type", value: "bodyType"},
+              {text: "Linear Velocity", value: "linvel"},
+              {text: "Angular Velocity", value: "angvel"},
+              {text: "Translation (position)", value: "translation"},
+              {text: "Rotation (quaternion)", value: "rotation"},
+              {text: "Mass", value: "mass"},
+              //{text: "Center of Mass", value: "centerOfMass"},
+              {text: "Linear Damping", value: "linearDamping"},
+              {text: "Angular Damping", value: "angularDamping"},
+              {text: "Is Sleeping?", value: "isSleeping"},
+              //{text: "Can Sleep?", value: "isCanSleep"},
+              {text: "Gravity Scale", value: "gravityScale"},
+              {text: "Is Fixed?", value: "isFixed"},
+              {text: "Is Dynamic?", value: "isDynamic"},
+              {text: "Is Kinematic?", value: "isKinematic"},
+              //{text: "Sleeping", value: "sleeping"}
+            ]},
+            rigidBodySets: {acceptReporters: false, items: [
+              //{text: "Linear Velocity", value: "setLinvel"},
+              //{text: "Angular Velocity", value: "setAngvel"},
+              //{text: "Mass", value: "setMass"},
+              {text: "Gravity Scale", value: "setGravityScale"},
+              //{text: "Can Sleep?", value: "setCanSleep"},
+              //{text: "Sleeping", value: "sleeping"},
+              {text: "Linear Damping", value: "setLinearDamping"},
+              {text: "Angular Damping", value: "setAngularDamping"},
+              {text: "Is Fixed?", value: "isFixed"},
+              {text: "Is Dynamic?", value: "isDynamic"},
+              {text: "Is Kinematic?", value: "isKinematic"}
+            ]},
+            colliderProperties: {acceptReporters: false, items: [
+              //{text: "Collider Type", value: "type"},
+              {text: "Is Sensor?", value: "isSensor"},
+              {text: "Friction", value: "friction"},
+              {text: "Restitution", value: "restitution"},
+              {text: "Density", value: "density"},
+              {text: "Mass", value: "mass"},
+              {text: "Position", value: "translation"},
+              {text: "Rotation", value: "rotation"},
+              //{text: "Area", value: "area"},
+              {text: "Volume", value: "volume"},
+              {text: "Collision Groups", value: "collisionGroups"},
+              //{text: "Collision Mask", value: "collisionMask"},
+              //{text: "Is Enabled?", value: "enabled"},
+              //{text: "Contact Count", value: "contactCount"},
+              //{text: "RigidBody Handle", value: "rigidBody"}
+            ]},
+            colliderSets: {acceptReporters: false, items: [
+              {text: "Friction", value: "setFriction"},
+              {text: "Restitution", value: "setRestitution"},
+              {text: "Density", value: "setDensity"},
+              {text: "Is Sensor?", value: "setSensor"},
+              {text: "Collision Groups", value: "setCollisionGroups"},
+              //{text: "Enabled", value: "enabled"},                 // object.collider.enabled = bool
+              //{text: "Position Offset", value: "setTranslation"},
+              //{text: "Rotation Offset", value: "setRotation"}
             ]},
             state: {acceptReporters: true, items: [{text: "on", value: "true"},{text: "off", value: "false"}]},
             state2: {acceptReporters: true, items: [{text: "false", value: "false"},{text: "true (must be fixed)", value: "true"}]},
@@ -1322,11 +1398,27 @@ directionTo(args) {
         if (args.PROPERTY === "log") {console.log(physicsWorld); return "logged"}
         return JSON.stringify(physicsWorld[args.PROPERTY])
       }
-      getObject(args) {
+
+      setRB(args) {
+        let value = args.VALUE
+        if (args.VALUE === "true" || args.VALUE === "false") value = !!args.VALUE
         getObject(args.OBJECT)
-        console.log(object)
-        if (args.PROPERTY === "physics") return object.physics
-        return JSON.stringify(object.rigidBody[args.PROPERTY])
+        object.rigidBody[args.PROPERTY](value)
+      }
+      setC(args) {
+        let value = args.VALUE
+        if (args.VALUE === "true" || args.VALUE === "false") value = !!args.VALUE
+        getObject(args.OBJECT)
+        object.collider[args.PROPERTY](value)
+      }
+
+      getRB(args) {
+        getObject(args.OBJECT)
+        return JSON.stringify(object.rigidBody[args.PROPERTY]())
+      }
+      getC(args) {
+        getObject(args.OBJECT)
+        return JSON.stringify(object.collider[args.PROPERTY]())
       }
 
       objectPhysics(args) {
@@ -1347,11 +1439,11 @@ directionTo(args) {
 
         let colliderDesc
         switch(args.collider) {
-            case "cuboid": colliderDesc = createCuboidCollider(object); break
-            case "ball": colliderDesc = createBallCollider(object); break
-            case "convexHull": colliderDesc = createConvexHullCollider(object); break
+            case "cuboid": colliderDesc = createCuboidCollider(object, args.state2); break
+            case "ball": colliderDesc = createBallCollider(object, args.state2); break
+            case "convexHull": colliderDesc = createConvexHullCollider(object, args.state2); break
         }
-        colliderDesc.setSensor(args.state2).setDensity(args.density).setFriction(args.friction)
+        colliderDesc.setSensor(JSON.parse(args.state2)).setDensity(args.density).setFriction(args.friction)
         
         let rigidBody = physicsWorld.createRigidBody(rigidBodyDesc)
         let collider = physicsWorld.createCollider(colliderDesc, rigidBody)
@@ -1389,6 +1481,37 @@ directionTo(args) {
 
      resetForces(args) {
       rigidBody[args.PROPERTY](true)
+     }
+
+     sensorSingle(args) {
+      getObject(args.SENSOR)
+      const sensor = object
+
+      getObject(args.OBJECT)
+
+      let touching = false
+      physicsWorld.intersectionPairsWith(sensor.collider, otherCollider => {
+        if (otherCollider === object.collider) touching = true
+      })
+
+      return touching
+     }
+
+     sensorAll(args) {
+      getObject(args.SENSOR)
+      const sensor = object
+
+      const touchedObjects = []
+
+      // loop thruogh every collider touching sensor
+      physicsWorld.intersectionPairsWith(sensor.collider, otherCollider => {
+        // find owner of collider
+        const otherObject = scene.children.find(o => o.collider === otherCollider)
+        console.log(otherCollider)
+        if (otherObject) touchedObjects.push(otherObject.name)
+      })
+
+      return JSON.stringify(touchedObjects)
      }
 
     }
