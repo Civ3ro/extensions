@@ -24,7 +24,8 @@
   if (vm.runtime.isPackaged) alerts = false
   console.log("alerts are "+ (alerts ? "enabled" : "disabled"))
 
-  let isMouseDown = { left: false, middle: false, right: false };
+  let isMouseDown = { left: false, middle: false, right: false }
+  let prevMouse = { left: false, middle: false, right: false }
 
   let THREE
     let clock
@@ -84,7 +85,7 @@
     function removeObject(name) {
       getObject(name)
       scene.remove(object)
-      physicsWorld.removeRigidBody(object.rigidBody)
+      object.rigidbody ? physicsWorld.removeRigidBody(object.rigidBody) : null
     }
     function getObject(name, isNew) {
       object = null
@@ -212,7 +213,6 @@ function createConvexHullCollider(mesh, sensor) {
     return collider;
 }
 
-
 let mouseNDC = [0, 0]
 //loops/init
 function stopLoop() {
@@ -293,12 +293,12 @@ async function load() {
         if (e.button === 2) isMouseDown.right = true
       })
       window.addEventListener("mouseup", e => {
-        if (e.button === 0) isMouseDown.left = false
-        if (e.button === 1) isMouseDown.middle = false
-        if (e.button === 2) isMouseDown.right = false
+        if (e.button === 0) isMouseDown.left = false; prevMouse.left = false
+        if (e.button === 1) isMouseDown.middle = false; prevMouse.middle = false
+        if (e.button === 2) isMouseDown.right = false; prevMouse.right = false
       })
       // prevent contextmenu on right click
-      window.addEventListener("contextmenu", e => e.preventDefault());
+      threeRenderer.domElement.addEventListener("contextmenu", e => e.preventDefault());
 
       threeRenderer.domElement.addEventListener('mousemove', (event) => {
         mouseNDC = getMouseNDC(event);
@@ -415,7 +415,6 @@ constructor() {
 
     setRendererRatio(args) {
       threeRenderer.setPixelRatio(window.devicePixelRatio * args.VALUE)
-
     }
 
 
@@ -657,6 +656,10 @@ constructor() {
             object.rigidBody.setTranslation({ x: x, y: y, z: z }, true)
           }
           return
+        }
+
+        if (object.isCamera == true && controls) {
+
         }
 
         if (args.PROPERTY === "rotation") {
@@ -963,30 +966,28 @@ constructor() {
             const model = gltf.scene
 
             model.traverse(child => {
-              console.log(child.name)
+              //console.log(child.name)
               if (child.isMesh) {
-                child.castShadow = true;
-                child.receiveShadow = true;
+                child.castShadow = true
+                child.receiveShadow = true
               }
-            });
+            })
 
             const mixer = new THREE.AnimationMixer(gltf.scene);
             const actions = {};
             gltf.animations.forEach(clip => {
               actions[clip.name] = mixer.clipAction(clip)
               actions[clip.name].clampWhenFinished = true //freeze last frame instead of the first frame
-            });
+            })
 
             models[args.NAME] = {
               root: gltf.scene,
               mixer: mixer,
               actions: actions
-            };
-
-            group.add(gltf.scene);
-            updateComposers()
+            }
+            group.add(gltf.scene)
         },
-        error => {console.error("Error parsing GLB model:", error);}
+        error => {console.error("Error parsing GLB model:", error)}
       )
     }
     getModel(args){
@@ -1048,7 +1049,7 @@ constructor() {
             {opcode: "newTexture", blockType: Scratch.BlockType.REPORTER, text: "New Texture [COSTUME] [MODE] [STYLE] repeat [X][Y]", arguments: {COSTUME: {type: Scratch.ArgumentType.COSTUME}, MODE: {type: Scratch.ArgumentType.STRING, menu: "textureModes"},STYLE: {type: Scratch.ArgumentType.STRING, menu: "textureStyles"}, X: {type: Scratch.ArgumentType.NUMBER, defaultValue: 1},Y: {type: Scratch.ArgumentType.NUMBER,defaultValue: 1}}},
             {opcode: "newCubeTexture", blockType: Scratch.BlockType.REPORTER, text: "New Cube Texture X+[COSTUMEX0]X-[COSTUMEX1]Y+[COSTUMEY0]Y-[COSTUMEY1]Z+[COSTUMEZ0]Z-[COSTUMEZ1] [MODE] [STYLE] repeat [X][Y]", arguments: {"COSTUMEX0": {type: Scratch.ArgumentType.COSTUME},"COSTUMEX1": {type: Scratch.ArgumentType.COSTUME},"COSTUMEY0": {type: Scratch.ArgumentType.COSTUME},"COSTUMEY1": {type: Scratch.ArgumentType.COSTUME},"COSTUMEZ0": {type: Scratch.ArgumentType.COSTUME},"COSTUMEZ1": {type: Scratch.ArgumentType.COSTUME}, MODE: {type: Scratch.ArgumentType.STRING, menu: "textureModes"},STYLE: {type: Scratch.ArgumentType.STRING, menu: "textureStyles"}, X: {type: Scratch.ArgumentType.NUMBER,defaultValue: 1},Y: {type: Scratch.ArgumentType.NUMBER,defaultValue: 1}}},
             "---",
-            {opcode:"mouseDown",extensions: ["colours_sensing"], blockType: Scratch.BlockType.BOOLEAN, text: "mouse [BUTTON] down?", arguments: {BUTTON: {type: Scratch.ArgumentType.STRING, menu: "mouseButtons"}}},
+            {opcode:"mouseDown",extensions: ["colours_sensing"], blockType: Scratch.BlockType.BOOLEAN, text: "mouse [BUTTON] [action]?", arguments: {BUTTON: {type: Scratch.ArgumentType.STRING, menu: "mouseButtons"},action: {type: Scratch.ArgumentType.STRING, menu: "mouseAction"}}},
             {opcode: "mousePos",extensions: ["colours_sensing"], blockType: Scratch.BlockType.REPORTER, text: "mouse position", arguments: {}},
             "---",
             {opcode: "getItem",extensions: ["colours_data_lists"], blockType: Scratch.BlockType.REPORTER, text: "get item [ITEM] of [ARRAY]", arguments: {ITEM: {type: Scratch.ArgumentType.STRING, defaultValue: "1"}, ARRAY: {type: Scratch.ArgumentType.STRING, defaultValue: `["myObject", "myLight"]`}}},
@@ -1066,10 +1067,17 @@ constructor() {
             raycastProperties: {acceptReporters: false, items: [
               {text: "Intersected Object Names", value: "name"},{text: "Number of Objects", value: "number"},{text: "Intersected Objects distances", value: "distance"},
             ]},
-            mouseButtons: {acceptReporters: false, items: ["left","middle","right"]}
+            mouseButtons: {acceptReporters: false, items: ["left","middle","right"]},
+            mouseAction: {acceptReporters: false, items: ["Down","Clicked"]}
         }
       }}
-    mouseDown(args) {return isMouseDown[args.BUTTON]}
+    mouseDown(args) {
+      if (args.action === "Down") return isMouseDown[args.BUTTON]
+      if (args.action === "Clicked") {
+        if (isMouseDown[args.BUTTON] == prevMouse[args.BUTTON]) return false
+        else prevMouse[args.BUTTON] = true; return true
+      }
+    }
     mousePos(event) {
       return JSON.stringify(mouseNDC)
     }
@@ -1302,8 +1310,14 @@ directionTo(args) {
             {opcode: "setRB", blockType: Scratch.BlockType.COMMAND, text: "set rigidbody [PROPERTY] of [OBJECT] to [VALUE]", arguments: {PROPERTY: {type: Scratch.ArgumentType.STRING, menu: "rigidBodySets"}, OBJECT: {type: Scratch.ArgumentType.STRING, defaultValue: "myObject"}, VALUE: {type: Scratch.ArgumentType.STRING, defaultValue: "1"}}},
             {opcode: "getRB", blockType: Scratch.BlockType.REPORTER, text: "get rigidbody [PROPERTY] of [OBJECT]", arguments: {PROPERTY: {type: Scratch.ArgumentType.STRING, menu: "rigidBodyProperties"}, OBJECT: {type: Scratch.ArgumentType.STRING, defaultValue: "myObject"}}},
             "---",
+            {opcode: "lockObjectAxis", blockType: Scratch.BlockType.COMMAND, text: "lock rigidbody [OBJECT] [PROPERTY] on x:[X] y:[Y] z:[Z]", arguments: {OBJECT: {type: Scratch.ArgumentType.STRING, defaultValue: "myObject"}, PROPERTY: {type: Scratch.ArgumentType.STRING, menu: "lockAxes"}, X: {type: Scratch.ArgumentType.STRING, menu: "tf"}, Y: {type: Scratch.ArgumentType.STRING, menu: "tf"}, Z: {type: Scratch.ArgumentType.STRING, menu: "tf"}}},
+            "---",
             {opcode: "addForce", blockType: Scratch.BlockType.COMMAND, text: "set [PROPERTY] of [OBJECT] to [VALUE] in [SPACE] space", arguments: {VALUE: {type: Scratch.ArgumentType.STRING, defaultValue: "[0,10,0]"},PROPERTY: {type: Scratch.ArgumentType.STRING, menu: "forces", defaultValue: "addForce"},SPACE: {type: Scratch.ArgumentType.STRING, menu: "spaces", defaultValue: "world"}, OBJECT: {type: Scratch.ArgumentType.STRING, defaultValue: "myObject"}}},
             {opcode: "resetForces", blockType: Scratch.BlockType.COMMAND, text: "reset [PROPERTY] of [OBJECT]", arguments: {PROPERTY: {type: Scratch.ArgumentType.STRING, menu: "resetF", defaultValue: "resetForces"}, OBJECT: {type: Scratch.ArgumentType.STRING, defaultValue: "myObject"}}},
+            "---",
+            {opcode: "fixedJoint", blockType: Scratch.BlockType.COMMAND, text: "create FIXED joint between [ObjA] & [ObjB] | anchor A: [VA] [RA] B: [VB] [RB]", arguments: {ObjA: {type: Scratch.ArgumentType.STRING, defaultValue: "myObject"},ObjB: {type: Scratch.ArgumentType.STRING, defaultValue: "myObjectB"},VA: {type: Scratch.ArgumentType.STRING, defaultValue: "[0,0,0]"},VB: {type: Scratch.ArgumentType.STRING, defaultValue: "[0,1,0]"},RA: {type: Scratch.ArgumentType.STRING, defaultValue: "[0,0,0]"},RB: {type: Scratch.ArgumentType.STRING, defaultValue: "[0,0,0]"},}},
+            {opcode: "sphericalJoint", blockType: Scratch.BlockType.COMMAND, text: "create SPHERICAL joint between [ObjA] & [ObjB] | anchor A: [VA] B: [VB]", arguments: {ObjA: {type: Scratch.ArgumentType.STRING, defaultValue: "myObject"},ObjB: {type: Scratch.ArgumentType.STRING, defaultValue: "myObjectB"},VA: {type: Scratch.ArgumentType.STRING, defaultValue: "[0,0,0]"},VB: {type: Scratch.ArgumentType.STRING, defaultValue: "[0,1,0]"},}},
+            {opcode: "revoluteJoint", blockType: Scratch.BlockType.COMMAND, text: "create REVOLUTE joint between [ObjA] & [ObjB] | anchor A: [VA] B: [VB] | axis: [X]", arguments: {ObjA: {type: Scratch.ArgumentType.STRING, defaultValue: "myObject"},ObjB: {type: Scratch.ArgumentType.STRING, defaultValue: "myObjectB"},VA: {type: Scratch.ArgumentType.STRING, defaultValue: "[0,0,0]"},VB: {type: Scratch.ArgumentType.STRING, defaultValue: "[0,1,0]"},X: {type: Scratch.ArgumentType.STRING, defaultValue: "[1,0,0]"},}},
             "---",
             {blockType: Scratch.BlockType.LABEL, text: "- Collider"},
             {opcode: "setC", blockType: Scratch.BlockType.COMMAND, text: "set collider [PROPERTY] of [OBJECT] to [VALUE]", arguments: {PROPERTY: {type: Scratch.ArgumentType.STRING, menu: "colliderSets"}, OBJECT: {type: Scratch.ArgumentType.STRING, defaultValue: "myObject"}, VALUE: {type: Scratch.ArgumentType.STRING, defaultValue: "1"}}},
@@ -1316,6 +1330,10 @@ directionTo(args) {
           menus: {
             wProp: {acceptReporters: false, items: [
               {text: "Gravity", value: "gravity"}, {text: "log to console", value: "log"}
+            ]},
+            tf: {acceptReporters: true, items: [{text: "false", value: "false"},{text: "true", value: "true"}]},
+            lockAxes: {acceptReporters: false, items: [
+              {text: "Translation", value: "setEnabledTranslations"}, {text: "Rotation", value: "setEnabledRotations"}
             ]},
             rigidBodyProperties: {acceptReporters: false, items: [
               {text: "Type", value: "bodyType"},
@@ -1385,6 +1403,84 @@ directionTo(args) {
           }
         }
       }
+      joint(jointData, bodyA, bodyB) {
+        physicsWorld.createImpulseJoint(jointData, bodyA.rigidBody, bodyB.rigidBody, true)
+      }
+
+      fixedJoint(args) {
+        const VA = JSON.parse(args.VA).map(Number)
+        const VB = JSON.parse(args.VB).map(Number)
+        let RA = JSON.parse(args.RA).map(Number)
+        let RB = JSON.parse(args.RB).map(Number)
+
+        RA = new THREE.Quaternion().setFromEuler(
+          new THREE.Euler(
+            THREE.MathUtils.degToRad(RA[0]),
+            THREE.MathUtils.degToRad(RA[1]),
+            THREE.MathUtils.degToRad(RA[2])
+          )
+        )
+        RB = new THREE.Quaternion().setFromEuler(
+          new THREE.Euler(
+            THREE.MathUtils.degToRad(RB[0]),
+            THREE.MathUtils.degToRad(RB[1]),
+            THREE.MathUtils.degToRad(RB[2])
+          )
+        )
+
+        const data = RAPIER.JointData.fixed(
+            { x: VA[0], y: VA[1], z: VA[2] }, RA,
+            { x: VB[0], y: VB[1], z: VB[2] }, RB
+        )
+        getObject(args.ObjA)
+        const objectA = object
+        getObject(args.ObjB)
+        this.joint(data, objectA, object)
+      }
+
+      sphericalJoint(args) {
+        const VA = JSON.parse(args.VA).map(Number)
+        const VB = JSON.parse(args.VB).map(Number)
+
+        const data = RAPIER.JointData.spherical(
+            { x: VA[0], y: VA[1], z: VA[2] },
+            { x: VB[0], y: VB[1], z: VB[2] }
+        )
+        getObject(args.ObjA)
+        const objectA = object
+        getObject(args.ObjB)
+        this.joint(data, objectA, object)
+      }
+
+      revoluteJoint(args) {
+        const VA = JSON.parse(args.VA).map(Number)
+        const VB = JSON.parse(args.VB).map(Number)
+        const x = JSON.parse(args.X).map(Number)
+
+        const data = RAPIER.JointData.revolute(
+            { x: VA[0], y: VA[1], z: VA[2] },
+            { x: VB[0], y: VB[1], z: VB[2] }, { x: x[0], y: x[1], z: x[2] },
+        )
+        getObject(args.ObjA)
+        const objectA = object
+        getObject(args.ObjB)
+        this.joint(data, objectA, object)
+      }
+
+      prismaticJoint(args) {
+        const VA = JSON.parse(args.VA).map(Number)
+        const VB = JSON.parse(args.VB).map(Number)
+        const x = JSON.parse(args.X).map(Number)
+
+        const data = RAPIER.JointData.prismatic(
+            { x: VA[0], y: VA[1], z: VA[2] },
+            { x: VB[0], y: VB[1], z: VB[2] }, { x: x[0], y: x[1], z: x[2] },
+        )
+        getObject(args.ObjA)
+        const objectA = object
+        getObject(args.ObjB)
+        this.joint(data, objectA, object)
+      }
 
       createWorld(args) {
         const v3 = JSON.parse(args.G).map(Number)
@@ -1419,6 +1515,14 @@ directionTo(args) {
       getC(args) {
         getObject(args.OBJECT)
         return JSON.stringify(object.collider[args.PROPERTY]())
+      }
+
+      lockObjectAxis(args) {
+        getObject(args.OBJECT)
+        const x =  !JSON.parse(args.X)
+        const y = !JSON.parse(args.Y)
+        const z = !JSON.parse(args.Z)
+        object.rigidBody[args.PROPERTY](x,y,z,true) //changes is xyz, wake up
       }
 
       objectPhysics(args) {
