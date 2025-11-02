@@ -190,8 +190,8 @@ function computeWorldBoundingBox(mesh) {
     box.getCenter(center);
     return { size, center };
 }
-function createCuboidCollider(mesh, sensor) {
-    const { size, center } = computeWorldBoundingBox(mesh);
+function createCuboidCollider(mesh) {
+    const { size } = computeWorldBoundingBox(mesh);
     const collider = RAPIER.ColliderDesc.cuboid(
         size.x / 2,
         size.y / 2,
@@ -199,19 +199,36 @@ function createCuboidCollider(mesh, sensor) {
     )
     return collider;
 }
-function createBallCollider(mesh, sensor) {
-    const { size, center } = computeWorldBoundingBox(mesh);
+function createBallCollider(mesh) {
+    const { size } = computeWorldBoundingBox(mesh);
     // radius = 1/2 of the largest verticie
     const radius = Math.max(size.x, size.y, size.z) / 2;
     const collider = RAPIER.ColliderDesc.ball(radius)
+    return collider //there's a flaw with this, if the ball is deformed in just one axis it will be inaccurate. use convex instead (?)
+}
+function createConvexHullCollider(mesh) {
+    mesh.updateWorldMatrix(true, false);
+
+    const position = mesh.geometry.attributes.position;
+    const vertices = [];
+    const vertex = new THREE.Vector3();
+
+    // Matrix for scale only
+    const scaleMatrix = new THREE.Matrix4().makeScale(
+        mesh.scale.x,
+        mesh.scale.y,
+        mesh.scale.z
+    );
+
+    for (let i = 0; i < position.count; i++) {
+        vertex.fromBufferAttribute(position, i).applyMatrix4(scaleMatrix);
+        vertices.push(vertex.x, vertex.y, vertex.z);
+    }
+
+    const collider = RAPIER.ColliderDesc.convexHull(Float32Array.from(vertices));
     return collider;
 }
-function createConvexHullCollider(mesh, sensor) {
-    const collider = RAPIER.ColliderDesc.convexHull(
-        mesh.geometry.attributes.position.array
-    )
-    return collider;
-}
+
 
 let mouseNDC = [0, 0]
 //loops/init
