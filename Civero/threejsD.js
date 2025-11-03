@@ -37,6 +37,7 @@
     let gltf
   let OrbitControls
     let controls
+  let BufferGeometryUtils
   //Physics
   let RAPIER
     let physicsWorld
@@ -228,6 +229,40 @@ function createConvexHullCollider(mesh) {
     const collider = RAPIER.ColliderDesc.convexHull(Float32Array.from(vertices));
     return collider;
 }
+function getModel(model, name) {
+  const file = runtime.getTargetForStage().getSounds().find(c => c.name === model)
+  if (!file) return
+
+return new Promise((resolve, reject) => {
+    gltf.parse(
+      file.asset.data.buffer,
+      "",
+      gltf => {
+        const root = gltf.scene
+        root.traverse(child => {
+          if (child.isMesh) {
+            child.castShadow = true
+            child.receiveShadow = true
+          }
+        });
+
+        const mixer = new THREE.AnimationMixer(root)
+        const actions = {}
+        gltf.animations.forEach(clip => {
+          const act = mixer.clipAction(clip)
+          act.clampWhenFinished = true
+          actions[clip.name] = act
+        });
+
+        models[name] = { root, mixer, actions }
+        resolve(root)
+      },
+      error => {
+        console.error("Error parsing GLB model:", error)
+        reject(error)
+      }
+    )})
+}
 
 
 let mouseNDC = [0, 0]
@@ -250,6 +285,7 @@ async function load() {
       //Addons
       GLTFLoader = await import("https://esm.sh/three@0.180.0/examples/jsm/loaders/GLTFLoader.js")
       OrbitControls = await import("https://esm.sh/three@0.180.0/examples/jsm/controls/OrbitControls.js")
+      BufferGeometryUtils = await import("https://esm.sh/three/examples/jsm/utils/BufferGeometryUtils.js")
 
       const POSTPROCESSING = await import("https://esm.sh/postprocessing@6.37.8")
       const {
@@ -263,7 +299,7 @@ async function load() {
         DepthOfFieldEffect,
 
         BlendFunction
-      } = POSTPROCESSING;
+      } = POSTPROCESSING
 
         window.EffectComposer = EffectComposer;
         window.EffectPass = EffectPass;
@@ -583,7 +619,7 @@ constructor() {
 
             {blockType: Scratch.BlockType.LABEL, text: "↳ Materials"},
             {opcode: "newMaterial",extensions: ["colours_looks"], blockType: Scratch.BlockType.COMMAND, text: "new material [NAME] [TYPE]", arguments: {NAME: {type: Scratch.ArgumentType.STRING, defaultValue: "myMaterial"}, TYPE: {type: Scratch.ArgumentType.STRING, menu: "materialTypes", defaultValue: "MeshStandardMaterial"}}},
-            {opcode: "setMaterial",extensions: ["colours_looks"], blockType: Scratch.BlockType.COMMAND, text: "set material [PROPERTY] of [NAME] to [VALUE]", arguments: {PROPERTY: {type: Scratch.ArgumentType.STRING, menu: "materialProperties"},NAME: {type: Scratch.ArgumentType.STRING, defaultValue: "myMaterial"}, VALUE: {type: Scratch.ArgumentType.STRING, defaultValue: "new Color()",exemptFromNormalization: true}}},
+            {opcode: "setMaterial",extensions: ["colours_looks"], blockType: Scratch.BlockType.COMMAND, text: "set material [PROPERTY] of [NAME] to [VALUE]", arguments: {PROPERTY: {type: Scratch.ArgumentType.STRING, menu: "materialProperties"},NAME: {type: Scratch.ArgumentType.STRING, defaultValue: "myMaterial"}, VALUE: {type: Scratch.ArgumentType.STRING, defaultValue: "new Color()", exemptFromNormalization: true}}},
             {opcode: "setBlending",extensions: ["colours_looks"], blockType: Scratch.BlockType.COMMAND, text: "set material [NAME] blending to [VALUE]", arguments: {NAME: {type: Scratch.ArgumentType.STRING, defaultValue: "myMaterial"}, VALUE: {type: Scratch.ArgumentType.STRING, menu: "blendModes"}}},
             {opcode: "setDepth",extensions: ["colours_looks"], blockType: Scratch.BlockType.COMMAND, text: "set material [NAME] depth to [VALUE]", arguments: {NAME: {type: Scratch.ArgumentType.STRING, defaultValue: "myMaterial"}, VALUE: {type: Scratch.ArgumentType.STRING, menu: "depthModes"}}},
             {opcode: "removeMaterial",extensions: ["colours_looks"], blockType: Scratch.BlockType.COMMAND, text: "remove material [NAME]", arguments: {NAME: {type: Scratch.ArgumentType.STRING, defaultValue: "myMaterial"}}},
@@ -591,7 +627,8 @@ constructor() {
             {blockType: Scratch.BlockType.LABEL, text: "↳ Geometries"},
             {opcode: "newGeometry",extensions: ["colours_data_lists"], blockType: Scratch.BlockType.COMMAND, text: "new geometry [NAME] [TYPE]", arguments: {NAME: {type: Scratch.ArgumentType.STRING, defaultValue: "myGeometry"}, TYPE: {type: Scratch.ArgumentType.STRING, menu: "geometryTypes", defaultValue: "BoxGeometry"}}},
             {opcode: "removeGeometry",extensions: ["colours_data_lists"], blockType: Scratch.BlockType.COMMAND, text: "remove geometry [NAME]", arguments: {NAME: {type: Scratch.ArgumentType.STRING, defaultValue: "myGeometry"}, TYPE: {type: Scratch.ArgumentType.STRING, menu: "geometryTypes", defaultValue: "BoxGeometry"}}},
-
+            {opcode: "splines", extensions: ["colours_data_lists"], blockType: Scratch.BlockType.COMMAND, text: "create spline [NAME] from curve [CURVE]", arguments: {NAME: {type: Scratch.ArgumentType.STRING, defaultValue: "mySpline"}, CURVE: {type: Scratch.ArgumentType.STRING, defaultValue: "[curve]", exemptFromNormalization: true}}},
+            {opcode: "splineModel", extensions: ["colours_data_lists"], blockType: Scratch.BlockType.COMMAND, text: "create spline [NAME] using model [MODEL] along curve [CURVE] with spacing [SPACING]", arguments: {NAME: {type: Scratch.ArgumentType.STRING, defaultValue: "mySpline"}, MODEL: {type: Scratch.ArgumentType.STRING, menu: "modelsList"}, CURVE: {type: Scratch.ArgumentType.STRING, defaultValue: "[curve]", exemptFromNormalization: true}, SPACING: {type: Scratch.ArgumentType.NUMBER, defaultValue: 1}}},
         ],
         menus: {
             objectVector3: {acceptReporters: false, items: [
@@ -605,7 +642,7 @@ constructor() {
             ]},
             XYZ: {acceptReporters: false, items: [{text: "X", value: "x"},{text: "Y", value: "y"},{text: "Z", value: "z"}]},
             materialProperties: {acceptReporters: false, items: [
-              {text: "Color", value: "color"},{text: "Map (texture)", value: "map"},{text: "Alpha Map (texture)", value: "alphaMap"},{text: "Alpha Test (0-1)", value: "alphaTest"},{text: "Side (front/back/double)", value: "side"},{text: "Bump Map (texture)", value: "bumpMap"},{text: "Bump Scale", value: "bumpScale"},{text: "Metalness", value: "metalness"},{text: "Metalness Map (texture)", value: "metalnessMap"},{text: "Roughness", value: "roughness"},{text: "Roughness Map (texture)", value: "roughnessMap"},{text: "Emissive Color", value: "emissive"},{text: "Emissive Intensity", value: "emissiveIntensity"},{text: "Emissive Map (texture)", value: "emissiveMap"},{text: "Normal Map (texture)", value: "normalMap"},{text: "Normal Scale (v2)", value: "normalScale"},{text: "Wireframe?", value: "wireframe"},
+              {text: "Color", value: "color"},{text: "Opacity", value: "opacity"},{text: "Map (texture)", value: "map"},{text: "Alpha Map (texture)", value: "alphaMap"},{text: "Alpha Test (0-1)", value: "alphaTest"},{text: "Side (front/back/double)", value: "side"},{text: "Bump Map (texture)", value: "bumpMap"},{text: "Bump Scale", value: "bumpScale"},{text: "Metalness", value: "metalness"},{text: "Metalness Map (texture)", value: "metalnessMap"},{text: "Roughness", value: "roughness"},{text: "Roughness Map (texture)", value: "roughnessMap"},{text: "Emissive Color", value: "emissive"},{text: "Emissive Intensity", value: "emissiveIntensity"},{text: "Emissive Map (texture)", value: "emissiveMap"},{text: "Normal Map (texture)", value: "normalMap"},{text: "Normal Scale (v2)", value: "normalScale"},{text: "Wireframe?", value: "wireframe"},
             ]},
             blendModes: {acceptReporters: false, items: [
               { text: "No Blending", value: "NoBlending" },{ text: "Normal Blending", value: "NormalBlending" },{ text: "Additive Blending", value: "AdditiveBlending" },{ text: "Subtractive Blending", value: "SubtractiveBlending" },{ text: "Multiply Blending", value: "MultiplyBlending" },{ text: "Custom Blending", value: "CustomBlending" }
@@ -621,6 +658,17 @@ constructor() {
             geometryTypes: {acceptReporters: false, items: [
               {text: "Box Geometry", value: "BoxGeometry"},{text: "Sphere Geometry", value: "SphereGeometry"},{text: "Cylinder Geometry", value: "CylinderGeometry"},{text: "Plane Geometry", value: "PlaneGeometry"},{text: "Circle Geometry", value: "CircleGeometry"},{text: "Torus Geometry", value: "TorusGeometry"},{text: "Torus Knot Geometry", value: "TorusKnotGeometry"},
             ]},
+            modelsList: {acceptReporters: false, items: () => {
+              const stage = runtime.getTargetForStage();
+              if (!stage) return ["(loading...)"];
+
+                // @ts-ignore
+                const models = Scratch.vm.runtime.getTargetForStage().getSounds()
+                if (models.length < 1) return [["Load a model! (GLB Loader category)"]]
+                  
+                  // @ts-ignore
+                  return models.map( m =>  [m.name] )
+            }},
 
         }
       }}
@@ -759,11 +807,13 @@ constructor() {
       
       mat[args.PROPERTY] = await (value)
       if (args.PROPERTY === "wireframe") mat.wireframeLinecap = "butt"; mat.wireframeLinejoin = "bevel"
+      mat.transparent = mat.opacity < 1.0
       mat.needsUpdate = true;
     }
     setBlending(args) {
       const mat = materials[args.NAME]
       mat.blending = THREE[args.VALUE]
+      mat.premultipliedAlpha = true
       mat.needsUpdate = true
     }
     setDepth(args) {
@@ -780,9 +830,9 @@ constructor() {
     newGeometry(args) {
       if (geometries[args.NAME] && alerts) alert ("geometry already exists! will replace...")
       const geo = new THREE[args.TYPE]()
-      geo.name = args.NAME;
+      geo.name = args.NAME
 
-      geometries[args.NAME] = geo;
+      geometries[args.NAME] = geo
     }
     setGeometry(args) {
       const geo = geometries[args.NAME]
@@ -795,6 +845,73 @@ constructor() {
       geo.dispose()
       delete(geometries[args.NAME])
     }
+
+    splines(args) {
+      const geometry = new THREE.TubeGeometry(args.CURVE)
+      geometry.name = args.NAME
+
+      geometries[args.NAME] = geometry
+    }
+
+    async splineModel(args) {
+  const model = await getModel(args.MODEL, args.NAME)
+  if (!model) return console.warn("Model not found:", args.MODEL)
+
+  const curve = args.CURVE
+  const spacing = parseFloat(args.SPACING) || 1
+  const curveLength = curve.getLength()
+  const divisions = Math.floor(curveLength / spacing)
+
+  const geomList = []
+
+  for (let i = 0; i <= divisions; i++) {
+    const t = i / divisions
+    const pos = curve.getPointAt(t)
+    const tangent = curve.getTangentAt(t)
+
+    const temp = model.clone(true)
+    temp.position.copy(pos)
+
+    const up = new THREE.Vector3(0, 1, 0)
+    const quat = new THREE.Quaternion().setFromUnitVectors(up, tangent.clone().normalize())
+    temp.quaternion.copy(quat)
+
+    temp.updateMatrixWorld(true)
+
+    temp.traverse(child => {
+      if (child.isMesh && child.geometry) {
+        const geom = child.geometry.clone()
+        geom.applyMatrix4(child.matrixWorld)
+        geomList.push(geom)
+      }
+    })
+  }
+
+  const validGeoms = geomList.filter(g => {
+    const ok = g && g.isBufferGeometry && g.attributes && g.attributes.position
+    if (!ok) console.warn("geometry skipped:", g)
+    return ok
+  })
+
+  const merged = BufferGeometryUtils.mergeGeometries(validGeoms, true)
+  merged.computeBoundingBox()
+  merged.computeBoundingSphere()
+
+  merged.name = args.NAME
+
+  // store in your global `geometries` object
+  geometries[args.NAME] = merged
+
+  // and actually add to scene for visibility
+  const mesh = new THREE.Mesh(
+    merged,
+    new THREE.MeshStandardMaterial({ color: 0x999999 })
+  )
+  mesh.name = args.NAME
+  scene.add(mesh)
+}
+
+
 
   }
   Scratch.extensions.register(new ThreeObjects())
@@ -967,45 +1084,9 @@ constructor() {
     }
 
     async addModel(args) {
-      const model = runtime.getTargetForStage().getSounds().find(c => c.name === args.ITEM);
-      if (!model) return;
-
-      const group = new THREE.Group()
+      const group = await getModel(args.ITEM, args.NAME)
 
       createObject(args.NAME, group, args.GROUP)
-    
-      gltf.parse(
-        // @ts-ignore
-        model.asset.data.buffer, 
-        "", 
-        async gltf => {
-
-            const model = gltf.scene
-
-            model.traverse(child => {
-              //console.log(child.name)
-              if (child.isMesh) {
-                child.castShadow = true
-                child.receiveShadow = true
-              }
-            })
-
-            const mixer = new THREE.AnimationMixer(gltf.scene);
-            const actions = {};
-            gltf.animations.forEach(clip => {
-              actions[clip.name] = mixer.clipAction(clip)
-              actions[clip.name].clampWhenFinished = true //freeze last frame instead of the first frame
-            })
-
-            models[args.NAME] = {
-              root: gltf.scene,
-              mixer: mixer,
-              actions: actions
-            }
-            group.add(gltf.scene)
-        },
-        error => {console.error("Error parsing GLB model:", error)}
-      )
     }
     getModel(args){
       if (!models[args.NAME]) return;
@@ -1066,6 +1147,8 @@ constructor() {
             {opcode: "newTexture", blockType: Scratch.BlockType.REPORTER, text: "New Texture [COSTUME] [MODE] [STYLE] repeat [X][Y]", arguments: {COSTUME: {type: Scratch.ArgumentType.COSTUME}, MODE: {type: Scratch.ArgumentType.STRING, menu: "textureModes"},STYLE: {type: Scratch.ArgumentType.STRING, menu: "textureStyles"}, X: {type: Scratch.ArgumentType.NUMBER, defaultValue: 1},Y: {type: Scratch.ArgumentType.NUMBER,defaultValue: 1}}},
             {opcode: "newCubeTexture", blockType: Scratch.BlockType.REPORTER, text: "New Cube Texture X+[COSTUMEX0]X-[COSTUMEX1]Y+[COSTUMEY0]Y-[COSTUMEY1]Z+[COSTUMEZ0]Z-[COSTUMEZ1] [MODE] [STYLE] repeat [X][Y]", arguments: {"COSTUMEX0": {type: Scratch.ArgumentType.COSTUME},"COSTUMEX1": {type: Scratch.ArgumentType.COSTUME},"COSTUMEY0": {type: Scratch.ArgumentType.COSTUME},"COSTUMEY1": {type: Scratch.ArgumentType.COSTUME},"COSTUMEZ0": {type: Scratch.ArgumentType.COSTUME},"COSTUMEZ1": {type: Scratch.ArgumentType.COSTUME}, MODE: {type: Scratch.ArgumentType.STRING, menu: "textureModes"},STYLE: {type: Scratch.ArgumentType.STRING, menu: "textureStyles"}, X: {type: Scratch.ArgumentType.NUMBER,defaultValue: 1},Y: {type: Scratch.ArgumentType.NUMBER,defaultValue: 1}}},
             "---",
+            {opcode: "curve", extensions: ["colours_data_lists"], blockType: Scratch.BlockType.REPORTER, text: "generate curve [TYPE] from points [POINTS], closed: [CLOSED]", arguments: {TYPE: {type: Scratch.ArgumentType.STRING, menu: "curveTypes"}, POINTS: {type: Scratch.ArgumentType.STRING, defaultValue: "[0,3,0] [2.5,-1.5,0] [-2.5,-1.5,0]"}, CLOSED: {type: Scratch.ArgumentType.STRING, defaultValue: "true"}}},
+            "---",
             {opcode:"mouseDown",extensions: ["colours_sensing"], blockType: Scratch.BlockType.BOOLEAN, text: "mouse [BUTTON] [action]?", arguments: {BUTTON: {type: Scratch.ArgumentType.STRING, menu: "mouseButtons"},action: {type: Scratch.ArgumentType.STRING, menu: "mouseAction"}}},
             {opcode: "mousePos",extensions: ["colours_sensing"], blockType: Scratch.BlockType.REPORTER, text: "mouse position", arguments: {}},
             "---",
@@ -1085,7 +1168,8 @@ constructor() {
               {text: "Intersected Object Names", value: "name"},{text: "Number of Objects", value: "number"},{text: "Intersected Objects distances", value: "distance"},
             ]},
             mouseButtons: {acceptReporters: false, items: ["left","middle","right"]},
-            mouseAction: {acceptReporters: false, items: ["Down","Clicked"]}
+            mouseAction: {acceptReporters: false, items: ["Down","Clicked"]},
+            curveTypes: {acceptReporters: false, items: ["CatmullRomCurve3"]}
         }
       }}
     mouseDown(args) {
@@ -1160,6 +1244,26 @@ directionTo(args) {
 
       setTexutre(texture, args.MODE, args.STYLE, args.X, args.Y)
       return texture;
+    }
+
+    curve(args) {
+      function parsePoints(input) {
+        // Match all [x,y,z] groups
+        const matches = input.match(/\[([^\]]+)\]/g)
+        if (!matches) return []
+
+        return matches.map(str => {
+          const nums = str
+            .replace(/[\[\]\s]/g, '')
+            .split(',')
+            .map(Number)
+          return new THREE.Vector3(nums[0] || 0, nums[1] || 0, nums[2] || 0)
+        })
+      }
+      const points = parsePoints(args.POINTS)
+      const curve = new THREE[args.TYPE](points)
+      curve.closed = JSON.parse(args.CLOSED)
+      return curve
     }
 
     getItem(args) {
