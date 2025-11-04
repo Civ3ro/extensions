@@ -872,7 +872,7 @@ constructor() {
     const temp = model.clone(true)
     temp.position.copy(pos)
 
-    const up = new THREE.Vector3(0, 1, 0)
+    const up = new THREE.Vector3(0, 0, 1)
     const quat = new THREE.Quaternion().setFromUnitVectors(up, tangent.clone().normalize())
     temp.quaternion.copy(quat)
 
@@ -898,17 +898,7 @@ constructor() {
   merged.computeBoundingSphere()
 
   merged.name = args.NAME
-
-  // store in your global `geometries` object
   geometries[args.NAME] = merged
-
-  // and actually add to scene for visibility
-  const mesh = new THREE.Mesh(
-    merged,
-    new THREE.MeshStandardMaterial({ color: 0x999999 })
-  )
-  mesh.name = args.NAME
-  scene.add(mesh)
 }
 
 
