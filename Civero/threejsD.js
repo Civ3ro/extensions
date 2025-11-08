@@ -1,5 +1,5 @@
-// Name: Three-D
-// ID: threeDjsExtension
+// Name: Three JS
+// ID: threejsExtension
 // Description: Use three js inside Turbowarp! A 3D graphics library. 
 // By: me <https://scratch.mit.edu/users/civero/>
 // License: MIT License Copyright (c) 2021-2024 TurboWarp Extensions Contributors 
@@ -38,6 +38,8 @@
   let OrbitControls
     let controls
   let BufferGeometryUtils
+  let TextGeometry
+    let fontLoad
   //Physics
   let RAPIER
     let physicsWorld
@@ -263,7 +265,19 @@ return new Promise((resolve, reject) => {
       }
     )})
 }
-
+async function openFileExplorer(format) {
+  return new Promise((resolve) => {
+    const input = document.createElement("input");
+      input.type = "file"
+      input.accept = format
+      input.multiple = false
+      input.onchange = () => {
+        resolve(input.files)
+        input.remove()
+      };
+      input.click();
+  })
+}
 
 let mouseNDC = [0, 0]
 //loops/init
@@ -285,7 +299,10 @@ async function load() {
       //Addons
       GLTFLoader = await import("https://esm.sh/three@0.180.0/examples/jsm/loaders/GLTFLoader.js")
       OrbitControls = await import("https://esm.sh/three@0.180.0/examples/jsm/controls/OrbitControls.js")
-      BufferGeometryUtils = await import("https://esm.sh/three/examples/jsm/utils/BufferGeometryUtils.js")
+      BufferGeometryUtils = await import("https://esm.sh/three@0.180.0/examples/jsm/utils/BufferGeometryUtils.js")
+      TextGeometry = await import("https://esm.sh/three@0.158.0/examples/jsm/geometries/TextGeometry.js")
+      const FontLoader = await import("https://esm.sh/three@0.158.0/examples/jsm/loaders/FontLoader.js")
+        fontLoad = new FontLoader.FontLoader()
 
       const POSTPROCESSING = await import("https://esm.sh/postprocessing@6.37.8")
       const {
@@ -631,6 +648,9 @@ constructor() {
             {opcode: "removeGeometry",extensions: ["colours_data_lists"], blockType: Scratch.BlockType.COMMAND, text: "remove geometry [NAME]", arguments: {NAME: {type: Scratch.ArgumentType.STRING, defaultValue: "myGeometry"}, TYPE: {type: Scratch.ArgumentType.STRING, menu: "geometryTypes", defaultValue: "BoxGeometry"}}},
             {opcode: "splines", extensions: ["colours_data_lists"], blockType: Scratch.BlockType.COMMAND, text: "create spline [NAME] from curve [CURVE]", arguments: {NAME: {type: Scratch.ArgumentType.STRING, defaultValue: "mySpline"}, CURVE: {type: Scratch.ArgumentType.STRING, defaultValue: "[curve]", exemptFromNormalization: true}}},
             {opcode: "splineModel", extensions: ["colours_operators"], blockType: Scratch.BlockType.COMMAND, text: "create (geometry&material) spline [NAME] using model [MODEL] along curve [CURVE] with spacing [SPACING]", arguments: {NAME: {type: Scratch.ArgumentType.STRING, defaultValue: "mySpline"}, MODEL: {type: Scratch.ArgumentType.STRING, menu: "modelsList"}, CURVE: {type: Scratch.ArgumentType.STRING, defaultValue: "[curve]", exemptFromNormalization: true}, SPACING: {type: Scratch.ArgumentType.NUMBER, defaultValue: 1}}},
+            {blockType: Scratch.BlockType.BUTTON, text: "Convert font to JSON", func: "openConv"},
+            {blockType: Scratch.BlockType.BUTTON, text: "Load JSON font file", func: "loadFont"},
+            {opcode: "text", extensions: ["colours_data_lists"], blockType: Scratch.BlockType.COMMAND, text: "create text geometry [NAME] with text [TEXT] in font [FONT] size [S] depth [D] curvedSegments [CS]", arguments: {NAME: {type: Scratch.ArgumentType.STRING, defaultValue: "myText"}, TEXT: {type: Scratch.ArgumentType.STRING, defaultValue: "C-369"}, FONT: {type: Scratch.ArgumentType.STRING, menu: "fonts"}, S: {type: Scratch.ArgumentType.NUMBER, defaultValue: 1}, D: {type: Scratch.ArgumentType.NUMBER, defaultValue: 0.1}, CS: {type: Scratch.ArgumentType.NUMBER, defaultValue: 6}}},
         ],
         menus: {
             objectVector3: {acceptReporters: false, items: [
@@ -665,8 +685,19 @@ constructor() {
               if (!stage) return ["(loading...)"];
 
                 // @ts-ignore
-                const models = Scratch.vm.runtime.getTargetForStage().getSounds()
+                const models = Scratch.vm.runtime.getTargetForStage().getSounds().filter(e => e.name && e.name.endsWith('.glb'))
                 if (models.length < 1) return [["Load a model! (GLB Loader category)"]]
+                  
+                  // @ts-ignore
+                  return models.map( m =>  [m.name] )
+            }},
+            fonts: {acceptReporters: false, items: () => {
+              const stage = runtime.getTargetForStage();
+              if (!stage) return ["(loading...)"];
+
+                // @ts-ignore
+                const models = Scratch.vm.runtime.getTargetForStage().getSounds().filter(e => e.name && e.name.endsWith('.json'))
+                if (models.length < 1) return [["Load a font!"]]
                   
                   // @ts-ignore
                   return models.map( m =>  [m.name] )
@@ -911,9 +942,77 @@ constructor() {
   geometries[args.NAME] = merged
   matList.name = args.NAME
   materials[args.NAME] = matList
-}
+    }    
+    
+    async text(args) {
+      const fontFile = runtime.getTargetForStage().getSounds().find(c => c.name === args.FONT)
+      if (!fontFile) return
 
+      const json = new TextDecoder().decode(fontFile.asset.data.buffer)
+      const fontData = JSON.parse(json)
 
+      const font = fontLoad.parse(fontData)
+
+      const params = {font: font, size: JSON.parse(args.S), height: JSON.parse(args.D), curveSegments: JSON.parse(args.CS), bevelEnabled: false}
+      const geometry = new TextGeometry.TextGeometry(args.TEXT, params)
+      geometry.computeVertexNormals()
+      geometry.center() // optional, recenters the text
+      
+
+      geometry.name = args.NAME
+
+      geometries[args.NAME] = geometry
+    }
+
+    async loadFont() {
+      openFileExplorer(".json").then(files => {
+        const file = files[0]
+        const reader = new FileReader()
+
+        reader.onload = async (e) => {
+          const arrayBuffer = e.target.result
+          
+         // From lily's assets
+         // // Thank you PenguinMod for providing this code.
+          
+            const targetId = runtime.getTargetForStage().id //util.target.id not working!
+            const assetName = Cast.toString(file.name)
+
+            const buffer = arrayBuffer
+
+            const storage = runtime.storage
+            const asset = storage.createAsset(
+              storage.AssetType.Sound,
+              storage.DataFormat.MP3,
+              // @ts-ignore
+              new Uint8Array(buffer),
+              null,
+              true
+            )
+
+            try {
+              await vm.addSound(
+                // @ts-ignore
+                {
+                  asset,
+                  md5: asset.assetId + "." + asset.dataFormat,
+                  name: assetName,
+                },
+                targetId
+              )
+              alert("Font loaded successfully!")
+            } catch (e) {
+              console.error(e)
+              alert("Error loading font.")
+            }
+          
+          // End of PenguinMod
+        }
+
+        reader.readAsArrayBuffer(file);
+      })
+    }
+    openConv() {{open("https://gero3.github.io/facetype.js/")}}
 
   }
   Scratch.extensions.register(new ThreeObjects())
@@ -1009,7 +1108,7 @@ constructor() {
               if (!stage) return ["(loading...)"];
 
                 // @ts-ignore
-                const models = Scratch.vm.runtime.getTargetForStage().getSounds()//.filter(c => c.hasOwnProperty("data"))
+                const models = Scratch.vm.runtime.getTargetForStage().getSounds().filter(e => e.name && e.name.endsWith('.glb'))
                 if (models.length < 1) return [["Load a model!"]]
                   
                   // @ts-ignore
@@ -1017,22 +1116,10 @@ constructor() {
             }},
         }
       }}
-          async loadModelFile(args, util) {
-      // @ts-ignore
-      async function openFileExplorer(args, util) {
-        return new Promise((resolve) => {
-          const input = document.createElement("input");
-            input.type = "file";
-            input.accept = ".glb"
-            input.multiple = false;
-            input.onchange = () => {
-              resolve(input.files)
-              input.remove()
-            };
-            input.click();
-        });}
 
-      openFileExplorer().then(files => {
+    async loadModelFile() {
+
+      openFileExplorer(".glb").then(files => {
         const file = files[0];
         const reader = new FileReader();
 
@@ -1081,10 +1168,9 @@ constructor() {
         };
 
         reader.readAsArrayBuffer(file);
-      });
+      })
 
     }
-
     async addModel(args) {
       const group = await getModel(args.ITEM, args.NAME)
 
