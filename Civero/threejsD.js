@@ -594,7 +594,6 @@ constructor() {
     }
     setCamera(args) {
       getObject(args.CAMERA)
-      console.log(object)
       object[args.PROPERTY] = args.VALUE
       object.updateProjectionMatrix()
     }
@@ -666,8 +665,8 @@ constructor() {
             ]},
             XYZ: {acceptReporters: false, items: [{text: "X", value: "x"},{text: "Y", value: "y"},{text: "Z", value: "z"}]},
             materialProperties: {acceptReporters: false, items: [
-              {text: "Color", value: "color"},{text: "Opacity", value: "opacity"},{text: "Map (texture)", value: "map"},{text: "Alpha Map (texture)", value: "alphaMap"},{text: "Alpha Test (0-1)", value: "alphaTest"},{text: "Side (front/back/double)", value: "side"},{text: "Bump Map (texture)", value: "bumpMap"},{text: "Bump Scale", value: "bumpScale"},{text: "Metalness", value: "metalness"},{text: "Metalness Map (texture)", value: "metalnessMap"},{text: "Roughness", value: "roughness"},{text: "Roughness Map (texture)", value: "roughnessMap"},{text: "Emissive Color", value: "emissive"},{text: "Emissive Intensity", value: "emissiveIntensity"},{text: "Emissive Map (texture)", value: "emissiveMap"},{text: "Normal Map (texture)", value: "normalMap"},{text: "Normal Scale (v2)", value: "normalScale"},{text: "Wireframe?", value: "wireframe"},
-            ]},
+    "alphaMap","anisotropy","anisotropyMap","anisotropyRotation","aoMap","aoMapIntensity","attenuationColor","attenuationDistance","bumpMap","bumpScale","clearcoat","clearcoatMap","clearcoatNormalMap","clearcoatNormalScale","clearcoatRoughness","clearcoatRoughnessMap","color","combine","displacementBias","displacementMap","displacementScale","emissive","emissiveIntensity","emissiveMap","envMap","envMapIntensity","envMapRotation","flatShading","fog","ior","iridescence","iridescenceIOR","iridescenceMap","iridescenceThicknessMap","iridescenceThicknessRange","lightMap","lightMapIntensity","map","metalness","metalnessMap","normalMap","normalMapType","normalScale","reflectivity","refractionRatio","roughness","roughnessMap","sheen","sheenColor","sheenColorMap","sheenRoughness","sheenRoughnessMap","shininess","specular","specularColor","specularColorMap","specularIntensity","specularIntensityMap","specularMap","thickness","thicknessMap","transmission","transmissionMap", "wireframe","wireframeLinecap","wireframeLinejoin", "wireframeLinewidth"
+]},
             blendModes: {acceptReporters: false, items: [
               { text: "No Blending", value: "NoBlending" },{ text: "Normal Blending", value: "NormalBlending" },{ text: "Additive Blending", value: "AdditiveBlending" },{ text: "Subtractive Blending", value: "SubtractiveBlending" },{ text: "Multiply Blending", value: "MultiplyBlending" },{ text: "Custom Blending", value: "CustomBlending" }
             ]},
@@ -1236,6 +1235,7 @@ constructor() {
             {opcode: "newFog", blockType: Scratch.BlockType.REPORTER, text: "New Fog [COLOR] [NEAR] [FAR]", arguments: {COLOR: {type: Scratch.ArgumentType.COLOR, defaultValue: "#9966ff", exemptFromNormalization: true}, NEAR: {type: Scratch.ArgumentType.NUMBER}, FAR: {type: Scratch.ArgumentType.NUMBER, defaultValue: 10}}},
             {opcode: "newTexture", blockType: Scratch.BlockType.REPORTER, text: "New Texture [COSTUME] [MODE] [STYLE] repeat [X][Y]", arguments: {COSTUME: {type: Scratch.ArgumentType.COSTUME}, MODE: {type: Scratch.ArgumentType.STRING, menu: "textureModes"},STYLE: {type: Scratch.ArgumentType.STRING, menu: "textureStyles"}, X: {type: Scratch.ArgumentType.NUMBER, defaultValue: 1},Y: {type: Scratch.ArgumentType.NUMBER,defaultValue: 1}}},
             {opcode: "newCubeTexture", blockType: Scratch.BlockType.REPORTER, text: "New Cube Texture X+[COSTUMEX0]X-[COSTUMEX1]Y+[COSTUMEY0]Y-[COSTUMEY1]Z+[COSTUMEZ0]Z-[COSTUMEZ1] [MODE] [STYLE] repeat [X][Y]", arguments: {"COSTUMEX0": {type: Scratch.ArgumentType.COSTUME},"COSTUMEX1": {type: Scratch.ArgumentType.COSTUME},"COSTUMEY0": {type: Scratch.ArgumentType.COSTUME},"COSTUMEY1": {type: Scratch.ArgumentType.COSTUME},"COSTUMEZ0": {type: Scratch.ArgumentType.COSTUME},"COSTUMEZ1": {type: Scratch.ArgumentType.COSTUME}, MODE: {type: Scratch.ArgumentType.STRING, menu: "textureModes"},STYLE: {type: Scratch.ArgumentType.STRING, menu: "textureStyles"}, X: {type: Scratch.ArgumentType.NUMBER,defaultValue: 1},Y: {type: Scratch.ArgumentType.NUMBER,defaultValue: 1}}},
+            {opcode: "newEquirectangularTexture", blockType: Scratch.BlockType.REPORTER, text: "New Equirectangular Texture [COSTUME] [MODE]", arguments: {COSTUME: {type: Scratch.ArgumentType.COSTUME}, MODE: {type: Scratch.ArgumentType.STRING, menu: "textureModes"}}},
             "---",
             {opcode: "curve", extensions: ["colours_data_lists"], blockType: Scratch.BlockType.REPORTER, text: "generate curve [TYPE] from points [POINTS], closed: [CLOSED]", arguments: {TYPE: {type: Scratch.ArgumentType.STRING, menu: "curveTypes"}, POINTS: {type: Scratch.ArgumentType.STRING, defaultValue: "[0,3,0] [2.5,-1.5,0] [-2.5,-1.5,0]"}, CLOSED: {type: Scratch.ArgumentType.STRING, defaultValue: "true"}}},
             "---",
@@ -1300,7 +1300,7 @@ constructor() {
         return JSON.stringify([pos.x, pos.y, pos.z])
     }
 
-directionTo(args) {
+  directionTo(args) {
   const v3 = new THREE.Vector3(...JSON.parse(args.V3))
   const toV3 = new THREE.Vector3(...JSON.parse(args.T3))
 
@@ -1312,7 +1312,7 @@ directionTo(args) {
 
   // Roll always 0
   return JSON.stringify([180+THREE.MathUtils.radToDeg(pitch),THREE.MathUtils.radToDeg(yaw),0])
-}
+  }
 
     newFog(args) {
         return new THREE.Fog(args.COLOR, args.NEAR, args.FAR)
@@ -1320,7 +1320,7 @@ directionTo(args) {
     async newTexture(args) {
       const textureURI = encodeCostume(args.COSTUME)
       const texture = await new THREE.TextureLoader().loadAsync(textureURI);
-      texture.name = args.COSTUME;
+      texture.name = args.COSTUME
 
       setTexutre(texture, args.MODE, args.STYLE, args.X, args.Y)
       return texture;
@@ -1333,6 +1333,15 @@ directionTo(args) {
       texture.name = "CubeTexture" + args.COSTUMEX0;
 
       setTexutre(texture, args.MODE, args.STYLE, args.X, args.Y)
+      return texture;
+    }
+    async newEquirectangularTexture(args) {
+      const textureURI = encodeCostume(args.COSTUME)
+      const texture = await new THREE.TextureLoader().loadAsync(textureURI);
+      texture.name = args.COSTUME
+      texture.mapping = THREE.EquirectangularReflectionMapping
+
+      setTexutre(texture, args.MODE)
       return texture;
     }
 
