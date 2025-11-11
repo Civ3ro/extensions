@@ -594,7 +594,9 @@ constructor() {
     }
     setCamera(args) {
       getObject(args.CAMERA)
-      object[args.PROPERTY].set(...JSON.parse(args.VALUE));
+      console.log(object)
+      object[args.PROPERTY] = args.VALUE
+      object.updateProjectionMatrix()
     }
     getCamera(args) {
       getObject(args.CAMERA)
