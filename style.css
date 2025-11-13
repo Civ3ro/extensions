@@ -1,0 +1,33 @@
+body {
+    background-color: #222222;
+}
+h1, p, div {
+  color: white;
+  font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
+  text-align: center;
+  padding: 25px;
+}
+
+a:link {
+  color: rgb(85, 248, 180);
+  background-color: transparent;
+  text-decoration: none;
+}
+
+a:visited {
+  color: rgb(122, 229, 243);
+  background-color: transparent;
+  text-decoration: none;
+}
+
+a:hover {
+  color: rgb(0, 255, 157);
+  background-color: transparent;
+  text-decoration: underline;
+}
+
+a:active {
+  color: rgb(255, 213, 75);
+  background-color: transparent;
+  text-decoration: underline;
+}
