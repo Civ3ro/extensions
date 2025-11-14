@@ -1,11 +1,22 @@
 body {
-    background-color: #222222;
-}
-h1, p, div {
+  background-color: #222222;
+  background-image: url(/threeJSicon\ \(1\).svg);
+  background-position: center;
+  background-size: 40%;
+  background-repeat: no-repeat;
+  background-blend-mode: overlay;
+  background-attachment: fixed;
   color: white;
   font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
   text-align: center;
   padding: 25px;
+}
+div {
+  background-color: #333;
+  padding: 20px;
+  width: max-content;
+  object-position: center;
+  margin: auto;
 }
 
 a:link {
