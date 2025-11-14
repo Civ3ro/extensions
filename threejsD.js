@@ -13,6 +13,8 @@
   if (!Scratch.extensions.unsandboxed) {
     throw new Error("Three-D extension must run unsandboxed");
   }
+  if (Scratch.vm.extensionManager._loadedExtensions.has("threejsExtension")) return
+
 
   const vm = Scratch.vm;
   const runtime = vm.runtime
@@ -27,10 +29,13 @@
   let isMouseDown = { left: false, middle: false, right: false }
   let prevMouse = { left: false, middle: false, right: false }
 
+  let lastWidth = 0
+  let lastHeight = 0
+
   let THREE
     let clock
     let running
-    let ready
+    let ready = false
     let loopId
   //Addons
   let GLTFLoader
@@ -87,8 +92,16 @@
     }
     function removeObject(name) {
       getObject(name)
+      if (!object) return
+
       scene.remove(object)
-      object.rigidbody ? physicsWorld.removeRigidBody(object.rigidBody) : null
+
+      if (object.rigidBody) {
+        physicsWorld.removeCollider(object.collider, true)
+        physicsWorld.removeRigidBody(object.rigidBody, true)
+        object.rigidBody = null
+        object.collider = null
+      }
     }
     function getObject(name, isNew) {
       object = null
@@ -182,6 +195,15 @@ function getMouseNDC(event) {
   const x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
   const y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
   return [x, y];
+}
+function checkCanvasSize() {
+  const { width, height } = renderer.canvas
+  if (width !== lastWidth || height !== lastHeight) {
+    lastWidth = width
+    lastHeight = height
+    resize()
+  }
+  requestAnimationFrame(checkCanvasSize) //rerun next frame
 }
 //physics
 function computeWorldBoundingBox(mesh) {
@@ -337,7 +359,6 @@ async function load() {
         depth: true
       })
       threeRenderer.setPixelRatio(window.devicePixelRatio)
-      threeRenderer.setSize(renderer.canvas.width * 1, renderer.canvas.height * 1)
       threeRenderer.outputColorSpace = THREE.SRGBColorSpace // correct colors
       threeRenderer.toneMapping = THREE.ACESFilmicToneMapping // HDR look (test)
       //threeRenderer.toneMappingExposure = 1.0 //(test)
@@ -351,11 +372,12 @@ async function load() {
       
       // Example: create a composer
       composer = new EffectComposer(threeRenderer, {frameBufferType: THREE.HalfFloatType})
-      composer.setSize(renderer.canvas.width * 1, renderer.canvas.height * 1)
 
-      renderer.addOverlay( threeRenderer.domElement, "scale" )
+      renderer.addOverlay( threeRenderer.domElement, "manual" )
       renderer.addOverlay(renderer.canvas, "manual")
       renderer.setBackgroundColor(1, 1, 1, 0)
+
+      resize()
 
       window.addEventListener("mousedown", e => {
         if (e.button === 0) isMouseDown.left = true
@@ -380,6 +402,8 @@ async function load() {
         startRenderLoop()
         runtime.on('PROJECT_START', () => startRenderLoop())
         runtime.on('PROJECT_STOP_ALL', () => stopLoop())
+        runtime.on('STAGE_SIZE_CHANGED', () => {requestAnimationFrame(() => resize())})
+        if (!runtime.isPackaged) checkCanvasSize() //only in editor
     }
   }
 function startRenderLoop() {
@@ -418,10 +442,23 @@ function startRenderLoop() {
   loopId = requestAnimationFrame(loop)
 }
 
-class threejsExtension {
-constructor() {
-  load()
+function resize() {
+  console.log("hey!")
+  const w = renderer.canvas.width
+  const h = renderer.canvas.height
+
+  threeRenderer.setSize(w, h)
+  composer.setSize(w, h)
+  
+  if (camera) {
+  camera.aspect = w / h
+  camera.updateProjectionMatrix()
 }
+}
+
+Promise.resolve(load()).then(() => {
+
+  class threejsExtension {
     getInfo() {
       return {
         id: "threejsExtension",
@@ -464,7 +501,7 @@ constructor() {
         `)
     }
     alerts() {alerts = !alerts; alerts ? alert("Alerts have been enabled!") : alert("Alerts have been disabled!")}
-}
+  }
   Scratch.extensions.register(new threejsExtension())
 
   class ThreeRenderer {
@@ -624,8 +661,9 @@ constructor() {
             {opcode: "addObject", blockType: Scratch.BlockType.COMMAND, text: "add object [OBJECT3D] [TYPE] to [GROUP]", arguments: {GROUP: {type: Scratch.ArgumentType.STRING, defaultValue: "scene"},TYPE: {type: Scratch.ArgumentType.STRING, menu: "objectTypes"},OBJECT3D: {type: Scratch.ArgumentType.STRING, defaultValue: "myObject"}}},
             {opcode: "cloneObject", blockType: Scratch.BlockType.COMMAND, text: "clone object [OBJECT3D] as [NAME] & add to [GROUP]", arguments: {GROUP: {type: Scratch.ArgumentType.STRING, defaultValue: "scene"},NAME: {type: Scratch.ArgumentType.STRING, defaultValue: "myClone"},OBJECT3D: {type: Scratch.ArgumentType.STRING, defaultValue: "myObject"}}},
             "---",
-            {opcode: "setObject", blockType: Scratch.BlockType.COMMAND, text: "set [PROPERTY] of object [OBJECT3D] to [NAME]", arguments: {OBJECT3D: {type: Scratch.ArgumentType.STRING, defaultValue: "myObject"}, PROPERTY: {type: Scratch.ArgumentType.STRING, menu: "objectProperties"}, NAME: {type: Scratch.ArgumentType.STRING, defaultValue: "myMaterial"}}},
+            {opcode: "setObject", blockType: Scratch.BlockType.COMMAND, text: "set [PROPERTY] of object [OBJECT3D] to [NAME]", arguments: {OBJECT3D: {type: Scratch.ArgumentType.STRING, defaultValue: "myObject"}, PROPERTY: {type: Scratch.ArgumentType.STRING, menu: "objectProperties"}, NAME: {type: Scratch.ArgumentType.STRING, defaultValue: "myGeometry"}}},
             {opcode: "getObject", blockType: Scratch.BlockType.REPORTER, text: "get [PROPERTY] of object [OBJECT3D]", arguments: {OBJECT3D: {type: Scratch.ArgumentType.STRING, defaultValue: "myObject"}, PROPERTY: {type: Scratch.ArgumentType.STRING, menu: "objectProperties"}}},
+            {opcode: "objectE", blockType: Scratch.BlockType.BOOLEAN, text: "is there an object [NAME]?", arguments: {NAME: {type: Scratch.ArgumentType.STRING, defaultValue: "myObject"}}},
             "---",
             {opcode: "removeObject", blockType: Scratch.BlockType.COMMAND, text: "remove object [OBJECT3D] from scene", arguments: {OBJECT3D: {type: Scratch.ArgumentType.STRING, defaultValue: "myObject"}}},
 
@@ -637,7 +675,7 @@ constructor() {
 
             {blockType: Scratch.BlockType.LABEL, text: "↳ Materials"},
             {opcode: "newMaterial",extensions: ["colours_looks"], blockType: Scratch.BlockType.COMMAND, text: "new material [NAME] [TYPE]", arguments: {NAME: {type: Scratch.ArgumentType.STRING, defaultValue: "myMaterial"}, TYPE: {type: Scratch.ArgumentType.STRING, menu: "materialTypes", defaultValue: "MeshStandardMaterial"}}},
-            {opcode: "materialE",extensions: ["colours_looks"], blockType: Scratch.BlockType.REPORTER, text: "is there a material [NAME]?", arguments: {NAME: {type: Scratch.ArgumentType.STRING, defaultValue: "myMaterial"}}},
+            {opcode: "materialE",extensions: ["colours_looks"], blockType: Scratch.BlockType.BOOLEAN, text: "is there a material [NAME]?", arguments: {NAME: {type: Scratch.ArgumentType.STRING, defaultValue: "myMaterial"}}},
             {opcode: "removeMaterial",extensions: ["colours_looks"], blockType: Scratch.BlockType.COMMAND, text: "remove material [NAME]", arguments: {NAME: {type: Scratch.ArgumentType.STRING, defaultValue: "myMaterial"}}},
             {opcode: "setMaterial",extensions: ["colours_looks"], blockType: Scratch.BlockType.COMMAND, text: "set material [PROPERTY] of [NAME] to [VALUE]", arguments: {PROPERTY: {type: Scratch.ArgumentType.STRING, menu: "materialProperties"},NAME: {type: Scratch.ArgumentType.STRING, defaultValue: "myMaterial"}, VALUE: {type: Scratch.ArgumentType.STRING, defaultValue: "new Color()", exemptFromNormalization: true}}},
             {opcode: "setBlending",extensions: ["colours_looks"], blockType: Scratch.BlockType.COMMAND, text: "set material [NAME] blending to [VALUE]", arguments: {NAME: {type: Scratch.ArgumentType.STRING, defaultValue: "myMaterial"}, VALUE: {type: Scratch.ArgumentType.STRING, menu: "blendModes"}}},
@@ -645,7 +683,7 @@ constructor() {
             
             {blockType: Scratch.BlockType.LABEL, text: "↳ Geometries"},
             {opcode: "newGeometry",extensions: ["colours_data_lists"], blockType: Scratch.BlockType.COMMAND, text: "new geometry [NAME] [TYPE]", arguments: {NAME: {type: Scratch.ArgumentType.STRING, defaultValue: "myGeometry"}, TYPE: {type: Scratch.ArgumentType.STRING, menu: "geometryTypes", defaultValue: "BoxGeometry"}}},
-            {opcode: "geometryE",extensions: ["colours_data_lists"], blockType: Scratch.BlockType.REPORTER, text: "is there a geometry [NAME]?", arguments: {NAME: {type: Scratch.ArgumentType.STRING, defaultValue: "myGeometry"}}},
+            {opcode: "geometryE",extensions: ["colours_data_lists"], blockType: Scratch.BlockType.BOOLEAN, text: "is there a geometry [NAME]?", arguments: {NAME: {type: Scratch.ArgumentType.STRING, defaultValue: "myGeometry"}}},
             {opcode: "removeGeometry",extensions: ["colours_data_lists"], blockType: Scratch.BlockType.COMMAND, text: "remove geometry [NAME]", arguments: {NAME: {type: Scratch.ArgumentType.STRING, defaultValue: "myGeometry"}, TYPE: {type: Scratch.ArgumentType.STRING, menu: "geometryTypes", defaultValue: "BoxGeometry"}}},
             {opcode: "splines", extensions: ["colours_data_lists"], blockType: Scratch.BlockType.COMMAND, text: "create spline [NAME] from curve [CURVE]", arguments: {NAME: {type: Scratch.ArgumentType.STRING, defaultValue: "mySpline"}, CURVE: {type: Scratch.ArgumentType.STRING, defaultValue: "[curve]", exemptFromNormalization: true}}},
             {opcode: "splineModel", extensions: ["colours_operators"], blockType: Scratch.BlockType.COMMAND, text: "create (geometry&material) spline [NAME] using model [MODEL] along curve [CURVE] with spacing [SPACING]", arguments: {NAME: {type: Scratch.ArgumentType.STRING, defaultValue: "mySpline"}, MODEL: {type: Scratch.ArgumentType.STRING, menu: "modelsList"}, CURVE: {type: Scratch.ArgumentType.STRING, defaultValue: "[curve]", exemptFromNormalization: true}, SPACING: {type: Scratch.ArgumentType.NUMBER, defaultValue: 1}}},
@@ -658,7 +696,7 @@ constructor() {
                 {text: "Positon", value: "position"},{text: "Rotation", value: "rotation"},{text: "Scale", value: "scale"},{text: "Facing Direction (.up)", value: "up"}
             ]},
             objectProperties: {acceptReporters: false, items: [
-              {text: "Material", value: "material"},{text: "Geometry", value: "geometry"},{text: "Visible (true/false)", value: "visible"},
+              {text: "Geometry", value: "geometry"},{text: "Material", value: "material"},{text: "Visible (true/false)", value: "visible"},
             ]},
             objectTypes: { acceptReporters: false, items: [
               { text: "Mesh", value: "Mesh" }, { text: "Sprite", value: "Sprite" }, { text: "Points", value: "Points" }, { text: "Line", value: "Line" }, { text: "Group", value: "Group" }
@@ -819,6 +857,9 @@ constructor() {
     }
     removeObject(args) {
       removeObject(args.OBJECT3D)
+    }
+    objectE(args) {
+      return scene.children.map(o => o.name).includes(args.NAME)
     }
 
 //defines
@@ -1840,6 +1881,6 @@ constructor() {
 
     }
   Scratch.extensions.register(new RapierPhysics())
-
+  })
 
 })(Scratch);
