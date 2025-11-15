@@ -1,6 +1,6 @@
 body {
   background-color: #222222;
-  background-image: url(threeJSicon.svg);
+  background-image: url(Images/threeJSicon.svg);
   background-position: center;
   background-size: 40%;
   background-repeat: no-repeat;
@@ -14,7 +14,7 @@ body {
 div {
   background-color: #333;
   padding: 20px;
-  width: max-content;
+  width: 50%;
   object-position: center;
   margin: auto;
 }
@@ -41,4 +41,11 @@ a:active {
   color: rgb(255, 213, 75);
   background-color: transparent;
   text-decoration: underline;
+}
+
+img {
+    max-width: 300px;
+    max-height: 300px;
+    min-width: 300px;
+    min-height: 300px;
 }
