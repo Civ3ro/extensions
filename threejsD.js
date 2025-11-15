@@ -1122,140 +1122,6 @@ Promise.resolve(load()).then(() => {
   }
   Scratch.extensions.register(new ThreeLights())
 
-  class ThreeGLB {
-    getInfo() {
-      return {
-        id: "threeGLB",
-        name: "Three GLB Loader",
-        color1: "#c53838ff",
-        color2: "#222222",
-        color3: "#222222",
-
-        blocks: [
-          {blockType: Scratch.BlockType.BUTTON, text: "Load GLB File", func: "loadModelFile"},
-            {opcode: "addModel", blockType: Scratch.BlockType.COMMAND, text: "add [ITEM] as [NAME] to [GROUP]", arguments: {GROUP: {type: Scratch.ArgumentType.STRING, defaultValue: "scene"},ITEM: {type: Scratch.ArgumentType.STRING, menu: "modelsList"}, NAME: {type: Scratch.ArgumentType.STRING, defaultValue: "myModel"}}},
-            {opcode: "getModel", blockType: Scratch.BlockType.REPORTER, text: "get object [PROPERTY] of [NAME]", arguments: {NAME: {type: Scratch.ArgumentType.STRING, defaultValue: "myModel"}, PROPERTY: {type: Scratch.ArgumentType.STRING, menu: "modelProperties"}}},
-            {opcode: "playAnimation", blockType: Scratch.BlockType.COMMAND, text: "play animation [ANAME] of [NAME], [TIMES] times", arguments: {TIMES: {type: Scratch.ArgumentType.NUMBER, defaultValue: "0"}, NAME: {type: Scratch.ArgumentType.STRING, defaultValue: "myModel"}, ANAME: {type: Scratch.ArgumentType.STRING, defaultValue: "walk",exemptFromNormalization: true}}},
-            {opcode: "pauseAnimation", blockType: Scratch.BlockType.COMMAND, text: "set [TOGGLE] animation [ANAME] of [NAME]", arguments: {TOGGLE: {type: Scratch.ArgumentType.NUMBER, menu: "pauseUn"}, NAME: {type: Scratch.ArgumentType.STRING, defaultValue: "myModel"}, ANAME: {type: Scratch.ArgumentType.STRING, defaultValue: "walk",exemptFromNormalization: true}}},
-            {opcode: "stopAnimation", blockType: Scratch.BlockType.COMMAND, text: "stop animation [ANAME] of [NAME]", arguments: {NAME: {type: Scratch.ArgumentType.STRING, defaultValue: "myModel"}, ANAME: {type: Scratch.ArgumentType.STRING, defaultValue: "walk",exemptFromNormalization: true}}},
-
-        ],
-        menus: {
-            modelProperties: {acceptReporters: false, items: [
-              {text: "Animations", value: "animations"},
-            ]},
-            pauseUn: {acceptReporters: true, items: [{text: "Pause", value: "true"},{text: "Unpasue", value: "false"},]},
-            modelsList: {acceptReporters: false, items: () => {
-              const stage = runtime.getTargetForStage();
-              if (!stage) return ["(loading...)"];
-
-                // @ts-ignore
-                const models = Scratch.vm.runtime.getTargetForStage().getSounds().filter(e => e.name && e.name.endsWith('.glb'))
-                if (models.length < 1) return [["Load a model!"]]
-                  
-                  // @ts-ignore
-                  return models.map( m =>  [m.name] )
-            }},
-        }
-      }}
-
-    async loadModelFile() {
-
-      openFileExplorer(".glb").then(files => {
-        const file = files[0];
-        const reader = new FileReader();
-
-        reader.onload = async (e) => {
-          const arrayBuffer = e.target.result;
-          
-        { // From lily's assets
-
-              // Thank you PenguinMod for providing this code.
-          {
-            const targetId = runtime.getTargetForStage().id; //util.target.id not working!
-            const assetName = Cast.toString(file.name);
-
-            //const res = await Scratch.fetch(args.URL);
-            //const buffer = await res.arrayBuffer();
-            const buffer = arrayBuffer
-
-            const storage = runtime.storage;
-            const asset = storage.createAsset(
-              storage.AssetType.Sound,
-              storage.DataFormat.MP3,
-              // @ts-ignore
-              new Uint8Array(buffer),
-              null,
-              true
-            );
-
-            try {
-              await vm.addSound(
-                // @ts-ignore
-                {
-                  asset,
-                  md5: asset.assetId + "." + asset.dataFormat,
-                  name: assetName,
-                },
-                targetId
-              );
-              alert("Model loaded successfully!");
-            } catch (e) {
-              console.error(e);
-              alert("Error loading model.");
-            }
-          }
-          // End of PenguinMod
-        }
-        };
-
-        reader.readAsArrayBuffer(file);
-      })
-
-    }
-    async addModel(args) {
-      const group = await getModel(args.ITEM, args.NAME)
-
-      createObject(args.NAME, group, args.GROUP)
-    }
-    getModel(args){
-      if (!models[args.NAME]) return;
-      return Object.keys(models[args.NAME].actions).toString()
-    }
-
-    playAnimation(args) {
-      const model = models[args.NAME]
-      if (!model) {console.log("no model!"); return}
-
-      const action = model.actions[args.ANAME] //clones of models dont have a stored actions!
-      if (!action) {
-        console.log("no action!")
-        return
-      }
-
-        args.TIMES > 0 ? action.setLoop(THREE.LoopRepeat, args.TIMES) : action.setLoop(THREE.LoopRepeat, Infinity)
-
-      action.reset()
-        .play()
-    }
-    stopAnimation(args) {
-      const model = models[args.NAME];
-      if (!model) return;
-
-      const action = model.actions[args.ANAME];
-      if (action) action.stop();
-    }
-    pauseAnimation(args) {
-      const model = models[args.NAME];
-      if (!model) return;
-
-      const action = model.actions[args.ANAME];
-      if (action) action.paused = args.TOGGLE
-    }
-
-  }
-  Scratch.extensions.register(new ThreeGLB()) //create a group then add the loaded glb there? so no errors while loading.
-
   class ThreeUtilities {
     getInfo() {
       return {
@@ -1437,6 +1303,140 @@ Promise.resolve(load()).then(() => {
 
   }
   Scratch.extensions.register(new ThreeUtilities())
+
+  class ThreeGLB {
+    getInfo() {
+      return {
+        id: "threeGLB",
+        name: "Three GLB Loader",
+        color1: "#c53838ff",
+        color2: "#222222",
+        color3: "#222222",
+
+        blocks: [
+          {blockType: Scratch.BlockType.BUTTON, text: "Load GLB File", func: "loadModelFile"},
+            {opcode: "addModel", blockType: Scratch.BlockType.COMMAND, text: "add [ITEM] as [NAME] to [GROUP]", arguments: {GROUP: {type: Scratch.ArgumentType.STRING, defaultValue: "scene"},ITEM: {type: Scratch.ArgumentType.STRING, menu: "modelsList"}, NAME: {type: Scratch.ArgumentType.STRING, defaultValue: "myModel"}}},
+            {opcode: "getModel", blockType: Scratch.BlockType.REPORTER, text: "get object [PROPERTY] of [NAME]", arguments: {NAME: {type: Scratch.ArgumentType.STRING, defaultValue: "myModel"}, PROPERTY: {type: Scratch.ArgumentType.STRING, menu: "modelProperties"}}},
+            {opcode: "playAnimation", blockType: Scratch.BlockType.COMMAND, text: "play animation [ANAME] of [NAME], [TIMES] times", arguments: {TIMES: {type: Scratch.ArgumentType.NUMBER, defaultValue: "0"}, NAME: {type: Scratch.ArgumentType.STRING, defaultValue: "myModel"}, ANAME: {type: Scratch.ArgumentType.STRING, defaultValue: "walk",exemptFromNormalization: true}}},
+            {opcode: "pauseAnimation", blockType: Scratch.BlockType.COMMAND, text: "set [TOGGLE] animation [ANAME] of [NAME]", arguments: {TOGGLE: {type: Scratch.ArgumentType.NUMBER, menu: "pauseUn"}, NAME: {type: Scratch.ArgumentType.STRING, defaultValue: "myModel"}, ANAME: {type: Scratch.ArgumentType.STRING, defaultValue: "walk",exemptFromNormalization: true}}},
+            {opcode: "stopAnimation", blockType: Scratch.BlockType.COMMAND, text: "stop animation [ANAME] of [NAME]", arguments: {NAME: {type: Scratch.ArgumentType.STRING, defaultValue: "myModel"}, ANAME: {type: Scratch.ArgumentType.STRING, defaultValue: "walk",exemptFromNormalization: true}}},
+
+        ],
+        menus: {
+            modelProperties: {acceptReporters: false, items: [
+              {text: "Animations", value: "animations"},
+            ]},
+            pauseUn: {acceptReporters: true, items: [{text: "Pause", value: "true"},{text: "Unpasue", value: "false"},]},
+            modelsList: {acceptReporters: false, items: () => {
+              const stage = runtime.getTargetForStage();
+              if (!stage) return ["(loading...)"];
+
+                // @ts-ignore
+                const models = Scratch.vm.runtime.getTargetForStage().getSounds().filter(e => e.name && e.name.endsWith('.glb'))
+                if (models.length < 1) return [["Load a model!"]]
+                  
+                  // @ts-ignore
+                  return models.map( m =>  [m.name] )
+            }},
+        }
+      }}
+
+    async loadModelFile() {
+
+      openFileExplorer(".glb").then(files => {
+        const file = files[0];
+        const reader = new FileReader();
+
+        reader.onload = async (e) => {
+          const arrayBuffer = e.target.result;
+          
+        { // From lily's assets
+
+              // Thank you PenguinMod for providing this code.
+          {
+            const targetId = runtime.getTargetForStage().id; //util.target.id not working!
+            const assetName = Cast.toString(file.name);
+
+            //const res = await Scratch.fetch(args.URL);
+            //const buffer = await res.arrayBuffer();
+            const buffer = arrayBuffer
+
+            const storage = runtime.storage;
+            const asset = storage.createAsset(
+              storage.AssetType.Sound,
+              storage.DataFormat.MP3,
+              // @ts-ignore
+              new Uint8Array(buffer),
+              null,
+              true
+            );
+
+            try {
+              await vm.addSound(
+                // @ts-ignore
+                {
+                  asset,
+                  md5: asset.assetId + "." + asset.dataFormat,
+                  name: assetName,
+                },
+                targetId
+              );
+              alert("Model loaded successfully!");
+            } catch (e) {
+              console.error(e);
+              alert("Error loading model.");
+            }
+          }
+          // End of PenguinMod
+        }
+        };
+
+        reader.readAsArrayBuffer(file);
+      })
+
+    }
+    async addModel(args) {
+      const group = await getModel(args.ITEM, args.NAME)
+
+      createObject(args.NAME, group, args.GROUP)
+    }
+    getModel(args){
+      if (!models[args.NAME]) return;
+      return Object.keys(models[args.NAME].actions).toString()
+    }
+
+    playAnimation(args) {
+      const model = models[args.NAME]
+      if (!model) {console.log("no model!"); return}
+
+      const action = model.actions[args.ANAME] //clones of models dont have a stored actions!
+      if (!action) {
+        console.log("no action!")
+        return
+      }
+
+        args.TIMES > 0 ? action.setLoop(THREE.LoopRepeat, args.TIMES) : action.setLoop(THREE.LoopRepeat, Infinity)
+
+      action.reset()
+        .play()
+    }
+    stopAnimation(args) {
+      const model = models[args.NAME];
+      if (!model) return;
+
+      const action = model.actions[args.ANAME];
+      if (action) action.stop();
+    }
+    pauseAnimation(args) {
+      const model = models[args.NAME];
+      if (!model) return;
+
+      const action = model.actions[args.ANAME];
+      if (action) action.paused = args.TOGGLE
+    }
+
+  }
+  Scratch.extensions.register(new ThreeGLB())
 
   class ThreeAddons {
     getInfo() {

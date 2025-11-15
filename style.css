@@ -12,7 +12,7 @@ body {
   padding: 25px;
 }
 div {
-  background-color: #333;
+  background-color: #11111155;
   padding: 20px;
   width: 50%;
   object-position: center;
@@ -48,4 +48,16 @@ img {
     max-height: 300px;
     min-width: 300px;
     min-height: 300px;
+}
+
+ol {
+    text-align: left;
+    background-color: #11111155;
+    padding: 20px;
+    width: 200px;
+    padding-left: 100px;
+    
+    
+    object-position: center;
+    margin: auto;
 }
