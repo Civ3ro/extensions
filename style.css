@@ -1,6 +1,6 @@
 body {
   background-color: #222222;
-  background-image: url(Images/threeJSicon.svg);
+  background-image: url(Assets/Images/threeJSicon.svg);
   background-position: center;
   background-size: 40%;
   background-repeat: no-repeat;
@@ -10,13 +10,36 @@ body {
   font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
   text-align: center;
   padding: 25px;
+  object-position: center;
 }
-div {
+
+pre[class*="language-"] {
+  background: #1118 !important;
+  font-size: small !important;
+  text-align: start;
+  padding: 8px !important;
+  border-radius: 8px;
+}
+
+table, th, td {
+    background-color: #2228;
+    border: 1px solid #fff;
+    border-collapse: collapse;
+    padding: 10px;
+    margin: auto;
+    width: 60%;
+}
+td {
+    text-align: start;
+}
+
+div:not(.scratchblocks) {
   background-color: #11111155;
   padding: 20px;
   width: 50%;
   object-position: center;
   margin: auto;
+  margin-top: 10px;
 }
 
 a:link {
@@ -44,10 +67,8 @@ a:active {
 }
 
 img {
-    max-width: 300px;
-    max-height: 300px;
-    min-width: 300px;
-    min-height: 300px;
+    height: 300px;
+    padding: 20px;
 }
 
 ol {

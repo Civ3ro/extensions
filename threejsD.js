@@ -1,11 +1,8 @@
-// Name: Three JS
+// Name: Extra 3D
 // ID: threejsExtension
 // Description: Use three js inside Turbowarp! A 3D graphics library. 
-// By: me <https://scratch.mit.edu/users/civero/>
-// License: MIT License Copyright (c) 2021-2024 TurboWarp Extensions Contributors 
-// Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
-//The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software. 
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+// By: Civero <https://scratch.mit.edu/users/civero/> <https://civero.itch.io> <https://civ3ro.github.io/extensions>
+// License: MIT License Copyright (c) 2021-2024 TurboWarp Extensions Contributors
 
 (function (Scratch) {
   "use strict";
@@ -417,10 +414,10 @@ function startRenderLoop() {
       physicsWorld.step()
 
       scene.children.forEach(obj => {
-        if (!(obj.isMesh) || !(obj.physics)) return;
+        if (!(obj.isMesh) || !(obj.physics)) return
         if (obj.rigidBody) {
-            obj.position.copy(obj.rigidBody.translation());
-            obj.quaternion.copy(obj.rigidBody.rotation());
+            obj.position.copy(obj.rigidBody.translation())
+            obj.quaternion.copy(obj.rigidBody.rotation())
         }
       })
 
@@ -443,7 +440,6 @@ function startRenderLoop() {
 }
 
 function resize() {
-  console.log("hey!")
   const w = renderer.canvas.width
   const h = renderer.canvas.height
 
@@ -455,7 +451,7 @@ function resize() {
   camera.updateProjectionMatrix()
 }
 }
-
+//wait until all packages are loaded
 Promise.resolve(load()).then(() => {
 
   class threejsExtension {
@@ -467,6 +463,7 @@ Promise.resolve(load()).then(() => {
         color2: "#222222",
         color3: "#11cc99",
         menuIconURI,
+        blockIconURI: menuIconURI,
 
         blocks: [
             {blockType: Scratch.BlockType.BUTTON, text: "Show Docs", func: "openDocs"},
@@ -604,7 +601,7 @@ Promise.resolve(load()).then(() => {
 
         blocks: [
             {opcode: "addCamera", blockType: Scratch.BlockType.COMMAND, text: "add camera [TYPE] [CAMERA] to [GROUP]", arguments: {GROUP: {type: Scratch.ArgumentType.STRING, defaultValue: "scene"},CAMERA: {type: Scratch.ArgumentType.STRING, defaultValue: "myCamera"}, TYPE: {type: Scratch.ArgumentType.STRING, menu: "cameraTypes"}}},
-            {opcode: "setCamera", blockType: Scratch.BlockType.COMMAND, text: "set camera [PROPERTY] of [CAMERA] to [VALUE]", arguments: {CAMERA: {type: Scratch.ArgumentType.STRING, defaultValue: "myCamera"}, PROPERTY: {type: Scratch.ArgumentType.STRING, menu: "cameraProperties"}, VALUE: {type: Scratch.ArgumentType.STRING, defaultValue: "0", exemptFromNormalization: true}}},
+            {opcode: "setCamera", blockType: Scratch.BlockType.COMMAND, text: "set camera [PROPERTY] of [CAMERA] to [VALUE]", arguments: {CAMERA: {type: Scratch.ArgumentType.STRING, defaultValue: "myCamera"}, PROPERTY: {type: Scratch.ArgumentType.STRING, menu: "cameraProperties"}, VALUE: {type: Scratch.ArgumentType.STRING, defaultValue: "0.1", exemptFromNormalization: true}}},
             {opcode: "getCamera", blockType: Scratch.BlockType.REPORTER, text: "get camera [PROPERTY] of [CAMERA]", arguments: {CAMERA: {type: Scratch.ArgumentType.STRING, defaultValue: "myCamera"}, PROPERTY: {type: Scratch.ArgumentType.STRING, menu: "cameraProperties"}}},
             "---",
             {opcode: "renderSceneCamera", blockType: Scratch.BlockType.COMMAND, text: "set rendering camera to [CAMERA]", arguments: {CAMERA: {type: Scratch.ArgumentType.STRING, defaultValue: "myCamera"}}},

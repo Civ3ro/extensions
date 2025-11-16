@@ -3,9 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Three-D - Documentation</title>
+    <title>Extra 3D - Documentation</title>
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/prismjs/themes/prism-okaidia.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/prismjs/prism.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/prismjs/components/prism-javascript.min.js"></script>
+
     <link rel="stylesheet" href="../style.css">
+
     <link rel="icon" type="image/x-icon" href="../favicon.ico">
+    <script src="../Assets/scratchblocks.min.js"></script>
+
+    
 </head>
 <body>
 
@@ -33,8 +42,93 @@
     </ol>
     <hr>
     <h2 id="scene">Scene</h2><br>
+        <table>
+            <tr>
+                <th>Block</th>
+                <th>Definition</th>
+            </tr>
+            <tr>
+                <td> <code class="b">new Scene [scene]:: #4638c5</code></td>
+                <td>Creates a new scene. Resets current scene. Block to start. <br>
+                <pre><code class="language-javascript">new THREE.Scene()</code></pre></td>
+            </tr>
+            <tr>
+                <td> <code class="b">set Scene [Background v] to (new Color(#96f):: #3875c5):: #4638c5</code></td>
+                <td>Sets a property of the scene to a value.<br>
+                They can be set to a number or an object (texture, color).</td>
+            </tr>
+            <tr>
+                <td> <code class="b">(get Scene [Objects v]:: #4638c5)</code></td>
+                <td>Returns a property of the scene. An array of names.</td>
+            </tr>
+        </table>
+        <p style="font-size:  small;">*scene can be seen as a group, the parent group where everything goes.</p>
+
     <h2 id="camera">Camera</h2><br>
+        <table>
+            <tr>
+                <td> <code class="b">add camera [Perspective v] [myCamera] to [scene]:: #38c59b</code></td>
+                <td>Adds a camera to a group. At [0,0,3] in world space. <br>
+                By now, only Perspective Camera works.
+                <pre><code class="language-javascript">new THREE.PerspectiveCamera()</code></pre></td>
+            </tr>
+            <tr>
+                <td> <code class="b">set camera [Near v] of [myCamera] to (0.1):: #38c59b</code></td>
+                <td>Sets a property of a camera to a value. Number.</td>
+            </tr>
+            <tr>
+                <td> <code class="b">(get camera [Near v] of [myCamera]:: #38c59b)</code></td>
+                <td>Returns a property of a camera. Number.</td>
+            </tr>
+            <tr>
+                <td> <code class="b">set rendering camera to [myCamera]:: #38c59b</code></td>
+                <td>Asign the camera that will be used to render the scene.</td>
+            </tr>
+        </table>
+
     <h2 id="obj">3D Objects</h2><br>
+        <table>
+            <tr>
+                <td><code class="b">add object [myObject] [Mesh v] to [scene]:: #38c567</code></td>
+                <td>Adds an object of a specified type to a group. <br>
+                <pre><code class="language-javascript"> new THREE.Mesh()</code></pre> <br>
+                </td>
+            </tr>
+        </table>
+
+        <div style="text-align: left;"><b>Object Types:</b><br>
+        <ul>
+            <li><b>Mesh</b>: <i>A renderable 3D object that combines geometry + material.</i></li>
+            <li><b>Sprite</b>: <i>A 2D element that always faces the camera.</i></li>
+            <li><b>Line</b>: <i>A sequence of connected vertices rendered as a continuous line.</i></li>
+            <li><b>Points</b>: <i>A point-cloud object where each vertex is rendered as a particle.</i></li>
+            <li><b>Group</b>: <i>A container for organizing multiple objects under one transform.</i></li>
+        </ul>
+        </div>
+
+        <table>
+            <tr>
+                <td><code class="b">clone object [myObject] as [myClone] & add to [scene]:: #38c567</code></td>
+                <td>Adds a copy of an already existing object to a group. <br> Same geometry, material and transforms.</td>
+            </tr>
+            <tr>
+                <td><code class="b">set [Geometry v] of object [myObject] to [myGeometry]:: #38c567</code></td>
+                <td>Asign an existing geometry to the object. <br> Crucial for rendering, to see something.</td>
+            </tr>
+            <tr>
+                <td><code class="b">(get [Geometry v] of object [myObject]:: #38c567)</code></td>
+                <td>Return the contents of the selected property of the object. Stringified JSON.</td>
+            </tr>
+            <tr>
+                <td><code class="b">&lt;is there an object [myObject]?:: #38c567&gt;</code></td>
+                <td>Check if the object exsits.</td>
+            </tr>
+            <tr>
+                <td><code class="b">remove object [myObject] from scene:: #38c567</code></td>
+                <td>Deletes the object from scene. Does not delete the geometry nor material.</td>
+            </tr>
+        </table>
+
         <h3 id="mat">Materials</h2><br>
         <h3 id="geo">Geometries</h2><br>
     <h2 id="light">Light</h2><br>
@@ -44,6 +138,19 @@
     <h2 id="orb">Orbit Control</h2><br>
     <h2 id="post">Post Procesing</h2><br>
     <h2 id="physics">Physics</h2><br>
+
+<script>
+    scratchblocks.renderMatching('pre.blocks', {
+        style:'scratch3',  // Optional, defaults to 'scratch2'.
+        scale: 1,         // Optional, defaults to 1
+    })
+
+    scratchblocks.renderMatching('code.b', {
+        inline: true,
+        style:'scratch3',  // Optional, defaults to 'scratch2'.
+        scale: 1,         // Optional, defaults to 1
+    })
+</script>
 
 </body>
 </html>
