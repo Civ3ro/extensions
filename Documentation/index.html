@@ -19,7 +19,7 @@
 <body>
 
     <h1>Documentation</h1>
-    <p>Here I'll explain how the blocks of my extension work. I would recommend taking a look at the <a href="https://threejs.org/docs/">Three JS documentation</a>. </p>
+    <p>Here I'll explain how the blocks of my extension work in relation of the Three JS functions and methods! I would recommend taking a look at the <a href="https://threejs.org/docs/">Three JS documentation</a>. </p>
     <hr>
     <h2>Guide</h2>
     <ol>
@@ -40,6 +40,7 @@
         </ul>
         <li><a href="#physics">Physics</a></li>    
     </ol>
+    <p>I'll be including tables with images of the blocks and some short descriptions. <br> Also tables, defining extra properties or the diferent types of concepts.</p>
     <hr>
     <h2 id="scene">Scene</h2><br>
         <table>
@@ -55,7 +56,7 @@
             <tr>
                 <td> <code class="b">set Scene [Background v] to (new Color(#96f):: #3875c5):: #4638c5</code></td>
                 <td>Sets a property of the scene to a value.<br>
-                They can be set to a number or an object (texture, color).</td>
+                They can be set to a number or an object <i>(Texture, Color)</i>.</td>
             </tr>
             <tr>
                 <td> <code class="b">(get Scene [Objects v]:: #4638c5)</code></td>
@@ -98,11 +99,11 @@
 
         <div style="text-align: left;"><b>Object Types:</b><br>
         <ul>
-            <li><b>Mesh</b>: <i>A renderable 3D object that combines geometry + material.</i></li>
-            <li><b>Sprite</b>: <i>A 2D element that always faces the camera.</i></li>
-            <li><b>Line</b>: <i>A sequence of connected vertices rendered as a continuous line.</i></li>
-            <li><b>Points</b>: <i>A point-cloud object where each vertex is rendered as a particle.</i></li>
-            <li><b>Group</b>: <i>A container for organizing multiple objects under one transform.</i></li>
+            <li><b><a href="https://threejs.org/docs/#Mesh" target="_blank">Mesh</a></b>: <i>A renderable 3D object that combines geometry + material.</i></li>
+            <br><li><b><a href="https://threejs.org/docs/#Sprite" target="_blank">Sprite</a></b>: <i>A 2D element that always faces the camera.</i></li>
+            <br><li><b><a href="https://threejs.org/docs/#Line" target="_blank">Line</a></b>: <i>A sequence of connected vertices rendered as a continuous line.</i></li>
+            <br><li><b><a href="https://threejs.org/docs/#Points" target="_blank">Points</a></b>: <i>A point-cloud object where each vertex is rendered as a particle.</i></li>
+            <br><li><b><a href="https://threejs.org/docs/#Group" target="_blank">Group</a></b>: <i>A container for organizing multiple objects under one transform.</i></li>
         </ul>
         </div>
 
@@ -121,16 +122,220 @@
             </tr>
             <tr>
                 <td><code class="b">&lt;is there an object [myObject]?:: #38c567&gt;</code></td>
-                <td>Check if the object exsits.</td>
+                <td>Check if the object exists.</td>
             </tr>
             <tr>
                 <td><code class="b">remove object [myObject] from scene:: #38c567</code></td>
                 <td>Deletes the object from scene. Does not delete the geometry nor material.</td>
             </tr>
+            <tr>
+                <td><code class="b">set transform [Position v] of [myObject] to [\[0,0,0\]]:: motion</code></td>
+                <td>Changes a transform of the object to a vector3.<br>Position, Rotation, Scale or Facing direction.<br>Rotation is done in YXZ order.</td>
+            </tr>
+            <tr>
+                <td><code class="b">(get [Position v] of [myObject]:: motion)</code></td>
+                <td>Returns a vector3 of a transform of the object.</td>
+            </tr>
         </table>
 
         <h3 id="mat">Materials</h2><br>
+        <table>
+            <tr>
+                <td><code class="b">new material [myMaterial] [Mesh Standard Material v]:: looks</code></td>
+                <td>Creates a material of a specified type.
+                    <pre><code class="language-javascript">new THREE.MeshStandardMaterial()</code></pre>
+                </td>
+            </tr>
+        </table>
+
+        <div style="text-align: left;"><b>Material Types:</b><br>
+        <ul>
+            <li><b><a href="https://threejs.org/docs/#MeshBasicMaterial" target="_blank">MeshBasicMaterial</a></b>: <i>Unlit. Ignores lights entirely. Use for UI meshes, skyboxes, constant-color objects, or when you want maximum performance.</i></li>
+            <br><li><b><a href="https://threejs.org/docs/#MeshStandardMaterial" target="_blank">MeshStandardMaterial</a></b>: <i>PBR with metalness/roughness workflow. Balanced quality/performance. Industry default for realistic surfaces.</i></li>
+            <br><li><b><a href="https://threejs.org/docs/#MeshPhysicalMaterial" target="_blank">MeshPhysicalMaterial</a></b>: <i>Extended PBR. Adds clearcoat, sheen, transmission, thickness, iridescence, advanced specular. Use for glass, car paint, fabrics, high-end realism.</i></li>
+            <br><li><b><a href="https://threejs.org/docs/#MeshLambertMaterial" target="_blank">MeshLambertMaterial</a></b>: <i>Old diffuse lighting using per-vertex Lambert shading. Cheap, soft lighting. Not physically accurate. Use only when you need fast lighting on low-poly meshes.</i></li>
+            <br><li><b><a href="https://threejs.org/docs/#MeshPhongMaterial" target="_blank">MeshPhongMaterial</a></b>: <i>Old specular + shininess model with per-pixel lighting. Glossier than Lambert but still outdated. Useful only for legacy workflows or if you want classic “Phong” plastic shine.</i></li>
+            <br><li><b><a href="https://threejs.org/docs/#MeshDepthMaterial" target="_blank">MeshDepthMaterial</a></b>: <i>Renders depth from the camera. Used internally for shadow maps or custom depth effects.</i></li>
+            <br><li><b><a href="https://threejs.org/docs/#MeshNormalMaterial" target="_blank">MeshNormalMaterial</a></b>: <i>Renders surface normals as RGB. Good for debugging geometry, checking UV seams, or generating stylized looks.</i></li>
+            <br><li><b><a href="https://threejs.org/docs/#MeshMatcapMaterial" target="_blank">MeshMatcapMaterial</a></b>: <i>Uses matcap texture to fake lighting with no actual lights. Super cheap and great for stylized renders, sculpting previews, toon models.</i></li>
+            <br><li><b><a href="https://threejs.org/docs/#MeshToonMaterial" target="_blank">MeshToonMaterial</a></b>: <i>Cel-shaded lighting with hard steps. Use for cartoon styles, anime shading, or simplified lighting.</i></li>
+            <br><li><b><a href="https://threejs.org/docs/#LineBasicMaterial" target="_blank">LineBasicMaterial</a></b>: <i>Simple unlit lines. Ideal for wireframes, helpers, debugging overlays, and vector drawings.</i></li>
+            <br><li><b><a href="https://threejs.org/docs/#LineDashedMaterial" target="_blank">LineDashedMaterial</a></b>: <i>Same as LineBasic but supports dashed patterns. Used for guidelines or technical drawings.</i></li>
+            <br><li><b><a href="https://threejs.org/docs/#PointsMaterial" target="_blank">PointsMaterial</a></b>: <i>Material for particle systems. Controls point size, color, and texture. Use for sparks, snow, dust, starfields, etc.</i></li>
+            <br><li><b><a href="https://threejs.org/docs/#SpriteMaterial" target="_blank">SpriteMaterial</a></b>: <i>Billboarded 2D planes that always face the camera. Use for icons, markers, UI, particles needing screen alignment.</i></li>
+            <br><li><b><a href="https://threejs.org/docs/#ShadowMaterial" target="_blank">ShadowMaterial</a></b>: <i>Special grayscale transparent material that only shows shadows. Use for “shadow catcher” floors in AR/realistic compositing.</i></li>
+        </ul>
+        Check the <a href="https://threejs.org/manual/#en/material-table" target="_blank">Materials Table</a> to know what <a href="https://threejs.org/docs/#Material" target="_blank">materials</a> enable certain properties 
+        </div>
+
+        <table>
+            <tr>
+                <td><code class="b">&lt;is there a material [myMaterial]:: looks&gt;</code></td>
+                <td>Checks if the material exists.</td>
+            </tr>
+            <tr>
+                <td><code class="b">remove material [myMaterial]:: looks</code></td>
+                <td>Removes the material properly.
+                    <pre><code class="language-javascript">material.dispose()</code></pre>
+                </td>
+            </tr>
+            <tr>
+                <td><code class="b">set material [alphaMap v] of [myMaterial] to (new Texture((costume1 v)::looks):: #3875c5):: looks</code></td>
+                <td>Sets a property of the material to a value. <i>(Number, Color, Texture, Vector2)</i></td>
+            </tr>
+        </table>
+
+        <div style="text-align: left;"><b style="font-size: larger;">Material Properties:</b><br>
+            <ul>
+                <b style="font-size: medium;">General:</b>
+                <ul>
+                    <li><b><a href="https://threejs.org/docs/#Material.color" target="_blank">Color</a></b>: <i>Base color before lighting calculations.</i></li>
+
+                    <li><b><a href="https://threejs.org/docs/#Material.map" target="_blank">Map</a></b>: <i>Diffuse/base texture applied to the surface.</i></li>
+
+                    <li><b><a href="https://threejs.org/docs/#Material.opacity" target="_blank">Opacity</a></b>: <i>Transparency amount, from fully opaque to invisible.</i></li>
+
+                    <li><b><a href="https://threejs.org/docs/#Material.transparent" target="_blank">Transparent</a></b>: <i>Enables rendering with transparency. Required when opacity &lt; 1.</i></li>
+
+                    <li><b><a href="https://threejs.org/docs/#Material.alphaMap" target="_blank">Alpha Map</a></b>: <i>Grayscale texture controlling per-pixel transparency.</i></li>
+
+                    <li><b><a href="https://threejs.org/docs/#Material.alphaTest" target="_blank">Alpha Test</a></b>: <i>Discard pixels below a transparency threshold.</i></li>
+
+                    <li><b><a href="https://threejs.org/docs/#Material.depthTest" target="_blank">Depth Test</a></b>: <i>Enables depth buffer comparisons.</i></li>
+
+                    <li><b><a href="https://threejs.org/docs/#Material.depthWrite" target="_blank">Depth Write</a></b>: <i>Writes material depth to the depth buffer.</i></li>
+
+                    <li><b><a href="https://threejs.org/docs/#Material.colorWrite" target="_blank">Color Write</a></b>: <i>Enables writing color to the frame buffer.</i></li>
+
+                    <li><b><a href="https://threejs.org/docs/#Material.side" target="_blank">Side</a></b>: <i>Determines which faces render (front, back, double).</i></li>
+
+                    <li><b><a href="https://threejs.org/docs/#Material.visible" target="_blank">Visible</a></b>: <i>Controls whether the material renders at all.</i></li>
+
+                    <li><b><a href="https://threejs.org/docs/#Material.blendDst" target="_blank">Blend Alpha</a></b>: <i>Alpha blending factor. Fix your typo in the value when using it.</i></li>
+
+                    <li><b><a href="https://threejs.org/docs/#Material.blendColor" target="_blank">Blend Color</a></b>: <i>Blend constant color used in custom blend modes.</i></li>
+
+                    <li><b><a href="https://threejs.org/docs/#Material.alphaHash" target="_blank">Alpha Hash</a></b>: <i>Dithered transparency for temporal anti-aliasing.</i></li>
+
+                    <li><b><a href="https://threejs.org/docs/#Material.premultipliedAlpha" target="_blank">Premultiplied Alpha</a></b>: <i>Changes how colors are blended with alpha.</i></li>
+
+                    <li><b><a href="https://threejs.org/docs/#Material.toneMapped" target="_blank">Tone Mapped</a></b>: <i>Includes material in tone mapping passes.</i></li>
+
+                    <li><b><a href="https://threejs.org/docs/#Material.fog" target="_blank">Fog</a></b>: <i>Material reacts to fog if enabled.</i></li>
+
+                    <li><b><a href="https://threejs.org/docs/#Material.flatShading" target="_blank">Flat Shading</a></b>: <i>Forces flat shading instead of smooth interpolation.</i></li>
+                </ul>
+                <br>
+
+                <b style="font-size: medium;">Standard / Physical:</b>
+                <ul>
+                    <li><b><a href="https://threejs.org/docs/#MeshStandardMaterial.metalness" target="_blank">Metalness</a></b>: <i>Metal-like reflectivity.</i></li>
+                    <li><b><a href="https://threejs.org/docs/#MeshStandardMaterial.metalnessMap" target="_blank">Metalness Map</a></b>: <i>Per-pixel metalness.</i></li>
+
+                    <li><b><a href="https://threejs.org/docs/#MeshStandardMaterial.roughness" target="_blank">Roughness</a></b>: <i>Micro-surface roughness.</i></li>
+                    <li><b><a href="https://threejs.org/docs/#MeshStandardMaterial.roughnessMap" target="_blank">Roughness Map</a></b>: <i>Roughness texture.</i></li>
+
+                    <li><b><a href="https://threejs.org/docs/#MeshPhysicalMaterial.reflectivity" target="_blank">Reflectivity</a></b>: <i>Legacy param controlling reflection amount.</i></li>
+
+                    <li><b><a href="https://threejs.org/docs/#MeshStandardMaterial.emissive" target="_blank">Emissive</a></b>: <i>Glow color independent of lighting.</i></li>
+                    <li><b><a href="https://threejs.org/docs/#MeshStandardMaterial.emissiveIntensity" target="_blank">Emissive Intensity</a></b>: <i>Glow strength.</i></li>
+                    <li><b><a href="https://threejs.org/docs/#MeshStandardMaterial.emissiveMap" target="_blank">Emissive Map</a></b>: <i>Per-pixel emission.</i></li>
+
+                    <li><b><a href="https://threejs.org/docs/#MeshStandardMaterial.envMap" target="_blank">Env Map</a></b>: <i>Reflection and lighting from environment.</i></li>
+                    <li><b><a href="https://threejs.org/docs/#MeshStandardMaterial.envMapIntensity" target="_blank">Env Map Intensity</a></b>: <i>Environment contribution strength.</i></li>
+                    <li><b><a href="https://threejs.org/docs/#MeshStandardMaterial.envMapRotation" target="_blank">Env Map Rotation</a></b>: <i>Rotation of environment map.</i></li>
+
+                    <li><b><a href="https://threejs.org/docs/#MeshPhysicalMaterial.ior" target="_blank">Ior</a></b>: <i>Index of refraction.</i></li>
+                    <li><b><a href="https://threejs.org/docs/#MeshPhysicalMaterial.refractionRatio" target="_blank">Refraction Ratio</a></b>: <i>Controls transmitted light bending.</i></li>
+
+                    <li><b><a href="https://threejs.org/docs/#MeshPhysicalMaterial.clearcoat" target="_blank">Clearcoat</a></b>: <i>Top reflective layer amount.</i></li>
+                    <li><b><a href="https://threejs.org/docs/#MeshPhysicalMaterial.clearcoatMap" target="_blank">Clearcoat Map</a></b>: <i>Per-pixel clearcoat intensity.</i></li>
+                    <li><b><a href="https://threejs.org/docs/#MeshPhysicalMaterial.clearcoatRoughness" target="_blank">Clearcoat Roughness</a></b>: <i>Surface roughness of clearcoat.</i></li>
+                    <li><b><a href="https://threejs.org/docs/#MeshPhysicalMaterial.clearcoatRoughnessMap" target="_blank">Clearcoat Roughness Map</a></b>: <i>Texture controlling clearcoat roughness.</i></li>
+
+                    <li><b><a href="https://threejs.org/docs/#MeshPhysicalMaterial.dispersion" target="_blank">Dispersion</a></b>: <i>Spectral dispersion (rainbow refraction).</i></li>
+
+                    <li><b><a href="https://threejs.org/docs/#MeshPhysicalMaterial.sheen" target="_blank">Sheen</a></b>: <i>Fabric-like soft reflection layer.</i></li>
+                    <li><b><a href="https://threejs.org/docs/#MeshPhysicalMaterial.sheenColor" target="_blank">Sheen Color</a></b>: <i>Color of the sheen layer.</i></li>
+                    <li><b><a href="https://threejs.org/docs/#MeshPhysicalMaterial.sheenColorMap" target="_blank">Sheen Color Map</a></b>: <i>Per-pixel sheen color.</i></li>
+                    <li><b><a href="https://threejs.org/docs/#MeshPhysicalMaterial.sheenRoughness" target="_blank">Sheen Roughness</a></b>: <i>Roughness of sheen.</i></li>
+                    <li><b><a href="https://threejs.org/docs/#MeshPhysicalMaterial.sheenRoughnessMap" target="_blank">Sheen Roughness Map</a></b>: <i>Texture controlling sheen roughness.</i></li>
+
+                    <li><b><a href="https://threejs.org/docs/#MeshPhysicalMaterial.specularColor" target="_blank">Specular Color</a></b>: <i>Color of specular reflection.</i></li>
+                    <li><b><a href="https://threejs.org/docs/#MeshPhysicalMaterial.specularColorMap" target="_blank">Specular Color Map</a></b>: <i>Per-pixel specular tint.</i></li>
+                    <li><b><a href="https://threejs.org/docs/#MeshPhysicalMaterial.specularIntensity" target="_blank">Specular Intensity</a></b>: <i>Strength of specular highlights.</i></li>
+                    <li><b><a href="https://threejs.org/docs/#MeshPhysicalMaterial.specularIntensityMap" target="_blank">Specular Intensity Map</a></b>: <i>Specular strength texture.</i></li>
+
+                    <li><b><a href="https://threejs.org/docs/#MeshPhysicalMaterial.transmission" target="_blank">Transmission</a></b>: <i>Physically-based transparency/light passing.</i></li>
+                    <li><b><a href="https://threejs.org/docs/#MeshPhysicalMaterial.transmissionMap" target="_blank">Transmission Map</a></b>: <i>Per-pixel transmission.</i></li>
+
+                    <li><b><a href="https://threejs.org/docs/#MeshPhysicalMaterial.thickness" target="_blank">Thickness</a></b>: <i>Used for subsurface/transmission depth.</i></li>
+                    <li><b><a href="https://threejs.org/docs/#MeshPhysicalMaterial.thicknessMap" target="_blank">Thickness Map</a></b>: <i>Per-pixel thickness.</i></li>
+
+                    <li><b><a href="https://threejs.org/docs/#MeshPhysicalMaterial.anisotropy" target="_blank">Anisotropy</a></b>: <i>Elongated highlight direction.</i></li>
+                    <li><b><a href="https://threejs.org/docs/#MeshPhysicalMaterial.anisotropyMap" target="_blank">Anisotropy Map</a></b>: <i>Texture controlling anisotropy.</i></li>
+                    <li><b><a href="https://threejs.org/docs/#MeshPhysicalMaterial.anisotropyRotation" target="_blank">Anisotropy Rotation</a></b>: <i>Orientation of anisotropic reflection.</i></li>
+
+                    <li><b><a href="https://threejs.org/docs/#MeshPhysicalMaterial.attenuationDistance" target="_blank">Attenuation Distance</a></b>: <i>How quickly transmitted light fades.</i></li>
+                    <li><b><a href="https://threejs.org/docs/#MeshPhysicalMaterial.attenuationColor" target="_blank">Attenuation Color</a></b>: <i>Color tint of transmission attenuation.</i></li>
+
+                    <li><b><a href="https://threejs.org/docs/#MeshPhysicalMaterial.iridescence" target="_blank">Iridescence</a></b>: <i>Angle-dependent color shifting.</i></li>
+                    <li><b><a href="https://threejs.org/docs/#MeshPhysicalMaterial.iridescenceIOR" target="_blank">Iridescence IOR</a></b>: <i>Refraction index for iridescence.</i></li>
+                    <li><b><a href="https://threejs.org/docs/#MeshPhysicalMaterial.iridescenceMap" target="_blank">Iridescence Map</a></b>: <i>Texture controlling iridescence.</i></li>
+                    <li><b><a href="https://threejs.org/docs/#MeshPhysicalMaterial.iridescenceThicknessRange" target="_blank">Iridescence Thickness Range</a></b>: <i>Thin-film thickness bounds.</i></li>
+                </ul>
+                <br>
+
+                <b style="font-size: medium;">Displacement / Normal / Bump:</b>
+                <ul>
+                    <li><b><a href="https://threejs.org/docs/#Material.displacementMap" target="_blank">Displacement Map</a></b>: <i>Alters geometry vertices.</i></li>
+                    <li><b><a href="https://threejs.org/docs/#Material.displacementScale" target="_blank">Displacement Scale</a></b>: <i>Strength of displacement.</i></li>
+                    <li><b><a href="https://threejs.org/docs/#Material.displacementBias" target="_blank">Displacement Bias</a></b>: <i>Offset added to displacement.</i></li>
+
+                    <li><b><a href="https://threejs.org/docs/#Material.bumpMap" target="_blank">Bump Map</a></b>: <i>Pseudo-normal perturbation.</i></li>
+                    <li><b><a href="https://threejs.org/docs/#Material.bumpScale" target="_blank">Bump Scale</a></b>: <i>Bump strength.</i></li>
+
+                    <li><b><a href="https://threejs.org/docs/#Material.normalMapType" target="_blank">Normal Map Type</a></b>: <i>Defines tangent-space or object-space normals.</i></li>
+                </ul>
+                <br>
+
+                <b style="font-size: medium;">Matcap / Toon / Phong / Lambert / Basic:</b>
+                <ul>
+                    <li><b><a href="https://threejs.org/docs/#MeshPhongMaterial.shininess" target="_blank">Shininess</a></b>: <i>Specular highlight sharpness.</i></li>
+
+                    <li><b><a href="https://threejs.org/docs/#Material.wireframe" target="_blank">Wireframe</a></b>: <i>Render only mesh edges.</i></li>
+                    <li><b><a href="https://threejs.org/docs/#Material.wireframeLinewidth" target="_blank">Wireframe Linewidth</a></b>: <i>Thickness of wireframe lines.</i></li>
+                    <li><b><a href="https://threejs.org/docs/#Material.wireframeLinecap" target="_blank">Wireframe Linecap</a></b>: <i>Shape for line ends.</i></li>
+                    <li><b><a href="https://threejs.org/docs/#Material.wireframeLinejoin" target="_blank">Wireframe Linejoin</a></b>: <i>Shape for line joins.</i></li>
+                </ul>
+                <br>
+
+                <b style="font-size: medium;">Points:</b>
+                <ul>
+                    <li><b><a href="https://threejs.org/docs/#PointsMaterial.size" target="_blank">Size</a></b>: <i>Point scale in world units.</i></li>
+                    <li><b><a href="https://threejs.org/docs/#PointsMaterial.sizeAttenuation" target="_blank">Size Attenuation</a></b>: <i>Points shrink with distance.</i></li>
+                </ul>
+                <br>
+
+                <b style="font-size: medium;">Lines:</b>
+                <ul>
+                    <li><b><a href="https://threejs.org/docs/#LineDashedMaterial.scale" target="_blank">Scale</a></b>: <i>Scaling for dashed textures.</i></li>
+                    <li><b><a href="https://threejs.org/docs/#LineDashedMaterial.dashSize" target="_blank">Dash Size</a></b>: <i>Length of dashes.</i></li>
+                    <li><b><a href="https://threejs.org/docs/#LineDashedMaterial.gapSize" target="_blank">Gap Size</a></b>: <i>Distance between dashes.</i></li>
+                </ul>
+                <br>
+
+                <b style="font-size: medium;">Sprites:</b>
+                <ul>
+                    <li><b><a href="https://threejs.org/docs/#SpriteMaterial.rotation" target="_blank">Rotation</a></b>: <i>2D rotation of sprite billboard.</i></li>
+                </ul>
+
+            </ul>
+
+        </div>
+
         <h3 id="geo">Geometries</h2><br>
+
     <h2 id="light">Light</h2><br>
     <h2 id="util">Utilities</h2><br>
     <h2 id="addon">Addons</h2><br>

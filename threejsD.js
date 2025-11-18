@@ -674,7 +674,7 @@ Promise.resolve(load()).then(() => {
             {opcode: "newMaterial",extensions: ["colours_looks"], blockType: Scratch.BlockType.COMMAND, text: "new material [NAME] [TYPE]", arguments: {NAME: {type: Scratch.ArgumentType.STRING, defaultValue: "myMaterial"}, TYPE: {type: Scratch.ArgumentType.STRING, menu: "materialTypes", defaultValue: "MeshStandardMaterial"}}},
             {opcode: "materialE",extensions: ["colours_looks"], blockType: Scratch.BlockType.BOOLEAN, text: "is there a material [NAME]?", arguments: {NAME: {type: Scratch.ArgumentType.STRING, defaultValue: "myMaterial"}}},
             {opcode: "removeMaterial",extensions: ["colours_looks"], blockType: Scratch.BlockType.COMMAND, text: "remove material [NAME]", arguments: {NAME: {type: Scratch.ArgumentType.STRING, defaultValue: "myMaterial"}}},
-            {opcode: "setMaterial",extensions: ["colours_looks"], blockType: Scratch.BlockType.COMMAND, text: "set material [PROPERTY] of [NAME] to [VALUE]", arguments: {PROPERTY: {type: Scratch.ArgumentType.STRING, menu: "materialProperties"},NAME: {type: Scratch.ArgumentType.STRING, defaultValue: "myMaterial"}, VALUE: {type: Scratch.ArgumentType.STRING, defaultValue: "new Color()", exemptFromNormalization: true}}},
+            {opcode: "setMaterial",extensions: ["colours_looks"], blockType: Scratch.BlockType.COMMAND, text: "set material [PROPERTY] of [NAME] to [VALUE]", arguments: {PROPERTY: {type: Scratch.ArgumentType.STRING, menu: "materialProperties", defaultValue: "Color"},NAME: {type: Scratch.ArgumentType.STRING, defaultValue: "myMaterial"}, VALUE: {type: Scratch.ArgumentType.STRING, defaultValue: "new Color()", exemptFromNormalization: true}}},
             {opcode: "setBlending",extensions: ["colours_looks"], blockType: Scratch.BlockType.COMMAND, text: "set material [NAME] blending to [VALUE]", arguments: {NAME: {type: Scratch.ArgumentType.STRING, defaultValue: "myMaterial"}, VALUE: {type: Scratch.ArgumentType.STRING, menu: "blendModes"}}},
             {opcode: "setDepth",extensions: ["colours_looks"], blockType: Scratch.BlockType.COMMAND, text: "set material [NAME] depth to [VALUE]", arguments: {NAME: {type: Scratch.ArgumentType.STRING, defaultValue: "myMaterial"}, VALUE: {type: Scratch.ArgumentType.STRING, menu: "depthModes"}}},
             
@@ -700,7 +700,104 @@ Promise.resolve(load()).then(() => {
             ]},
             XYZ: {acceptReporters: false, items: [{text: "X", value: "x"},{text: "Y", value: "y"},{text: "Z", value: "z"}]},
             materialProperties: {acceptReporters: false, items: [
-    "alphaMap","anisotropy","anisotropyMap","anisotropyRotation","aoMap","aoMapIntensity","attenuationColor","attenuationDistance","bumpMap","bumpScale","clearcoat","clearcoatMap","clearcoatNormalMap","clearcoatNormalScale","clearcoatRoughness","clearcoatRoughnessMap","color","combine","displacementBias","displacementMap","displacementScale","emissive","emissiveIntensity","emissiveMap","envMap","envMapIntensity","envMapRotation","flatShading","fog","ior","iridescence","iridescenceIOR","iridescenceMap","iridescenceThicknessMap","iridescenceThicknessRange","lightMap","lightMapIntensity","map","metalness","metalnessMap","normalMap","normalMapType","normalScale","reflectivity","refractionRatio","roughness","roughnessMap","sheen","sheenColor","sheenColorMap","sheenRoughness","sheenRoughnessMap","shininess","specular","specularColor","specularColorMap","specularIntensity","specularIntensityMap","specularMap","thickness","thicknessMap","transmission","transmissionMap", "wireframe","wireframeLinecap","wireframeLinejoin", "wireframeLinewidth"
+  "|GENERAL| <-- not a property",
+  { text: "Color", value: "color" },
+  { text: "Map", value: "map" },
+  { text: "Opacity", value: "opacity" },
+  { text: "Transparent", value: "transparent" },
+  { text: "Alpha Map", value: "alphaMap" },
+  { text: "Alpha Test", value: "alphaTest" },
+  { text: "Depth Test", value: "depthTest" },
+  { text: "Depth Write", value: "depthWrite" },
+  { text: "Color Write", value: "colorWrite" },
+  { text: "Side", value: "side" },
+  { text: "Visible", value: "visible" },/*
+  { text: "Blending", value: "blending" },
+  { text: "Blend Src", value: "blendSrc" },
+  { text: "Blend Dst", value: "blendDst" },
+  { text: "Blend Equation", value: "blendEquation" },
+  { text: "Blend Src Alpha", value: "blendSrcAlpha" },
+  { text: "Blend Dst Alpha", value: "blendDstAlpha" },
+  { text: "Blend Equation Alpha", value: "blendEquationAlpha" },*/
+  { text: "Blend Aplha", value: "blendAplha" },
+  { text: "Blend Color", value: "blendColor" },
+  { text: "Alpha Hash", value: "alphaHash" },
+  { text: "Premultiplied Alpha", value: "premultipliedAlpha" },
+
+  { text: "Tone Mapped", value: "toneMapped" },
+  { text: "Fog", value: "fog" },
+  { text: "Flat Shading", value: "flatShading" },
+
+  /* Standard / Physical */
+  { text: "Metalness", value: "metalness" },
+  { text: "Metalness Map", value: "metalnessMap" },
+  { text: "Roughness", value: "roughness" },
+  { text: "Reflectivity", value: "reflectivity" },
+  { text: "Roughness Map", value: "roughnessMap" },
+  { text: "Emissive", value: "emissive" },
+  { text: "Emissive Intensity", value: "emissiveIntensity" },
+  { text: "Emissive Map", value: "emissiveMap" },
+  { text: "Env Map", value: "envMap" },
+  { text: "Env Map Intensity", value: "envMapIntensity" },
+  { text: "Env Map Rotation", value: "envMapRotation" },
+  { text: "Ior", value: "ior" },
+  { text: "Refraction Ratio", value: "refractionRatio" },
+  { text: "Clearcoat", value: "clearcoat" },
+  { text: "Clearcoat Map", value: "clearcoatMap" },
+  { text: "Clearcoat Roughness", value: "clearcoatRoughness" },
+  { text: "Clearcoat Roughness Map", value: "clearcoatRoughnessMap" },
+  { text: "Dispersion", value: "dispersion" },
+  { text: "Sheen", value: "sheen" },
+  { text: "Sheen Color", value: "sheenColor" },
+  { text: "Sheen Color Map", value: "sheenColorMap" },
+  { text: "Sheen Roughness", value: "sheenRoughness" },
+  { text: "Sheen Roughness Map", value: "sheenRoughnessMap" },
+  { text: "Specular Color", value: "specularColor" },
+  { text: "Specular Color Map", value: "specularColorMap" },
+  { text: "Specular Intensity", value: "specularIntensity" },
+  { text: "Specular Intensity Map", value: "specularIntensityMap" },
+  { text: "Transmission", value: "transmission" },
+  { text: "Transmission Map", value: "transmissionMap" },
+  { text: "Thickness", value: "thickness" },
+  { text: "Thickness Map", value: "thicknessMap" },
+  { text: "Anisotropy", value: "anisotropy" },
+  { text: "Anisotropy Map", value: "anisotropyMap" },
+  { text: "Anisotropy Rotation", value: "anisotropyRotation" },
+  { text: "Attenuation Distance", value: "attenuationDistance" },
+  { text: "Attenuation Color", value: "attenuationColor" },
+  { text: "Thickness", value: "thickness" },
+  { text: "Iridescence", value: "iridescence" },
+  { text: "Iridescence Ior", value: "iridescenceIOR" },
+  { text: "Iridescence Map", value: "iridescenceMap" },
+  { text: "Iridescence Thickness Range", value: "iridescenceThicknessRange" },
+
+  /* Displacement / Normal / Bump */
+  { text: "Displacement Map", value: "displacementMap" },
+  { text: "Displacement Scale", value: "displacementScale" },
+  { text: "Displacement Bias", value: "displacementBias" },
+  { text: "Bump Map", value: "bumpMap" },
+  { text: "Bump Scale", value: "bumpScale" },
+  { text: "Normal Map Type", value: "normalMapType" },
+
+  /* Matcap / Toon / Phong / Lambert / Basic */
+  { text: "Shininess", value: "shininess" },
+
+  { text: "Wireframe", value: "wireframe" },
+  { text: "Wireframe Linewidth", value: "wireframeLinewidth" },
+  { text: "Wireframe Linecap", value: "wireframeLinecap" },
+  { text: "Wireframe Linejoin", value: "wireframeLinejoin" },
+
+  "|POINTS| <-- not a property",
+  { text: "Size", value: "size" },
+  { text: "Size Attenuation", value: "sizeAttenuation" },
+
+  "|LINES| <-- not a property",
+  { text: "Scale", value: "scale" },
+  { text: "Dash Size", value: "dashSize" },
+  { text: "Gap Size", value: "gapSize" },
+
+  "|SPRITES| <-- not a property",
+  { text: "Rotation", value: "rotation" }
 ]},
             blendModes: {acceptReporters: false, items: [
               { text: "No Blending", value: "NoBlending" },{ text: "Normal Blending", value: "NormalBlending" },{ text: "Additive Blending", value: "AdditiveBlending" },{ text: "Subtractive Blending", value: "SubtractiveBlending" },{ text: "Multiply Blending", value: "MultiplyBlending" },{ text: "Custom Blending", value: "CustomBlending" }
@@ -869,18 +966,17 @@ Promise.resolve(load()).then(() => {
     }
     async setMaterial(args) {
       const mat = materials[args.NAME]
-      let value = args.VALUE
-      if  (args.PROPERTY === "side") {
-      value = (value === "double" ? THREE.DoubleSide : value === "back" ? THREE.BackSide : THREE.FrontSide)
-      } else if (args.PROPERTY === "normalScale") value = new THREE.Vector2(...(JSON.parse(value))); console.log(value)
-
-      value === "true" ? value = true : value === "false" ? value = false : null
-
+      console.log(args.VALUE)
+      let value
+      if (typeof(args.VALUE) == ("object") || args.VALUE == "D" || "B" || "F" ) value = args.VALUE; else value = JSON.parse(args.VALUE);
+      console.log(value)
+      if  (args.PROPERTY == "side") {
+      value = (value == "D" ? THREE.DoubleSide : value == "B" ? THREE.BackSide : THREE.FrontSide)
+      } else if (args.PROPERTY === "normalScale") value = new THREE.Vector2(...(value))
       
-      mat[args.PROPERTY] = await (value)
-      if (args.PROPERTY === "wireframe") mat.wireframeLinecap = "butt"; mat.wireframeLinejoin = "bevel"
-      mat.transparent = mat.opacity < 1.0
-      mat.needsUpdate = true;
+      mat[args.PROPERTY] = await (value) //await incase its a texture
+      //mat.transparent = mat.opacity < 1.0   should this be auto?
+      mat.needsUpdate = true
     }
     setBlending(args) {
       const mat = materials[args.NAME]
