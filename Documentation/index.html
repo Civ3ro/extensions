@@ -180,7 +180,7 @@
                 </td>
             </tr>
             <tr>
-                <td><code class="b">set material [alphaMap v] of [myMaterial] to (new Texture((costume1 v)::looks):: #3875c5):: looks</code></td>
+                <td><code class="b">set material [Color v] of [myMaterial] to (new Texture((costume1 v)::looks):: #3875c5):: looks</code></td>
                 <td>Sets a property of the material to a value. <i>(Number, Color, Texture, Vector2)</i></td>
             </tr>
         </table>
@@ -189,41 +189,41 @@
             <ul>
                 <b style="font-size: medium;">General:</b>
                 <ul>
-                    <li><b><a href="https://threejs.org/docs/#Material.color" target="_blank">Color</a></b>: <i>Base color before lighting calculations.</i></li>
+                    <li><b><a href="https://threejs.org/docs/?q=color" target="_blank">Color</a></b>: <i>Base color before lighting calculations.</i></li>
 
-                    <li><b><a href="https://threejs.org/docs/#Material.map" target="_blank">Map</a></b>: <i>Diffuse/base texture applied to the surface.</i></li>
+                    <li><b><a href="https://threejs.org/docs/?q=map" target="_blank">Map</a></b>: <i>Diffuse/base texture applied to the surface.</i></li>
 
-                    <li><b><a href="https://threejs.org/docs/#Material.opacity" target="_blank">Opacity</a></b>: <i>Transparency amount, from fully opaque to invisible.</i></li>
+                    <li><b><a href="https://threejs.org/docs/?q=opacity" target="_blank">Opacity</a></b>: <i>Transparency amount, from fully opaque to invisible.</i></li>
 
-                    <li><b><a href="https://threejs.org/docs/#Material.transparent" target="_blank">Transparent</a></b>: <i>Enables rendering with transparency. Required when opacity &lt; 1.</i></li>
+                    <li><b><a href="https://threejs.org/docs/?q=transparent" target="_blank">Transparent</a></b>: <i>Enables rendering with transparency. Required when opacity &lt; 1.</i></li>
 
-                    <li><b><a href="https://threejs.org/docs/#Material.alphaMap" target="_blank">Alpha Map</a></b>: <i>Grayscale texture controlling per-pixel transparency.</i></li>
+                    <li><b><a href="https://threejs.org/docs/?q=alphaMap" target="_blank">Alpha Map</a></b>: <i>Grayscale texture controlling per-pixel transparency.</i></li>
 
-                    <li><b><a href="https://threejs.org/docs/#Material.alphaTest" target="_blank">Alpha Test</a></b>: <i>Discard pixels below a transparency threshold.</i></li>
+                    <li><b><a href="https://threejs.org/docs/?q=alphaTest" target="_blank">Alpha Test</a></b>: <i>Discard pixels below a transparency threshold.</i></li>
 
-                    <li><b><a href="https://threejs.org/docs/#Material.depthTest" target="_blank">Depth Test</a></b>: <i>Enables depth buffer comparisons.</i></li>
+                    <li><b><a href="https://threejs.org/docs/?q=depthTest" target="_blank">Depth Test</a></b>: <i>Enables depth buffer comparisons.</i></li>
 
-                    <li><b><a href="https://threejs.org/docs/#Material.depthWrite" target="_blank">Depth Write</a></b>: <i>Writes material depth to the depth buffer.</i></li>
+                    <li><b><a href="https://threejs.org/docs/?q=depthWrite" target="_blank">Depth Write</a></b>: <i>Writes material depth to the depth buffer.</i></li>
 
-                    <li><b><a href="https://threejs.org/docs/#Material.colorWrite" target="_blank">Color Write</a></b>: <i>Enables writing color to the frame buffer.</i></li>
+                    <li><b><a href="https://threejs.org/docs/?q=colorWrite" target="_blank">Color Write</a></b>: <i>Enables writing color to the frame buffer.</i></li>
 
-                    <li><b><a href="https://threejs.org/docs/#Material.side" target="_blank">Side</a></b>: <i>Determines which faces render (front, back, double).</i></li>
+                    <li><b><a href="https://threejs.org/docs/?q=side" target="_blank">Side</a></b>: <i>Determines which faces render (front, back, double).</i></li>
 
-                    <li><b><a href="https://threejs.org/docs/#Material.visible" target="_blank">Visible</a></b>: <i>Controls whether the material renders at all.</i></li>
+                    <li><b><a href="https://threejs.org/docs/?q=visible" target="_blank">Visible</a></b>: <i>Controls whether the material renders at all.</i></li>
 
-                    <li><b><a href="https://threejs.org/docs/#Material.blendDst" target="_blank">Blend Alpha</a></b>: <i>Alpha blending factor. Fix your typo in the value when using it.</i></li>
+                    <li><b><a href="https://threejs.org/docs/?q=blendDst" target="_blank">Blend Alpha</a></b>: <i>Alpha blending factor. Fix your typo in the value when using it.</i></li>
 
-                    <li><b><a href="https://threejs.org/docs/#Material.blendColor" target="_blank">Blend Color</a></b>: <i>Blend constant color used in custom blend modes.</i></li>
+                    <li><b><a href="https://threejs.org/docs/?q=blendColor" target="_blank">Blend Color</a></b>: <i>Blend constant color used in custom blend modes.</i></li>
 
-                    <li><b><a href="https://threejs.org/docs/#Material.alphaHash" target="_blank">Alpha Hash</a></b>: <i>Dithered transparency for temporal anti-aliasing.</i></li>
+                    <li><b><a href="https://threejs.org/docs/?q=alphaHash" target="_blank">Alpha Hash</a></b>: <i>Dithered transparency for temporal anti-aliasing.</i></li>
 
-                    <li><b><a href="https://threejs.org/docs/#Material.premultipliedAlpha" target="_blank">Premultiplied Alpha</a></b>: <i>Changes how colors are blended with alpha.</i></li>
+                    <li><b><a href="https://threejs.org/docs/?q=premultipliedAlpha" target="_blank">Premultiplied Alpha</a></b>: <i>Changes how colors are blended with alpha.</i></li>
 
-                    <li><b><a href="https://threejs.org/docs/#Material.toneMapped" target="_blank">Tone Mapped</a></b>: <i>Includes material in tone mapping passes.</i></li>
+                    <li><b><a href="https://threejs.org/docs/?q=toneMapped" target="_blank">Tone Mapped</a></b>: <i>Includes material in tone mapping passes.</i></li>
 
-                    <li><b><a href="https://threejs.org/docs/#Material.fog" target="_blank">Fog</a></b>: <i>Material reacts to fog if enabled.</i></li>
+                    <li><b><a href="https://threejs.org/docs/?q=fog" target="_blank">Fog</a></b>: <i>Material reacts to fog if enabled.</i></li>
 
-                    <li><b><a href="https://threejs.org/docs/#Material.flatShading" target="_blank">Flat Shading</a></b>: <i>Forces flat shading instead of smooth interpolation.</i></li>
+                    <li><b><a href="https://threejs.org/docs/?q=flatShading" target="_blank">Flat Shading</a></b>: <i>Forces flat shading instead of smooth interpolation.</i></li>
                 </ul>
                 <br>
 
@@ -288,14 +288,14 @@
 
                 <b style="font-size: medium;">Displacement / Normal / Bump:</b>
                 <ul>
-                    <li><b><a href="https://threejs.org/docs/#Material.displacementMap" target="_blank">Displacement Map</a></b>: <i>Alters geometry vertices.</i></li>
-                    <li><b><a href="https://threejs.org/docs/#Material.displacementScale" target="_blank">Displacement Scale</a></b>: <i>Strength of displacement.</i></li>
-                    <li><b><a href="https://threejs.org/docs/#Material.displacementBias" target="_blank">Displacement Bias</a></b>: <i>Offset added to displacement.</i></li>
+                    <li><b><a href="https://threejs.org/docs/?q=displacementMap" target="_blank">Displacement Map</a></b>: <i>Alters geometry vertices.</i></li>
+                    <li><b><a href="https://threejs.org/docs/?q=displacementScale" target="_blank">Displacement Scale</a></b>: <i>Strength of displacement.</i></li>
+                    <li><b><a href="https://threejs.org/docs/?q=displacementBias" target="_blank">Displacement Bias</a></b>: <i>Offset added to displacement.</i></li>
 
-                    <li><b><a href="https://threejs.org/docs/#Material.bumpMap" target="_blank">Bump Map</a></b>: <i>Pseudo-normal perturbation.</i></li>
-                    <li><b><a href="https://threejs.org/docs/#Material.bumpScale" target="_blank">Bump Scale</a></b>: <i>Bump strength.</i></li>
+                    <li><b><a href="https://threejs.org/docs/?q=bumpMap" target="_blank">Bump Map</a></b>: <i>Pseudo-normal perturbation.</i></li>
+                    <li><b><a href="https://threejs.org/docs/?q=bumpScale" target="_blank">Bump Scale</a></b>: <i>Bump strength.</i></li>
 
-                    <li><b><a href="https://threejs.org/docs/#Material.normalMapType" target="_blank">Normal Map Type</a></b>: <i>Defines tangent-space or object-space normals.</i></li>
+                    <li><b><a href="https://threejs.org/docs/?q=normalMapType" target="_blank">Normal Map Type</a></b>: <i>Defines tangent-space or object-space normals.</i></li>
                 </ul>
                 <br>
 
@@ -303,10 +303,10 @@
                 <ul>
                     <li><b><a href="https://threejs.org/docs/#MeshPhongMaterial.shininess" target="_blank">Shininess</a></b>: <i>Specular highlight sharpness.</i></li>
 
-                    <li><b><a href="https://threejs.org/docs/#Material.wireframe" target="_blank">Wireframe</a></b>: <i>Render only mesh edges.</i></li>
-                    <li><b><a href="https://threejs.org/docs/#Material.wireframeLinewidth" target="_blank">Wireframe Linewidth</a></b>: <i>Thickness of wireframe lines.</i></li>
-                    <li><b><a href="https://threejs.org/docs/#Material.wireframeLinecap" target="_blank">Wireframe Linecap</a></b>: <i>Shape for line ends.</i></li>
-                    <li><b><a href="https://threejs.org/docs/#Material.wireframeLinejoin" target="_blank">Wireframe Linejoin</a></b>: <i>Shape for line joins.</i></li>
+                    <li><b><a href="https://threejs.org/docs/?q=wireframe" target="_blank">Wireframe</a></b>: <i>Render only mesh edges.</i></li>
+                    <li><b><a href="https://threejs.org/docs/?q=wireframeLinewidth" target="_blank">Wireframe Linewidth</a></b>: <i>Thickness of wireframe lines.</i></li>
+                    <li><b><a href="https://threejs.org/docs/?q=wireframeLinecap" target="_blank">Wireframe Linecap</a></b>: <i>Shape for line ends.</i></li>
+                    <li><b><a href="https://threejs.org/docs/?q=wireframeLinejoin" target="_blank">Wireframe Linejoin</a></b>: <i>Shape for line joins.</i></li>
                 </ul>
                 <br>
 
@@ -332,6 +332,42 @@
 
             </ul>
 
+        </div>
+
+        <table>
+            <tr>
+                <td><code class="b">set material [myMaterial] blending to [No Blending v]:: looks</code></td>
+                <td>Sets the blending mode of the material to a specified type.</td>
+            </tr>
+        </table>
+
+        <div style="text-align: left;"><b>Blending Modes:</b><br>
+        <ul>
+            <li><b><a href="https://threejs.org/docs/#global.NoBlending" target="_blank">No Blending</a></b>: <i>No blending at all. Source fully replaces destination where drawn.</i></li>
+            <br><li><b><a href="https://threejs.org/docs/#global.NormalBlending" target="_blank">Normal Blending</a></b>: <i>Standard alpha blending. Source pixels overlay destination based on their alpha.</i></li>
+            <br><li><b><a href="https://threejs.org/docs/#global.AdditiveBlending" target="_blank">Additive Blending</a></b>: <i>Light-adding blend. Colors accumulate on top of each other, brightening the result.</i></li>
+            <br><li><b><a href="https://threejs.org/docs/#global.SubtractiveBlending" target="_blank">Subtractive Blending</a></b>: <i>Removes color from the destination, producing darker results. Good for shadow-like effects.</i></li>
+            <br><li><b><a href="https://threejs.org/docs/#global.MultiplyBlending" target="_blank">Multiply Blending</a></b>: <i>Multiplies source and destination colors. Always darkens. Useful for decals, shading overlays.</i></li>
+            <br><li><b><a href="https://threejs.org/docs/#global.CustomBlending" target="_blank">Custom Blending</a></b>: <i>Enables manual control using blendSrc, blendDst, and blendEquation. <b style="color: deeppink;">No such properties implemented enabled yet.</b></i></li>
+          </div>
+    
+        <table>
+            <tr>
+                <td><code class="b">set material [myMaterial] depth to [Never Depth v]:: looks</code></td>
+                <td>Sets the depth mode of the material to a specified type.</td>
+            </tr>
+        </table>
+
+        <div style="text-align: left;"><b>Depth Modes:</b><br>
+        <ul>
+            <li><b><a href="https://threejs.org/docs/#global.NeverDepth" target="_blank">Never Depth</a></b>: <i>The fragment never passes the depth test. Nothing is ever drawn.</i></li>
+            <br><li><b><a href="https://threejs.org/docs/#global.AlwaysDepth" target="_blank">Always Depth</a></b>: <i>The fragment always passes the depth test. Draws on top of everything.</i></li>
+            <br><li><b><a href="https://threejs.org/docs/#global.LessDepth" target="_blank">Less Depth</a></b>: <i>Passes only if the fragment’s depth is closer than what’s already in the depth buffer. (Standard behavior.)</i></li>
+            <br><li><b><a href="https://threejs.org/docs/#global.LessEqualDepth" target="_blank">Less Equal Depth</a></b>: <i>Passes if the fragment’s depth is closer or equal. Helps avoid z-fighting edges.</i></li>
+            <br><li><b><a href="https://threejs.org/docs/#global.EqualDepth" target="_blank">Equal Depth</a></b>: <i>Passes only if fragment depth exactly equals the existing depth. Used for special rendering passes.</i></li>
+            <br><li><b><a href="https://threejs.org/docs/#global.GreaterDepth" target="_blank">Greater Depth</a></b>: <i>Passes if fragment depth is farther than what’s in the buffer.</i></li>
+            <br><li><b><a href="https://threejs.org/docs/#global.GreaterEqualDepth" target="_blank">Greater Equal Depth</a></b>: <i>Passes if fragment depth is farther or equal. Rarely needed.</i></li>
+            <br><li><b><a href="https://threejs.org/docs/#global.NotEqualDepth" target="_blank">Not Equal Depth</a></b>: <i>Passes when depths don’t match. Useful for highlighting edges or special effects.</i></li>
         </div>
 
         <h3 id="geo">Geometries</h2><br>

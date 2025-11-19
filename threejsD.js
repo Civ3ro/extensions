@@ -728,7 +728,7 @@ Promise.resolve(load()).then(() => {
   { text: "Fog", value: "fog" },
   { text: "Flat Shading", value: "flatShading" },
 
-  /* Standard / Physical */
+  "|MESH Standard / Physical| <-- not a property",
   { text: "Metalness", value: "metalness" },
   { text: "Metalness Map", value: "metalnessMap" },
   { text: "Roughness", value: "roughness" },
@@ -771,7 +771,7 @@ Promise.resolve(load()).then(() => {
   { text: "Iridescence Map", value: "iridescenceMap" },
   { text: "Iridescence Thickness Range", value: "iridescenceThicknessRange" },
 
-  /* Displacement / Normal / Bump */
+  "|MESH Displacement / Normal / Bump| <-- not a property",
   { text: "Displacement Map", value: "displacementMap" },
   { text: "Displacement Scale", value: "displacementScale" },
   { text: "Displacement Bias", value: "displacementBias" },
@@ -779,7 +779,7 @@ Promise.resolve(load()).then(() => {
   { text: "Bump Scale", value: "bumpScale" },
   { text: "Normal Map Type", value: "normalMapType" },
 
-  /* Matcap / Toon / Phong / Lambert / Basic */
+  "|MESH Matcap / Toon / Phong / Lambert / Basic| <-- not a property",
   { text: "Shininess", value: "shininess" },
 
   { text: "Wireframe", value: "wireframe" },
@@ -965,6 +965,7 @@ Promise.resolve(load()).then(() => {
       materials[args.NAME] = mat;
     }
     async setMaterial(args) {
+      if (args.VALUE.at(0) == "|") return //incase someone places |MESH| as property bruh
       const mat = materials[args.NAME]
       console.log(args.VALUE)
       let value
