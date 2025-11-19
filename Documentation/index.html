@@ -371,7 +371,62 @@
         </div>
 
         <h3 id="geo">Geometries</h2><br>
+            
+        <table>
+            <tr>
+                <td><code class="b">new geometry [myGeometry] [Box Geometry v]:: list</code></td>
+                <td>Creates a new geometry of a specified type.
+                    <pre><code class="language-javascript">new THREE.BoxGeometry()</code></pre>
+                </td>
+            </tr>
+        </table>
+        
+        <div style="text-align: left;"><b>Predefined Geometries:</b> |
+        <b><a href="https://threejs.org/docs/#BoxGeometry" target="_blank">Box</a></b> | 
+        <b><a href="https://threejs.org/docs/#SphereGeometry" target="_blank">Sphere</a></b> | 
+        <b><a href="https://threejs.org/docs/#CylinderGeometry" target="_blank">Cylinder</a></b> | 
+        <b><a href="https://threejs.org/docs/#PlaneGeometry" target="_blank">Plane</a></b> | 
+        <b><a href="https://threejs.org/docs/#CircleGeometry" target="_blank">Circle</a></b> | 
+        <b><a href="https://threejs.org/docs/#TorusGeometry" target="_blank">Torus</a></b> | 
+        <b><a href="https://threejs.org/docs/#TorusKnotGeometry" target="_blank">Torus Knot</a></b> |
+        <br><br>
+        Each link contains a pretty good visualization of each one.
+        </div>
+        
+        <table>
+            <tr>
+                <td><code class="b">&lt;is there a geometry [myGeometry]:: list</code></td>
+                <td>Checks if the geometry exists.</td>
+            </tr>
+            <tr>
+                <td><code class="b">remove geometry [myGeometry]:: list</code></td>
+                <td>Removes the geometry properly.
+                    <pre><code class="language-javascript">geometry.dispose()</code></pre>
+                </td>
+            </tr>
+            <tr>
+                <td><code class="s">create spline [mySpline] from (generate cruve [CatmullRomCurve3] from points [\[0,3,0\] \[2.5,-1.5,0\] \[-2.5,-1.5,0\]]:: list), closed: [true]:: list</code></td>
+                <td>Creates a <a href="https://en.wikipedia.org/wiki/Spline_(mathematics)" target="_blank">spline geometry</a> of a unique type (for now, CatmullRomCurve3). Use <a href="#.curve">curve</a>.</td>
+            </tr>
+            <tr>
+                <td><code class="s">create text geometry [myText] with text [Hello World!] in font [import v] size (1) depth (0.1) curvedSegments (6):: list</code></td>
+                <td>Creates a text geometry that displays the given text in a imported font.</td>
+            </tr>
+        </table>
 
+        <div style="text-align: left;">
+            To import fonts, use the next buttons:
+            <table style="width: 100%; margin-top: 10px;">
+                <td><img src="../Assets/Images/FontImport.png" alt="Convert and Import Font Buttons" style="width: 300px; height: auto; mix-blend-mode: lighten;"></td>
+                <td><b>"Convert font..." </b>will redirect you to <a href="https://gero3.github.io/facetype.js/" target="_blank">facetype.js</a>. This website transforms fonts files (.ttf usually) to json so three can interpret them to generate a geometry.
+                <br> <br>
+                <b>"Load font..."</b> will open your file explorer, just select the transformed font file (.json) and load it! <br>
+                Then should appear in font dropdown. 
+                </td>
+            </table>
+            
+        </div>
+            
     <h2 id="light">Light</h2><br>
     <h2 id="util">Utilities</h2><br>
     <h2 id="addon">Addons</h2><br>
@@ -390,6 +445,12 @@
         inline: true,
         style:'scratch3',  // Optional, defaults to 'scratch2'.
         scale: 1,         // Optional, defaults to 1
+    })
+
+    scratchblocks.renderMatching('code.s', {
+        inline: true,
+        style:'scratch3',  // Optional, defaults to 'scratch2'.
+        scale: 0.6,         // Optional, defaults to 1
     })
 </script>
 
