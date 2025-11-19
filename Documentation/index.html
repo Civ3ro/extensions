@@ -424,10 +424,33 @@
                 Then should appear in font dropdown. 
                 </td>
             </table>
-            
         </div>
             
     <h2 id="light">Light</h2><br>
+
+    <table>
+        <tr>
+            <td><code class="b">add light [myLight] type [Ambient Light v] to [scene]:: #c7a22a</code></td>
+            <td>Adds a light of a specified type to the group.</td>
+        </tr>
+    </table>
+        <div style="text-align: left;"><b>Light types:</b><br>
+        <ul>
+            <li><b><a href="https://threejs.org/docs/#AmbientLight" target="_blank">Ambient</a></b>: <i>Illuminates all objects in the scene equally. It cannot be used to cast shadows as it does not have a direction.</i></li>
+            <br><li><b><a href="https://threejs.org/docs/#DirectionalLight" target="_blank">Directional</a></b>: <i>A light that gets emitted in a specific direction. Used to simulate the sun. Can cast shadows.</i> <br> Change the direction of the light by changing its position. <em style="color: coral;">"...direction is calculated as pointing from the light's Object3D#position to the DirectionalLight#target position (0,0,0)"</em></li>
+            <br><li><b><a href="https://threejs.org/docs/#PointLight" target="_blank">Point</a></b>: <i>A light that gets emitted from a single point in all directions. As a Lightbulb. Can cast shadows.</i></li>
+        </div>
+    <table>
+        <tr>
+            <td><code class="b">set light [myLight] [Intensity v] to [1]:: #c7a22a</code></td>
+            <td>Sets the <a href="https://threejs.org/docs/#Light" target="_blank">light</a> property to a value. Color or Intensity.</td>
+        </tr>
+        <tr>
+            <td><code class="b">remove light [myLight]:: #c7a22a</code></td>
+            <td>Removes the light properly.</td>
+        </tr>
+    </table>
+
     <h2 id="util">Utilities</h2><br>
     <h2 id="addon">Addons</h2><br>
     <h2 id="glb">GLB Importing</h2><br>
