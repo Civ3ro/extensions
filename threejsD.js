@@ -99,6 +99,9 @@
         object.rigidBody = null
         object.collider = null
       }
+      if (object.isLight) {
+        delete(lights[name])
+      }
     }
     function getObject(name, isNew) {
       object = null
@@ -1165,8 +1168,6 @@ Promise.resolve(load()).then(() => {
         blocks: [
             {opcode: "addLight", blockType: Scratch.BlockType.COMMAND, text: "add light [NAME] type [TYPE] to [GROUP]", arguments: {GROUP: {type: Scratch.ArgumentType.STRING, defaultValue: "scene"},NAME: {type: Scratch.ArgumentType.STRING, defaultValue: "myLight"}, TYPE: {type: Scratch.ArgumentType.STRING, menu: "lightTypes"}}},
             {opcode: "setLight", blockType: Scratch.BlockType.COMMAND, text: "set light [NAME][PROPERTY] to [VALUE]", arguments: {PROPERTY: {type: Scratch.ArgumentType.STRING, menu: "lightProperties", defaultValue: "intensity"},NAME: {type: Scratch.ArgumentType.STRING, defaultValue: "myLight"}, VALUE: {type: Scratch.ArgumentType.STRING, defaultValue: "1", exemptFromNormalization: true}}},
-            {opcode: "removeLight", blockType: Scratch.BlockType.COMMAND, text: "remove light [NAME]", arguments: {NAME: {type: Scratch.ArgumentType.STRING, defaultValue: "myLight"}}},
-
         ],
         menus: {
             lightTypes: {acceptReporters: false, items: [
@@ -1205,13 +1206,6 @@ Promise.resolve(load()).then(() => {
 
       light.needsUpdate = true
     }
-    removeLight(args) {
-      const light = lights[args.NAME]
-      
-      scene.remove(light);
-      // should check if material has any type of maps...
-      delete(lights[args.NAME])
-    }
 
   }
   Scratch.extensions.register(new ThreeLights())
@@ -1229,7 +1223,7 @@ Promise.resolve(load()).then(() => {
             {opcode: "newVector2", blockType: Scratch.BlockType.REPORTER, text: "New Vector [X] [Y]", arguments: {X: {type: Scratch.ArgumentType.NUMBER}, Y: {type: Scratch.ArgumentType.NUMBER}}},
             {opcode: "newVector3", blockType: Scratch.BlockType.REPORTER, text: "New Vector [X] [Y] [Z]", arguments: {X: {type: Scratch.ArgumentType.NUMBER}, Y: {type: Scratch.ArgumentType.NUMBER}, Z: {type: Scratch.ArgumentType.NUMBER}}},
             "---",
-            {opcode: "moveVector3", blockType: Scratch.BlockType.REPORTER, text: "move [S] vector [V3] in direction [D3]", arguments: {S: {type: Scratch.ArgumentType.NUMBER},V3: {type: Scratch.ArgumentType.STRING, defaultValue: "[0,0,0]"}, D3: {type: Scratch.ArgumentType.STRING, defaultValue: "[0,0,0]"}}},
+            {opcode: "moveVector3", blockType: Scratch.BlockType.REPORTER, text: "move [S] steps in vector [V3] in direction [D3]", arguments: {S: {type: Scratch.ArgumentType.NUMBER, defaultValue: 1},V3: {type: Scratch.ArgumentType.STRING, defaultValue: "[0,0,0]"}, D3: {type: Scratch.ArgumentType.STRING, defaultValue: "[1,0,0]"}}},
             {opcode: "directionTo", blockType: Scratch.BlockType.REPORTER, text: "direction from [V3] to [T3]", arguments: {V3: {type: Scratch.ArgumentType.STRING, defaultValue: "[0,0,3]"}, T3: {type: Scratch.ArgumentType.STRING, defaultValue: "[0,0,0]"}}},
             "---",
             {opcode: "newColor", blockType: Scratch.BlockType.REPORTER, text: "New Color [HEX]", arguments: {HEX: {type: Scratch.ArgumentType.COLOR, defaultValue: "#9966ff"}}},
@@ -1245,7 +1239,7 @@ Promise.resolve(load()).then(() => {
             "---",
             {opcode: "getItem",extensions: ["colours_data_lists"], blockType: Scratch.BlockType.REPORTER, text: "get item [ITEM] of [ARRAY]", arguments: {ITEM: {type: Scratch.ArgumentType.STRING, defaultValue: "1"}, ARRAY: {type: Scratch.ArgumentType.STRING, defaultValue: `["myObject", "myLight"]`}}},
             {blockType: Scratch.BlockType.LABEL, text: "↳ Raycasting"},
-            {opcode: "raycast", blockType: Scratch.BlockType.COMMAND, text: "raycast from [V3] in direction [D3]", arguments: {V3: {type: Scratch.ArgumentType.STRING, defaultValue: "[0,0,3]"}, D3: {type: Scratch.ArgumentType.STRING, defaultValue: "[0,0,0]"}}},
+            {opcode: "raycast", blockType: Scratch.BlockType.COMMAND, text: "Raycast from [V3] in direction [D3]", arguments: {V3: {type: Scratch.ArgumentType.STRING, defaultValue: "[0,0,3]"}, D3: {type: Scratch.ArgumentType.STRING, defaultValue: "[0,0,1]"}}},
             {opcode: "getRaycast", blockType: Scratch.BlockType.REPORTER, text: "get raycast [PROPERTY]", arguments: {PROPERTY: {type: Scratch.ArgumentType.STRING, menu: "raycastProperties"}}},
 
         ],
@@ -1546,7 +1540,7 @@ Promise.resolve(load()).then(() => {
             {opcode: "OrbitControl", blockType: Scratch.BlockType.COMMAND, text: "set addon Orbit Control [STATE]", arguments: {STATE: {type: Scratch.ArgumentType.STRING, menu: "onoff"},}},
        
             {blockType: Scratch.BlockType.LABEL, text: "Post Processing"},
-            {opcode: "resetComposer",extensions: ["colours_operators"], blockType: Scratch.BlockType.COMMAND, text: "reset composer"},
+            {opcode: "resetComposer", blockType: Scratch.BlockType.COMMAND, text: "reset composer"},
             {opcode: "bloom", blockType: Scratch.BlockType.COMMAND, text: "add bloom intensity:[I] smoothing:[S] threshold:[T] | blend: [BLEND] opacity:[OP]", arguments: {OP: {type: Scratch.ArgumentType.NUMBER, defaultValue: 1},I: {type: Scratch.ArgumentType.NUMBER, defaultValue: 1}, S:{type: Scratch.ArgumentType.NUMBER, defaultValue: 0.5}, T:{type: Scratch.ArgumentType.NUMBER, defaultValue: 0.5}, BLEND: {type: Scratch.ArgumentType.STRING, menu: "blendModes", defaultValue: "SCREEN"}}},
             {opcode: "godRays", blockType: Scratch.BlockType.COMMAND, text: "add god rays object:[NAME] density:[DENS] decay:[DEC] weight:[WEI] exposition:[EXP] | resolution:[RES] samples:[SAMP] | blend: [BLEND] opacity:[OP]", arguments: {OP: {type: Scratch.ArgumentType.NUMBER, defaultValue: 1},NAME: {type: Scratch.ArgumentType.STRING, defaultValue: "myObject"},BLEND: {type: Scratch.ArgumentType.STRING, menu: "blendModes", defaultValue: "SCREEN"}, DEC:{type: Scratch.ArgumentType.NUMBER, defaultValue: 0.95}, DENS:{type: Scratch.ArgumentType.NUMBER, defaultValue: 1},EXP:{type: Scratch.ArgumentType.NUMBER, defaultValue: 0.1},WEI:{type: Scratch.ArgumentType.NUMBER, defaultValue: 0.4},RES:{type: Scratch.ArgumentType.NUMBER, defaultValue: 1},SAMP:{type: Scratch.ArgumentType.NUMBER, defaultValue: 64},}},
             {opcode: "dots", blockType: Scratch.BlockType.COMMAND, text: "add dots scale:[S] angle:[A] | blend: [BLEND] opacity:[OP]", arguments: {OP: {type: Scratch.ArgumentType.NUMBER, defaultValue: 1},S:{type: Scratch.ArgumentType.NUMBER, defaultValue: 1}, A: {type: Scratch.ArgumentType.ANGLE, defaultValue: 0},BLEND: {type: Scratch.ArgumentType.STRING, menu: "blendModes", defaultValue: "SCREEN"}}},

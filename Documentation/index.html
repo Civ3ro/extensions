@@ -88,6 +88,7 @@
         </table>
 
     <h2 id="obj">3D Objects</h2><br>
+    <p>Objects are not just 3D meshes, but these <a href="#objT">object types</a> too. The <a href="#camera">camera</a>, <a href="#light">lights</a> are objects too.</p>
         <table>
             <tr>
                 <td><code class="b">add object [myObject] [Mesh v] to [scene]:: #38c567</code></td>
@@ -97,7 +98,7 @@
             </tr>
         </table>
 
-        <div style="text-align: left;"><b>Object Types:</b><br>
+        <div style="text-align: left;" id="objT"><b>Object Types:</b><br>
         <ul>
             <li><b><a href="https://threejs.org/docs/#Mesh" target="_blank">Mesh</a></b>: <i>A renderable 3D object that combines geometry + material.</i></li>
             <br><li><b><a href="https://threejs.org/docs/#Sprite" target="_blank">Sprite</a></b>: <i>A 2D element that always faces the camera.</i></li>
@@ -122,13 +123,13 @@
             </tr>
             <tr>
                 <td><code class="b">&lt;is there an object [myObject]?:: #38c567&gt;</code></td>
-                <td>Check if the object exists.</td>
+                <td>Check if the object (anytype) exists.</td>
             </tr>
             <tr>
                 <td><code class="b">remove object [myObject] from scene:: #38c567</code></td>
-                <td>Deletes the object from scene. Does not delete the geometry nor material.</td>
+                <td>Deletes the object (anytype) from scene. Does not delete the geometry nor material.</td>
             </tr>
-            <tr>
+            <tr id="trans">
                 <td><code class="b">set transform [Position v] of [myObject] to [\[0,0,0\]]:: motion</code></td>
                 <td>Changes a transform of the object to a vector3.<br>Position, Rotation, Scale or Facing direction.<br>Rotation is done in YXZ order.</td>
             </tr>
@@ -405,20 +406,20 @@
                 </td>
             </tr>
             <tr>
-                <td><code class="s">create spline [mySpline] from (generate cruve [CatmullRomCurve3] from points [\[0,3,0\] \[2.5,-1.5,0\] \[-2.5,-1.5,0\]]:: list), closed: [true]:: list</code></td>
+                <td><code class="m">create spline [mySpline] from (generate cruve [CatmullRomCurve3] from points [\[0,3,0\] \[2.5,-1.5,0\] \[-2.5,-1.5,0\]]:: list), closed: [true]:: list</code></td>
                 <td>Creates a <a href="https://en.wikipedia.org/wiki/Spline_(mathematics)" target="_blank">spline geometry</a> of a unique type (for now, CatmullRomCurve3). Use <a href="#.curve">curve</a>.</td>
             </tr>
             <tr>
-                <td><code class="s">create text geometry [myText] with text [Hello World!] in font [import v] size (1) depth (0.1) curvedSegments (6):: list</code></td>
+                <td><code class="m">create text geometry [myText] with text [Hello World!] in font [import v] size (1) depth (0.1) curvedSegments (6):: list</code></td>
                 <td>Creates a text geometry that displays the given text in a imported font.</td>
             </tr>
         </table>
 
         <div style="text-align: left;">
             To import fonts, use the next buttons:
-            <table style="width: 100%; margin-top: 10px;">
-                <td><img src="../Assets/Images/FontImport.png" alt="Convert and Import Font Buttons" style="width: 300px; height: auto; mix-blend-mode: lighten;"></td>
-                <td><b>"Convert font..." </b>will redirect you to <a href="https://gero3.github.io/facetype.js/" target="_blank">facetype.js</a>. This website transforms fonts files (.ttf usually) to json so three can interpret them to generate a geometry.
+            <table style="width: 100%; margin-top: 10px; border: 0px;">
+                <td style="border: 0px;"><img src="../Assets/Images/FontImport.png" alt="Convert and Import Font Buttons" style="width: 300px; height: auto; mix-blend-mode: lighten;"></td>
+                <td style="border: 0px;"><b>"Convert font..." </b>will redirect you to <a href="https://gero3.github.io/facetype.js/" target="_blank">facetype.js</a>. This website transforms fonts files (.ttf usually) to json so three can interpret them to generate a geometry.
                 <br> <br>
                 <b>"Load font..."</b> will open your file explorer, just select the transformed font file (.json) and load it! <br>
                 Then should appear in font dropdown. 
@@ -445,18 +446,132 @@
             <td><code class="b">set light [myLight] [Intensity v] to [1]:: #c7a22a</code></td>
             <td>Sets the <a href="https://threejs.org/docs/#Light" target="_blank">light</a> property to a value. Color or Intensity.</td>
         </tr>
-        <tr>
-            <td><code class="b">remove light [myLight]:: #c7a22a</code></td>
-            <td>Removes the light properly.</td>
-        </tr>
     </table>
 
     <h2 id="util">Utilities</h2><br>
+    Here are some utility blocks to use the extension faster and better.
+    <table>
+        <tr>
+            <td><code class="b">(New Vector [0] [0]:: #3875c5)</code></td>
+            <td>Returns a Vector2 as an Array. Can be used to set properties of some materials.<br>[0,0]</td>
+        </tr>
+        <tr>
+            <td><code class="b">(New Vector [0] [0] [0]:: #3875c5)</code></td>
+            <td>Returns a Vector3 as an Array. Usually to set <a href="#trans">transforms</a><br>[0,0,0]</td>
+        </tr>
+        <tr>
+            <td><code class="b">(move [1] steps in vector [\[0,0,0\]] in direction [\[1,0,0\]]:: #3875c5)</code></td>
+            <td>Like the <code class="m">move (10) steps</code> block. Needs to be fed a Vector3 direction. Returns a new Vector3.</td>
+        </tr>
+        <tr>
+            <td><code class="b">(direction from [\[0,0,3\]] to [\[0,0,0\]]:: #3875c5)</code></td>
+            <td>Returns the Vector3 of the direction.</td>
+        </tr>
+        <tr>
+            <td><code class="b">(New Color (#96f):: #3875c5)</code></td>
+            <td>Returns an [object Object]. Don't mind it. Used to set colors of materials or the scene background.</td>
+        </tr>
+        <tr>
+            <td><code class="b">(New Fog (#96f) (0) (10):: #3875c5)</code></td>
+            <td>Specify the color, near and far of the fog. Returns an [object Object]. Don't mind it. Used to set the scene fog.</td>
+        </tr>
+        <tr>
+            <td><code class="s">(New Texture ((costume1 v)::#96f) [Pixelate v] [Repeat v] repeat (1) (1):: #3875c5)</code></td>
+            <td>Creates a texture from a costume. Returns an [object Object]. Don't mind it. Used to set the scene background, all material maps and more...</td>
+        </tr>
+        <tr>
+            <td><code class="m">(New Cube Texture X+((costume1 v)::#96f) X-((costume1 v)::#96f) Y+((costume2 v)::#96f) Y-((costume2 v)::#96f) Z+((costume1 v)::#96f) Z-((costume1 v)::#96f) [Pixelate v] [Repeat v] repeat (1) (1):: #3875c5)</code></td>
+            <td>Creates a Cube Texture from a costume, to give each face of a 3D cube a specific texture. Same applications as Texture.</td>
+        </tr>
+        <tr>
+            <td><code class="b">(New Equirectangular Texture ((costume1 v)::#96f) [Pixelate v]:: #3875c5)</code></td>
+            <td>Creates a texture from a 360 costume, <a href="../Assets/Images/Equirectangular.jpg" target="_blank">like this</a>. Same applications as Texture.</td>
+        </tr>
+        <tr>
+            <td><code class="s">(generate cruve [CatmullRomCurve3] from points [\[0,3,0\] \[2.5,-1.5,0\] \[-2.5,-1.5,0\]]:: list)</code></td>
+            <td>Used to generate a curve that can be used to create the spline curve geometry.</td>
+        </tr>
+        <tr>
+            <td><code class="b">&lt;mouse [left v] [Down v]?:: sensing</code></td>
+            <td>Overlaying Three JD on top of scratch disables the <code class="m">mouse down</code> block. I made this block to replace it.</td>
+        </tr>
+        <tr>
+            <td><code class="b">(get item (1) of [\["myObject", "myLight"\]]:: list)</code></td>
+            <td>Helper block. Returns the item in the Array position (starting on 1). To get an axis from a vector or objects from a raycast.</td>
+        </tr>
+        <tr>
+            <td><code class="b">Raycast from [\[0,0,3\]] in direction [\[0,0,1\]]:: #3875c5</code></td>
+            <td>Sends a ray coming from [0,0,3] in direction [0,0,1], every object that the ray goes thru will be stored. For sensing things, grabbing objects?, collisions?...</td>
+        </tr>
+        <tr>
+            <td><code class="b">(get raycast [Intersected Object Names v]:: #3875c5)</code></td>
+            <td>Get the above raycast results. You can read the number of objects, their names and their distances. (always ordered from closer-further)</td>
+        </tr>
+    </table>
+
     <h2 id="addon">Addons</h2><br>
-    <h2 id="glb">GLB Importing</h2><br>
-    <h2 id="orb">Orbit Control</h2><br>
-    <h2 id="post">Post Procesing</h2><br>
+        <p>Some extra utilities that deserve their own categories</p>
+        <h3 id="glb">GLB Importing</h2><br>
+            <div style="text-align: left;">Use this button to load and save your .glb model files into the project.
+                <table style="border: 0px; width: 100%;">
+                    <td style="border: 0px;"><img src="../Assets/Images/GLB.jpg" alt="GLB import button" style="mix-blend-mode: lighten; height: 100px;"></td>
+                    <td style="border: 0px;">It opens the file explorer and saves the model data as a sound in the backdrop. <br><br> To dispose a model, delete the sound with the same name.</td>
+                </table>
+            </div>
+            <table>
+                <tr>
+                    <td><code class="b">add [model v] as [myModel] to [scene]::#c53838</code></td>
+                    <td>Adds the selected preloaded model to the group. It will be added as a group, so when transforming [myModel] all of the children (whole model) gets it.</td>
+                </tr>
+                <tr>
+                    <td><code class="b">(get object [Animations v] of [myModel]::#c53838)</code></td>
+                    <td>Some models can come with an animation, get the names of these with this reporter.</td>
+                </tr>
+                <tr>
+                    <td><code class="b">play animation [walk] of [myModel], (0) times::#c53838</code></td>
+                    <td>If the model has animations, place the name here and make it play a certain number of times. 0 times = forever.</td>
+                </tr>
+                <tr>
+                    <td><code class="b">set (Pause v) animation [walk] of [myModel]::#c53838</code></td>
+                    <td>If the model is running an animation, pause it or unpause it.</td>
+                </tr>
+                <tr>
+                    <td><code class="b">stop animation [walk] of [myModel]::#c53838</code></td>
+                    <td>If the model is running an animation, stop it.</td>
+                </tr>
+            </table>
+        <h3 id="orb">Orbit Control</h2><br>
+            This addon is really useful. It enables a quick way of visualizating the scene with just a toggle. <br> Left drag to rotate, right to pan and middle to zoom.
+            <br><br>
+            <code class="b">set addon Orbit Control (enabled v)::#c538a2</code>
+                    
+        <h3 id="post">Post Procesing</h2><br>
+            It modifies the render before its made. Can add cool unique effects. Deeper explanation <a href="https://threejs.org/manual/?q=po#en/post-processing" target="_blank">here</a>.
+            <br><br>
+            <table>
+                <tr>
+                    <td><code class="b">reset composer::#c538a2</code></td>
+                    <td>Cleans/Resets added passes. Passes are the effects. Passes are added to the composer.</td>
+                </tr>
+                <tr>
+                    <td><code class="b">add bloom intensity:[1] smoothing:[0.5] threshold:[0.5] | blend: [SCREEN] opacity:[1]::#c538a2</code></td>
+                    <td>Bloom. Take a look at <a href="https://pmndrs.github.io/postprocessing/public/demo/#bloom" target="_blank">these examples</a>.</td>
+                </tr>
+                <tr>
+                    <td><code class="s">add god rays object:[myObject] density:[1] decay:[0.95] weight:[0.4] exposition:[0.1] | resolution:[1] samples:[64] | blend: [SCREEN] opacity:[1]::#c538a2</code></td>
+                    <td>God rays. Take a look at <a href="https://pmndrs.github.io/postprocessing/public/demo/#god-rays" target="_blank">these examples</a>.</td>
+                </tr>
+                <tr>
+                    <td><code class="b">add dots scale:[1] angle:[0] | blend: [SCREEN] opacity:[1]::#c538a2</code></td>
+                    <td>Comic-Dotted overlay. Take a look at <a href="https://pmndrs.github.io/postprocessing/public/demo/#pattern" target="_blank">these examples</a>.</td>
+                </tr>
+                <tr>
+                    <td><code class="s">add depth of field focusDistance:[3] focalLength:[0.001] bokehScale:[4] | height:[240] | blend: [NORMAL] opacity:[1]::#c538a2</code></td>
+                    <td>Enables adding a focus point, blurs everything out of the focus range. Take a look at <a href="https://pmndrs.github.io/postprocessing/public/demo/#depth-of-field" target="_blank">these examples</a>.</td>
+                </tr>
+            </table>
     <h2 id="physics">Physics</h2><br>
+    
 
 <script>
     scratchblocks.renderMatching('pre.blocks', {
@@ -474,6 +589,12 @@
         inline: true,
         style:'scratch3',  // Optional, defaults to 'scratch2'.
         scale: 0.6,         // Optional, defaults to 1
+    })
+
+    scratchblocks.renderMatching('code.m', {
+        inline: true,
+        style:'scratch3',  // Optional, defaults to 'scratch2'.
+        scale: 0.35,         // Optional, defaults to 1
     })
 </script>
 
