@@ -475,30 +475,7 @@ Promise.resolve(load()).then(() => {
         menus: {}
       }}
     openDocs(){
-      alert(`
-        IF YOU STOP THE PROJECT, THE RENDERER WON'T DRAW AGAIN UNTIL THE FLAG IS PRESSED.
-
-        Start by creating a scene. Add objects here.
-        Add a camera, and set the rendering camera to that one. The stage should update.
-
-        Add an object. Create a geometry. Assing this geometry to the object.
-        By default a white cube will appear.
-        Create and modify materials and geometries, then asign the object these.
-        You can modify these after! Or apply the same material to diferent objects!
-
-        Add a light, only Light Points can be moved.
-        Directional light changes direction if moved. Changing the direction does nothing.
-        
-        Camera defaults is [0,0,3], FOV: 90, Ratio: Canvas ratio
-        Pixel Ratio default is 1, recommended: 2-3 You can set decimals.
-
-        Creating Objects with an exsisting name will replace them.
-        
-        To do:
-        Instancing or cloneing objects/groups 
-        Physics?
-        Postprocesing? Focal thing would be cool! Godrays, and more...
-        `)
+      open("https://civ3ro.github.io/extensions/Documentation/")
     }
     alerts() {alerts = !alerts; alerts ? alert("Alerts have been enabled!") : alert("Alerts have been disabled!")}
   }
@@ -1664,6 +1641,8 @@ Promise.resolve(load()).then(() => {
             {opcode: "addForce", blockType: Scratch.BlockType.COMMAND, text: "set [PROPERTY] of [OBJECT] to [VALUE] in [SPACE] space", arguments: {VALUE: {type: Scratch.ArgumentType.STRING, defaultValue: "[0,10,0]"},PROPERTY: {type: Scratch.ArgumentType.STRING, menu: "forces", defaultValue: "addForce"},SPACE: {type: Scratch.ArgumentType.STRING, menu: "spaces", defaultValue: "world"}, OBJECT: {type: Scratch.ArgumentType.STRING, defaultValue: "myObject"}}},
             {opcode: "resetForces", blockType: Scratch.BlockType.COMMAND, text: "reset [PROPERTY] of [OBJECT]", arguments: {PROPERTY: {type: Scratch.ArgumentType.STRING, menu: "resetF", defaultValue: "resetForces"}, OBJECT: {type: Scratch.ArgumentType.STRING, defaultValue: "myObject"}}},
             "---",
+            {opcode: "enableCCD", blockType: Scratch.BlockType.COMMAND, text: "enable Continuous Collision Detection for [OBJECT] [state]", arguments: {state: {type: Scratch.ArgumentType.STRING, menu: "state", defaultValue: "true"},PROPERTY: {type: Scratch.ArgumentType.STRING, menu: "oPropS", defaultValue: "physics"}, OBJECT: {type: Scratch.ArgumentType.STRING, defaultValue: "myObject"}}},
+            "---",
             {opcode: "fixedJoint", blockType: Scratch.BlockType.COMMAND, text: "create FIXED joint between [ObjA] & [ObjB] | anchor A: [VA] [RA] B: [VB] [RB]", arguments: {ObjA: {type: Scratch.ArgumentType.STRING, defaultValue: "myObject"},ObjB: {type: Scratch.ArgumentType.STRING, defaultValue: "myObjectB"},VA: {type: Scratch.ArgumentType.STRING, defaultValue: "[0,0,0]"},VB: {type: Scratch.ArgumentType.STRING, defaultValue: "[0,1,0]"},RA: {type: Scratch.ArgumentType.STRING, defaultValue: "[0,0,0]"},RB: {type: Scratch.ArgumentType.STRING, defaultValue: "[0,0,0]"},}},
             {opcode: "sphericalJoint", blockType: Scratch.BlockType.COMMAND, text: "create SPHERICAL joint between [ObjA] & [ObjB] | anchor A: [VA] B: [VB]", arguments: {ObjA: {type: Scratch.ArgumentType.STRING, defaultValue: "myObject"},ObjB: {type: Scratch.ArgumentType.STRING, defaultValue: "myObjectB"},VA: {type: Scratch.ArgumentType.STRING, defaultValue: "[0,0,0]"},VB: {type: Scratch.ArgumentType.STRING, defaultValue: "[0,1,0]"},}},
             {opcode: "revoluteJoint", blockType: Scratch.BlockType.COMMAND, text: "create REVOLUTE joint between [ObjA] & [ObjB] | anchor A: [VA] B: [VB] | axis: [X]", arguments: {ObjA: {type: Scratch.ArgumentType.STRING, defaultValue: "myObject"},ObjB: {type: Scratch.ArgumentType.STRING, defaultValue: "myObjectB"},VA: {type: Scratch.ArgumentType.STRING, defaultValue: "[0,0,0]"},VB: {type: Scratch.ArgumentType.STRING, defaultValue: "[0,1,0]"},X: {type: Scratch.ArgumentType.STRING, defaultValue: "[1,0,0]"},}},
@@ -1671,7 +1650,6 @@ Promise.resolve(load()).then(() => {
             {blockType: Scratch.BlockType.LABEL, text: "- Collider"},
             {opcode: "setC", blockType: Scratch.BlockType.COMMAND, text: "set collider [PROPERTY] of [OBJECT] to [VALUE]", arguments: {PROPERTY: {type: Scratch.ArgumentType.STRING, menu: "colliderSets"}, OBJECT: {type: Scratch.ArgumentType.STRING, defaultValue: "myObject"}, VALUE: {type: Scratch.ArgumentType.STRING, defaultValue: "1"}}},
             {opcode: "getC", blockType: Scratch.BlockType.REPORTER, text: "get collider [PROPERTY] of [OBJECT]", arguments: {PROPERTY: {type: Scratch.ArgumentType.STRING, menu: "colliderProperties"}, OBJECT: {type: Scratch.ArgumentType.STRING, defaultValue: "myObject"}}},
-            {opcode: "enableCCD", blockType: Scratch.BlockType.COMMAND, text: "enable Continuous collision detection for [OBJECT] [state]", arguments: {state: {type: Scratch.ArgumentType.STRING, menu: "state", defaultValue: "true"},PROPERTY: {type: Scratch.ArgumentType.STRING, menu: "oPropS", defaultValue: "physics"}, OBJECT: {type: Scratch.ArgumentType.STRING, defaultValue: "myObject"}}},
             "---",
             {opcode: "sensorSingle", blockType: Scratch.BlockType.BOOLEAN, text: "is sensor [SENSOR] touching [OBJECT]?", arguments: {SENSOR: {type: Scratch.ArgumentType.STRING, defaultValue: "mySensor"}, OBJECT: {type: Scratch.ArgumentType.STRING, defaultValue: "myObject"}}},
             {opcode: "sensorAll", blockType: Scratch.BlockType.REPORTER, text: "objects touching sensor [SENSOR]", arguments: {SENSOR: {type: Scratch.ArgumentType.STRING, defaultValue: "mySensor"}}}
@@ -1748,7 +1726,7 @@ Promise.resolve(load()).then(() => {
             objectTypes: {acceptReporters: false, items: [{text: "Dynamic", value: "dynamic"},{text: "Fixed", value: "fixed"},{text: "Kinematic Position Based",value: "kinematicPositionBased"}]},
             colliderTypes: {acceptReporters: false, items: [{text: "Box, Rectangle, cuboid", value: "cuboid"},{text: "Sphere, ball", value: "ball"},{text: "Custom, convexHull", value: "convexHull"},]},
             forces: {acceptReporters: false, items: [{text: "Force", value: "addForce"},{text: "Torque (rotation)", value: "addTorque"},{text: "Apply Impulse", value: "applyImpulse"},{text: "Apply Torque Impulse (rotation)", value: "applyTorqueImpulse"},{text: "Linear Velocity", value: "setLinvel"},{text: "Angular Velocity", value: "setAngvel"},]},
-            resetF: {acceptReporters: false, items: [{text:"Reset Forces", value: "resetForces"},{text:"Reset Torques", value: "resetTorques"},]}
+            resetF: {acceptReporters: false, items: [{text:"Forces", value: "resetForces"},{text:"Torques", value: "resetTorques"},]}
           }
         }
       }

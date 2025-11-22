@@ -571,8 +571,142 @@
                 </tr>
             </table>
     <h2 id="physics">Physics</h2><br>
-    
+            A really complete-easy to understand physics engine. It uses <a href="https://rapier.rs/docs/" target="_blank">RAPIER physics</a> and Three JS is just the renderer and manager of objects.
+            <br><br><table>
+                <tr>
+                    <td><code class="b">create world | gravity [\[0,-9,81,0\]]::#444</code></td>
+                    <td>Starter block. Set the gravity and start/restart the physics scene.</td>
+                </tr>
+                <tr>
+                    <td><code class="b">(get world [Gravity v]::#444)</code></td>
+                    <td>Helper.</td>
+                </tr>
+                <tr>
+                    <td><code class="m">enable physics for object [myObject] [on v] | rigidBody [Dynamic v] | collider [Box, Rectangle, cuboid v] density [1] friction [0.5] sensor [false v]::#444</code></td>
+                    <td>Turns on/off the physics for the object. Take a look at the next definitions:</td>
+                </tr>
+            </table>
+            
+            <div style="text-align: left;"><b style="font-size: larger;">Physics properties:</b>
+                <ul>
+                    <li><a href="https://rapier.rs/docs/user_guides/javascript/rigid_bodies#rigid-body-type" target="_blank">RigidBody types</a>:
+                        <ul>
+                            <li>Dynamic: Indicates that the body is affected by external forces and contacts.</li>
+                            <li>Fixed: Indicates the body cannot move. It acts as if it has an infinite mass and will not be affected by any force. It will continue to collide with dynamic bodies but not with fixed nor with kinematic bodies. Ground.</li>
+                            <li>Kinematic: Indicates that the body position must not be altered by the physics engine. The user is free to set its next position. Platforms, elevators, etc</li>
+                        </ul>
+                    </li><br>
+                    <li><a href="https://rapier.rs/docs/user_guides/javascript/colliders#collider-type" target="_blank">Collider types</a>:
+                        <ul>
+                            <li>Solid: Can have contact points with other colliders to generate contact forces to prevent objects from penetrating-each-others.</li>
+                            <li>Sensor: They only generate intersection events when one sensor collider and another collider start/stop touching. Sensor colliders are generally used to detect when something enters an area.</li>
+                        </ul> <br>
+                        <ul>
+                            <li>Cuboid: Box, Cubes...</li>
+                            <li>Ball: Perfect shperes</li>
+                            <li>Convex hull: Everything else, </li>
+                        </ul> <br>
+                        <ul>
+                            <li><a href="https://rapier.rs/docs/user_guides/javascript/colliders#mass-properties" target="_blank">Density</a></li>
+                            <li><a href="https://rapier.rs/docs/user_guides/javascript/colliders/#friction" target="_blank">Friction</a></li>
+                            <li>More properies in the next blocks...</li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
 
+            <table> RigidBody blocks. RigidBodies are used to simulate the dynamics of non-deformable solids as well as to integrate the trajectory of solids which velocities are controlled by the user.
+                <br><br>
+                <tr>
+                    <td><code class="b">set rigidbody [Gravity Scale v] of [myObject] to [1]::#444</code></td>
+                    <td>Changes a property of the rigidbody.</td>
+                </tr>
+                <tr>
+                    <td><code class="b">(get rigidbody [Type v] of [myObject]::#444)</code></td>
+                    <td>Return the current value of the property.</td>
+                </tr>
+            </table>
+
+            <div style="text-align: left;"><b style="font-size: larger;">RigidBody properties:</b>
+                <ul>
+                    <li><b>Type</b>: 0=Dynamic, 1=Fixed, 2=Kinematic</li>
+                    <li><b>Linear Velocity</b>: The current "position" (linear) velocity of the xyz.</li>
+                    <li><b>Angular Velocity</b>: The current "rotation" (angular) velocity of the xyz</li>
+                    <li><b>Translation</b>: Current position of the object in the world. Same as Three-scene's position.</li>
+                    <li><b>Quaternion</b>: Current rotation (in quaternions) of the object in the world. Same as Three-scene's rotation.</li>
+                    <li><b>Mass</b>: The ammount of matter. Affects the weight and can have gravitational effects.</li>
+                    <li><b><a href="https://rapier.rs/docs/user_guides/javascript/rigid_bodies/#damping" target="_blank">Linear & Angular Damping</a></b>: Damping lets you slow down a rigid-body automatically. This can be used to achieve a wide variety of effects like fake air friction.</li>
+                    <li><b><a href="https://rapier.rs/docs/user_guides/javascript/rigid_bodies/#sleeping" target="_blank">is Sleeping?</a></b>: When a dynamic rigid-body doesn't move (or moves very slowly) during a few seconds, it will be marked as sleeping.</li>
+                    <li><b>Gravity Scale</b>: The magnitude of the gravity applied to this body will be multiplied by this scaling factor. Therefore, a gravity scale set to 0.0 will disable gravity for the rigid-body whereas a gravity scale set to 2.0 will make it twice as strong.</li>
+                    <li><b>is Fixed? / is Dynamic? / is Kinematic?</b>: Checks.</li>
+                </ul>
+            </div>
+
+            <table>
+                <tr>
+                    <td><code class="b">lock rigidbody [myObject] [Translation v] on x:(on v) y:(on v) z:(on v)::#444</code></td>
+                    <td>To prevent a rigid-body from rotating or translating on said axis.</td>
+                </tr>
+                <tr>
+                    <td><code class="b">set [Force v] of [myObject] to [\[0,10,0\]] in [World v] space::#444</code></td>
+                    <td>Forces affect linear velocity. Torques Angular. Impulses both. Check more <a href="https://rapier.rs/docs/user_guides/javascript/rigid_bodies/#forces-and-impulses" target="_blank">here</a>.</td>
+                </tr>
+                <tr>
+                    <td><code class="b">reset [Forces v] of [myObject]::#444</code></td>
+                    <td>Cleans any Forces or Torques the object had.</td>
+                </tr>
+                <tr>
+                    <td><code class="b">enable Continuous Collision Detection for [myObject] [on v]::#444</code></td>
+                    <td>Extra precision. More <a href="https://rapier.rs/docs/user_guides/javascript/rigid_bodies#continuous-collision-detection" target="_blank">here</a>.</td>
+                </tr>
+            </table>
+            <br>
+            <table> <a href="https://rapier.rs/docs/user_guides/javascript/joints" target="_blank">Joints</a> can be used to restric the movement of an object in relation to another.<br><br>
+                <tr>
+                    <td><code class="s">create FIXED joint between [myObject] & [myObject2] | anchor A: [\[0,0,0\]] [\[0,0,0\]] B: [\[0,1,0\]] [\[0,0,0\]]::#444</code></td>
+                    <td><a href="https://rapier.rs/docs/user_guides/javascript/joints#fixed-joint" target="_blank">Fixed Joint</a>.</td>
+                </tr>
+                <tr>
+                    <td><code class="s">create SPHERICAL joint between [myObject] & [myObject2] | anchor A: [\[0,0,0\]] B: [\[0,1,0\]]::#444</code></td>
+                    <td><a href="https://rapier.rs/docs/user_guides/javascript/joints/#spherical-joint" target="_blank">Spherical Joint</a>.</td>
+                </tr>
+                <tr>
+                    <td><code class="s">create REVOLUTE joint between [myObject] & [myObject2] | anchor A: [\[0,0,0\]] B: [\[1,0,0\]] | axis: [\[0,1,0\]]::#444</code></td>
+                    <td><a href="https://rapier.rs/docs/user_guides/javascript/joints/#revolute-joint" target="_blank">Revolute Joint</a>.</td>
+                </tr>
+            </table>
+            <p style="font-size: smaller;">*I recommend setting the transform of the objects to the one you place here, else it will go crazy. <br> The first value for each A/B is for position, if there's a second its for rotation.</p>
+
+            <table> <a href="https://rapier.rs/docs/user_guides/javascript/colliders" target="_blank">Collider</a> blocks. <br>Colliders represent the geometric shapes that generate contacts and collision events when they touch. <br>Attaching one or multiple colliders to a rigid body allow the rigid-body to be affected by contact forces.                <br><br>
+                <tr>
+                    <td><code class="b">set collider [Friction v] of [myObject] to [1]::#444</code></td>
+                    <td>Changes a property of the collider.</td>
+                </tr>
+                <tr>
+                    <td><code class="b">(get collider [is Sensor? v] of [myObject]::#444)</code></td>
+                    <td>Returns property values.</td>
+                </tr>
+            </table>
+
+            <div style="text-align: left;"><b style="font-size: larger;">Collider properties:</b>
+                <ul>
+                    <li><b><a href="https://rapier.rs/docs/user_guides/javascript/colliders#friction" target="_blank">Friction</a></b>: Friction is a force that opposes the relative tangential motion between two rigid-bodies with colliders in contact.</li>
+                    <li><b><a href="https://rapier.rs/docs/user_guides/javascript/colliders#restitution" target="_blank">Restitution</a></b>: Restitution controls how elastic (aka. bouncy) a contact is.</li>
+                    <li><b><a href="https://rapier.rs/docs/user_guides/javascript/colliders#mass-properties" target="_blank">Density & Mass</a></b>: The mass-properties of a collider can only be set when the collider is created. Density is one of them. So it can only be changed with the turn physics on block.</li>
+                </ul>
+            </div><br>
+
+            <table> <a href="https://rapier.rs/docs/user_guides/javascript/colliders" target="_blank">Collider</a> blocks. <br>Colliders represent the geometric shapes that generate contacts and collision events when they touch. <br>Attaching one or multiple colliders to a rigid body allow the rigid-body to be affected by contact forces.                <br><br>
+                <tr>
+                    <td><code class="b">&lt;is sensor [mySensor] touching [myObject]?::#444</code></td>
+                    <td>Checks if a solid object is intersecting with a sensor object.</td>
+                </tr>
+                <tr>
+                    <td><code class="b">(objects touching sensor [mySensor]::#444)</code></td>
+                    <td>Returns the names of all objects intersecting with a sensor.</td>
+                </tr>
+            </table>
+            
 <script>
     scratchblocks.renderMatching('pre.blocks', {
         style:'scratch3',  // Optional, defaults to 'scratch2'.
