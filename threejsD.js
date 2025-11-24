@@ -54,6 +54,7 @@
   let composer
   let renderPass
   let passes = {}
+  let customEffects = []
 
   let materials = {}
   let geometries = {}
@@ -331,7 +332,8 @@ async function load() {
         EffectComposer,
         EffectPass,
         RenderPass,
-
+        
+        Effect,
         BloomEffect,
         GodRaysEffect,
         DotScreenEffect,
@@ -339,10 +341,11 @@ async function load() {
 
         BlendFunction
       } = POSTPROCESSING
-
+        //so i can use them later as global
         window.EffectComposer = EffectComposer;
         window.EffectPass = EffectPass;
         window.RenderPass = RenderPass;
+        window.Effect = Effect;
         window.BloomEffect = BloomEffect;
         window.GodRaysEffect = GodRaysEffect;
         window.DotScreenEffect = DotScreenEffect;
@@ -394,7 +397,7 @@ async function load() {
 
       threeRenderer.domElement.addEventListener('mousemove', (event) => {
         mouseNDC = getMouseNDC(event);
-      });
+      })
 
         running = false
         ready = load()
@@ -432,6 +435,8 @@ function startRenderLoop() {
       Object.values(models).forEach( model => { if (model) model.mixer.update(delta) } )
 
       Object.values(lights).forEach(light => updateShadowFrustum(light, camera.position))
+
+      //update custom effects time and resolution uniforms
 
       composer.render(delta)
     }
@@ -917,10 +922,11 @@ Promise.resolve(load()).then(() => {
     setObject(args){
       getObject(args.OBJECT3D)
       let value = args.VALUE
-      if (args.PROPERTY === "material") value = materials[args.NAME]
-      else if (args.PROPERTY === "geometry") value = geometries[args.NAME]
+      if (args.PROPERTY === "material") {const mat = materials[args.NAME]; if (mat) value = mat; else value = undefined}
+      else if (args.PROPERTY === "geometry") {const geo = geometries[args.NAME]; if (geo) value = geo; else value = undefined}
       else value = !!value
 
+      if (value == undefined) return //invalid geo/mat
       object[args.PROPERTY] = value
     }
     getObject(args){
@@ -945,7 +951,7 @@ Promise.resolve(load()).then(() => {
       materials[args.NAME] = mat;
     }
     async setMaterial(args) {
-      if (args.VALUE.at(0) == "|") return //incase someone places |MESH| as property bruh
+      if (typeof(args.VALUE) == "string" && args.VALUE.at(0) == "|") return
       const mat = materials[args.NAME]
       console.log(args.VALUE)
       let value
@@ -1521,8 +1527,9 @@ Promise.resolve(load()).then(() => {
             {opcode: "bloom", blockType: Scratch.BlockType.COMMAND, text: "add bloom intensity:[I] smoothing:[S] threshold:[T] | blend: [BLEND] opacity:[OP]", arguments: {OP: {type: Scratch.ArgumentType.NUMBER, defaultValue: 1},I: {type: Scratch.ArgumentType.NUMBER, defaultValue: 1}, S:{type: Scratch.ArgumentType.NUMBER, defaultValue: 0.5}, T:{type: Scratch.ArgumentType.NUMBER, defaultValue: 0.5}, BLEND: {type: Scratch.ArgumentType.STRING, menu: "blendModes", defaultValue: "SCREEN"}}},
             {opcode: "godRays", blockType: Scratch.BlockType.COMMAND, text: "add god rays object:[NAME] density:[DENS] decay:[DEC] weight:[WEI] exposition:[EXP] | resolution:[RES] samples:[SAMP] | blend: [BLEND] opacity:[OP]", arguments: {OP: {type: Scratch.ArgumentType.NUMBER, defaultValue: 1},NAME: {type: Scratch.ArgumentType.STRING, defaultValue: "myObject"},BLEND: {type: Scratch.ArgumentType.STRING, menu: "blendModes", defaultValue: "SCREEN"}, DEC:{type: Scratch.ArgumentType.NUMBER, defaultValue: 0.95}, DENS:{type: Scratch.ArgumentType.NUMBER, defaultValue: 1},EXP:{type: Scratch.ArgumentType.NUMBER, defaultValue: 0.1},WEI:{type: Scratch.ArgumentType.NUMBER, defaultValue: 0.4},RES:{type: Scratch.ArgumentType.NUMBER, defaultValue: 1},SAMP:{type: Scratch.ArgumentType.NUMBER, defaultValue: 64},}},
             {opcode: "dots", blockType: Scratch.BlockType.COMMAND, text: "add dots scale:[S] angle:[A] | blend: [BLEND] opacity:[OP]", arguments: {OP: {type: Scratch.ArgumentType.NUMBER, defaultValue: 1},S:{type: Scratch.ArgumentType.NUMBER, defaultValue: 1}, A: {type: Scratch.ArgumentType.ANGLE, defaultValue: 0},BLEND: {type: Scratch.ArgumentType.STRING, menu: "blendModes", defaultValue: "SCREEN"}}},
-            {opcode: "depth", blockType: Scratch.BlockType.COMMAND, text: "add depth of field focusDistance:[FD] focalLength:[FL] bokehScale:[BS] | height:[H] | blend: [BLEND] opacity:[OP]", arguments: {FD: {type: Scratch.ArgumentType.NUMBER, defaultValue: (3)},FL: {type: Scratch.ArgumentType.NUMBER, defaultValue: (0.001)},BS: {type: Scratch.ArgumentType.NUMBER, defaultValue: 4},H: {type: Scratch.ArgumentType.NUMBER, defaultValue: 240},OP: {type: Scratch.ArgumentType.NUMBER, defaultValue: 1},BLEND: {type: Scratch.ArgumentType.STRING, menu: "blendModes", defaultValue: "NORMAL"}}}
-        
+            {opcode: "depth", blockType: Scratch.BlockType.COMMAND, text: "add depth of field focusDistance:[FD] focalLength:[FL] bokehScale:[BS] | height:[H] | blend: [BLEND] opacity:[OP]", arguments: {FD: {type: Scratch.ArgumentType.NUMBER, defaultValue: (3)},FL: {type: Scratch.ArgumentType.NUMBER, defaultValue: (0.001)},BS: {type: Scratch.ArgumentType.NUMBER, defaultValue: 4},H: {type: Scratch.ArgumentType.NUMBER, defaultValue: 240},OP: {type: Scratch.ArgumentType.NUMBER, defaultValue: 1},BLEND: {type: Scratch.ArgumentType.STRING, menu: "blendModes", defaultValue: "NORMAL"}}},
+            "---",
+            {opcode: "custom", blockType: Scratch.BlockType.COMMAND, text: "add custom shader [NAME] with GLSL fragm [FRA] vert [VER] | blend: [BLEND] opacity:[OP]", arguments: {NAME: {type: Scratch.ArgumentType.STRING, defaultValue: "myShader"}, FRA: {type: Scratch.ArgumentType.STRING}, VER: {type: Scratch.ArgumentType.STRING}, BLEND: {type: Scratch.ArgumentType.STRING, menu: "blendModes", defaultValue: "NORMAL"}, OP: {type: Scratch.ArgumentType.NUMBER, defaultValue: 1}}},
           ],
         menus: {            
           onoff: {acceptReporters: true, items: [{text: "enabled", value: "1"},{text: "disabled", value: "0"},]},
@@ -1550,6 +1557,7 @@ Promise.resolve(load()).then(() => {
     resetComposer() {
       composer.passes = []
       passes = {}
+      customEffects = []
       updateComposers()
     }
 
@@ -1614,6 +1622,51 @@ Promise.resolve(load()).then(() => {
       composer.addPass(dofPass)
     }
 
+    async custom(args) {
+      function cleanGLSL(glslCode) {
+          // 1. Remove C-style multi-line comments: /* ... */
+          let cleanedCode = glslCode.replace(/\/\*[\s\S]*?\*\//g, '');
+          
+          // 2. Remove C++ style single-line comments: // ... to end of line
+          cleanedCode = cleanedCode.replace(/\/\/.*$/gm, '');
+          
+          // 3. Normalize multiple whitespace characters (including newlines and tabs) into a single space, and trim leading/trailing space.
+          cleanedCode = cleanedCode.replace(/\s+/g, ' ').trim();
+
+          return cleanedCode;
+      }
+
+      const fs = cleanGLSL(`
+        void mainImage(const in vec4 inputColor, const in vec2 uv, out vec4 outputColor) {
+            ${args.FRA}
+        }
+      `)
+        console.log(fs)
+      const vs = cleanGLSL(`
+        void mainSupport(const in vec2 uv) {
+          ${args.VER}
+        }
+      `)
+        console.log(vs)
+
+      const effect = new Effect(
+        "Custom", 
+        fs, 
+        {
+          blendFunction: BlendFunction[args.BLEND],
+          vertexShader: vs,
+          uniforms: new Map([ ['time', new THREE.Uniform(0.0)]  ]),
+          defines: new Map([['USE_TIME', '1']]),
+        }
+      );
+
+      effect.blendMode.opacity.value = args.OP
+
+      const pass = new EffectPass(camera, effect);
+      composer.addPass(pass);
+
+      customEffects.push(effect);
+    }
 
   }
   Scratch.extensions.register(new ThreeAddons())
