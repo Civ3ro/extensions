@@ -55,6 +55,7 @@
   let renderPass
   let passes = {}
   let customEffects = []
+  let renderTargets = {}
 
   let materials = {}
   let geometries = {}
@@ -76,20 +77,20 @@
 
 //objects
     function createObject(name, content, parentName) {
-      getObject(name, true)
+      let object = getObject(name, true)
       if (object) {
         removeObject(name)
         alerts ? alert(name + " already exsisted, will replace!") : null
       }
       content.name = name
       content.rotation._order = "YXZ"
-      parentName === scene.name ? object = scene : getObject(parentName)
+      parentName === scene.name ? object = scene : object = getObject(parentName)
       content.physics = false
 
       object.add(content)
     }
     function removeObject(name) {
-      getObject(name)
+      let object = getObject(name)
       if (!object) return
 
       scene.remove(object)
@@ -105,11 +106,12 @@
       }
     }
     function getObject(name, isNew) {
-      object = null
+      let object = null
       if (!scene) {
         alerts ? alert("Can not get " + name + ". Create a scene first!") : null; return;}
       object = scene.getObjectByName(name)
       if (!object && !isNew) {alerts ? alert(name + " does not exist! Add it to scene"):null; return;}
+      return object
     }
 
 //materials
@@ -301,6 +303,23 @@ async function openFileExplorer(format) {
       input.click();
   })
 }
+function getMeshesUsingTexture(scene, targetTexture) {
+    const meshes = []
+
+    scene.traverse(object => {
+        if (object.isMesh && object.material) {
+            const materials = Array.isArray(object.material) ? object.material : [object.material]
+            for (const material of materials) {
+                if (material.map === targetTexture) {
+                    meshes.push(object)
+                    break
+                }
+            }
+        }
+    })
+
+    return meshes
+}
 
 let mouseNDC = [0, 0]
 //loops/init
@@ -436,8 +455,33 @@ function startRenderLoop() {
 
       Object.values(lights).forEach(light => updateShadowFrustum(light, camera.position))
 
-      //update custom effects time and resolution uniforms
+      //update custom effects time
+      customEffects.forEach(e => {
+        if (e.uniforms.get('time')) {
+        e.uniforms.get('time').value += delta
+        }
+      })
+      Object.values(renderTargets).forEach(t => {
+        t.camera.aspect = t.target.width / t.target.height
+        t.camera.updateProjectionMatrix()
+        // get meshes using the texture associated with this target
+        const displayMeshes = getMeshesUsingTexture(scene, t.target.texture)
 
+        displayMeshes.forEach(mesh => {
+        mesh.visible = false
+        })
+
+        threeRenderer.setRenderTarget(t.target)
+        threeRenderer.clear(true, true, true)
+        threeRenderer.render(scene, t.camera)
+
+        displayMeshes.forEach(mesh => {
+        mesh.visible = true
+        })
+      })
+      camera.aspect = threeRenderer.domElement.width / threeRenderer.domElement.height
+      camera.updateProjectionMatrix()
+      threeRenderer.setRenderTarget(null)
       composer.render(delta)
     }
 
@@ -453,7 +497,12 @@ function resize() {
 
   threeRenderer.setSize(w, h)
   composer.setSize(w, h)
-  
+  customEffects.forEach(e => {
+    if (e.uniforms.get('resolution')) {
+    e.uniforms.get('resolution').value.set(w,h)
+    }
+  })
+
   if (camera) {
   camera.aspect = w / h
   camera.updateProjectionMatrix()
@@ -590,8 +639,12 @@ Promise.resolve(load()).then(() => {
             {opcode: "getCamera", blockType: Scratch.BlockType.REPORTER, text: "get camera [PROPERTY] of [CAMERA]", arguments: {CAMERA: {type: Scratch.ArgumentType.STRING, defaultValue: "myCamera"}, PROPERTY: {type: Scratch.ArgumentType.STRING, menu: "cameraProperties"}}},
             "---",
             {opcode: "renderSceneCamera", blockType: Scratch.BlockType.COMMAND, text: "set rendering camera to [CAMERA]", arguments: {CAMERA: {type: Scratch.ArgumentType.STRING, defaultValue: "myCamera"}}},
-
-        ],
+            "---",
+            {opcode: "renderTarget", blockType: Scratch.BlockType.COMMAND, text: "set a RenderTarget: [RT] for camera [CAMERA]", arguments: {CAMERA: {type: Scratch.ArgumentType.STRING, defaultValue: "myCamera"}, RT: {type: Scratch.ArgumentType.STRING, defaultValue: "myTarget"}, } },
+            {opcode: "sizeTarget", blockType: Scratch.BlockType.COMMAND, text: "set RenderTarget [RT] size to [W] [H]", arguments: {RT: {type: Scratch.ArgumentType.STRING, defaultValue: "myTarget"}, W: {type: Scratch.ArgumentType.NUMBER, defaultValue: 480}, H: {type: Scratch.ArgumentType.NUMBER, defaultValue: 360},} },
+            {opcode: "getTarget", blockType: Scratch.BlockType.REPORTER, text: "get RenderTarget: [RT] texture", arguments: {RT: {type: Scratch.ArgumentType.STRING, defaultValue: "myTarget"}} },
+            {opcode: "removeTarget", blockType: Scratch.BlockType.COMMAND, text: "remove RenderTarget: [RT]", arguments: {RT: {type: Scratch.ArgumentType.STRING, defaultValue: "myTarget"}} },
+          ],
         menus: {
             cameraTypes: {acceptReporters: false, items: [
                 {text: "Perspective", value: "PerspectiveCamera"},{text: "Orthographic (not done yet!)", value: "OrthographicCamera"}
@@ -604,28 +657,54 @@ Promise.resolve(load()).then(() => {
     addCamera(args) {
         let v2 = new THREE.Vector2()
         threeRenderer.getSize(v2)
-        const object = new THREE[args.TYPE](90, v2.x / v2.y  )
+        const object = new THREE.PerspectiveCamera(90, v2.x / v2.y  )
         object.position.z = 3
  
         createObject(args.CAMERA, object, args.GROUP)
-        updateComposers()
-
     }
     setCamera(args) {
-      getObject(args.CAMERA)
+      let object = getObject(args.CAMERA)
       object[args.PROPERTY] = args.VALUE
       object.updateProjectionMatrix()
     }
     getCamera(args) {
-      getObject(args.CAMERA)
+      let object = getObject(args.CAMERA)
       const value = JSON.stringify(object[args.PROPERTY])
       return value
     }
     renderSceneCamera(args) {
-      getObject(args.CAMERA)
+      let object = getObject(args.CAMERA)
       if (!object) return
       camera = object
+      //reset composer, else it does not update.
+      composer.passes = []
+      passes = {}
+      customEffects = []
       updateComposers()
+    }
+
+    renderTarget(args) {
+      let object = getObject(args.CAMERA)
+      const renderTarget = new THREE.WebGLRenderTarget(
+          360,
+          360,
+          {
+            generateMipmaps: false
+          }
+      )
+
+      renderTargets[args.RT] = {target: renderTarget, camera: object}
+    }
+    sizeTarget(args) {
+      renderTargets[args.RT].target.setSize(args.W, args.H)
+    }
+    getTarget(args) {
+      console.log(renderTargets, renderTargets[args.RT].target.texture)
+      return renderTargets[args.RT].target.texture
+    }
+    removeTarget(args) {
+      renderTargets[args.RT].target.dispose()
+      delete(renderTargets[args.RT])
     }
   }
   Scratch.extensions.register(new ThreeCameras())
@@ -659,7 +738,7 @@ Promise.resolve(load()).then(() => {
             {opcode: "newMaterial",extensions: ["colours_looks"], blockType: Scratch.BlockType.COMMAND, text: "new material [NAME] [TYPE]", arguments: {NAME: {type: Scratch.ArgumentType.STRING, defaultValue: "myMaterial"}, TYPE: {type: Scratch.ArgumentType.STRING, menu: "materialTypes", defaultValue: "MeshStandardMaterial"}}},
             {opcode: "materialE",extensions: ["colours_looks"], blockType: Scratch.BlockType.BOOLEAN, text: "is there a material [NAME]?", arguments: {NAME: {type: Scratch.ArgumentType.STRING, defaultValue: "myMaterial"}}},
             {opcode: "removeMaterial",extensions: ["colours_looks"], blockType: Scratch.BlockType.COMMAND, text: "remove material [NAME]", arguments: {NAME: {type: Scratch.ArgumentType.STRING, defaultValue: "myMaterial"}}},
-            {opcode: "setMaterial",extensions: ["colours_looks"], blockType: Scratch.BlockType.COMMAND, text: "set material [PROPERTY] of [NAME] to [VALUE]", arguments: {PROPERTY: {type: Scratch.ArgumentType.STRING, menu: "materialProperties", defaultValue: "Color"},NAME: {type: Scratch.ArgumentType.STRING, defaultValue: "myMaterial"}, VALUE: {type: Scratch.ArgumentType.STRING, defaultValue: "new Color()", exemptFromNormalization: true}}},
+            {opcode: "setMaterial",extensions: ["colours_looks"], blockType: Scratch.BlockType.COMMAND, text: "set material [PROPERTY] of [NAME] to [VALUE]", arguments: {PROPERTY: {type: Scratch.ArgumentType.STRING, menu: "materialProperties", defaultValue: "color"},NAME: {type: Scratch.ArgumentType.STRING, defaultValue: "myMaterial"}, VALUE: {type: Scratch.ArgumentType.STRING, defaultValue: "new Color()", exemptFromNormalization: true}}},
             {opcode: "setBlending",extensions: ["colours_looks"], blockType: Scratch.BlockType.COMMAND, text: "set material [NAME] blending to [VALUE]", arguments: {NAME: {type: Scratch.ArgumentType.STRING, defaultValue: "myMaterial"}, VALUE: {type: Scratch.ArgumentType.STRING, menu: "blendModes"}}},
             {opcode: "setDepth",extensions: ["colours_looks"], blockType: Scratch.BlockType.COMMAND, text: "set material [NAME] depth to [VALUE]", arguments: {NAME: {type: Scratch.ArgumentType.STRING, defaultValue: "myMaterial"}, VALUE: {type: Scratch.ArgumentType.STRING, menu: "depthModes"}}},
             
@@ -833,14 +912,14 @@ Promise.resolve(load()).then(() => {
         createObject(args.OBJECT3D, object, args.GROUP)
     }
     cloneObject(args) {
-      getObject(args.OBJECT3D)
+      let object = getObject(args.OBJECT3D)
       const clone = object.clone(true)
       clone.name
       createObject(args.NAME, clone, args.GROUP)
     }
 
     setObjectV3(args) {
-        getObject(args.OBJECT3D)
+        let object = getObject(args.OBJECT3D)
         let values = JSON.parse(args.VALUE)
 
         function degToRad(deg) {
@@ -909,7 +988,7 @@ Promise.resolve(load()).then(() => {
     }
     */
     getObjectV3(args) {
-        getObject(args.OBJECT3D)
+        let object = getObject(args.OBJECT3D)
         if (!object) return
         let values = vector3ToString(object[args.PROPERTY])
         if (args.PROPERTY === "rotation") {
@@ -920,7 +999,7 @@ Promise.resolve(load()).then(() => {
         return JSON.stringify(values)
     }
     setObject(args){
-      getObject(args.OBJECT3D)
+      let object = getObject(args.OBJECT3D)
       let value = args.VALUE
       if (args.PROPERTY === "material") {const mat = materials[args.NAME]; if (mat) value = mat; else value = undefined}
       else if (args.PROPERTY === "geometry") {const geo = geometries[args.NAME]; if (geo) value = geo; else value = undefined}
@@ -930,7 +1009,7 @@ Promise.resolve(load()).then(() => {
       object[args.PROPERTY] = value
     }
     getObject(args){
-      getObject(args.OBJECT3D)
+      let object = getObject(args.OBJECT3D)
       if (!object) return
       const value = object[args.PROPERTY]
       return JSON.stringify(value)
@@ -956,6 +1035,7 @@ Promise.resolve(load()).then(() => {
       console.log(args.VALUE)
       let value
       if (typeof(args.VALUE) == ("object") || args.VALUE == "D" || "B" || "F" ) value = args.VALUE; else value = JSON.parse(args.VALUE);
+      if (args.VALUE == "false") value = false
       console.log(value)
       if  (args.PROPERTY == "side") {
       value = (value == "D" ? THREE.DoubleSide : value == "B" ? THREE.BackSide : THREE.FrontSide)
@@ -1578,7 +1658,7 @@ Promise.resolve(load()).then(() => {
 
     godRays(args) {
     if (!camera || !scene) {if (alerts) alert("set a camera!"); return}
-      getObject(args.NAME)
+      let object = getObject(args.NAME)
       const sun = object
 
       const godRays = new GodRaysEffect(camera, sun, {
@@ -1624,30 +1704,24 @@ Promise.resolve(load()).then(() => {
 
     async custom(args) {
       function cleanGLSL(glslCode) {
-          // 1. Remove C-style multi-line comments: /* ... */
-          let cleanedCode = glslCode.replace(/\/\*[\s\S]*?\*\//g, '');
-          
-          // 2. Remove C++ style single-line comments: // ... to end of line
-          cleanedCode = cleanedCode.replace(/\/\/.*$/gm, '');
-          
-          // 3. Normalize multiple whitespace characters (including newlines and tabs) into a single space, and trim leading/trailing space.
-          cleanedCode = cleanedCode.replace(/\s+/g, ' ').trim();
-
-          return cleanedCode;
+        //delete multilines comments
+        let cleanedCode = glslCode.replace(/\/\*[\s\S]*?\*\//g, ' ')
+        .replace(/  /g, '\n')
+        .replace(/\/\/.*$/gm, ' ')
+        .replace(/; /g, ';\n')
+        
+        return cleanedCode;
       }
 
-      const fs = cleanGLSL(`
-        void mainImage(const in vec4 inputColor, const in vec2 uv, out vec4 outputColor) {
-            ${args.FRA}
-        }
+      let fs = cleanGLSL(`
+        ${args.FRA}
       `)
-        console.log(fs)
+      if (!args.FRA.trim()) {fs = `void mainImage(const in vec4 inputColor, const in vec2 uv, out vec4 outputColor) { outputColor = inputColor; }`}
       const vs = cleanGLSL(`
-        void mainSupport(const in vec2 uv) {
-          ${args.VER}
-        }
+        ${args.VER}
       `)
-        console.log(vs)
+      console.log(fs)
+      console.log(vs)
 
       const effect = new Effect(
         "Custom", 
@@ -1655,8 +1729,11 @@ Promise.resolve(load()).then(() => {
         {
           blendFunction: BlendFunction[args.BLEND],
           vertexShader: vs,
-          uniforms: new Map([ ['time', new THREE.Uniform(0.0)]  ]),
-          defines: new Map([['USE_TIME', '1']]),
+          uniforms: new Map([ //uniforms usually in shaders... open to more!
+            ['time', new THREE.Uniform(0.0)], 
+            ['resolution', new THREE.Uniform(new THREE.Vector2(threeRenderer.domElement.width, threeRenderer.domElement.height))] 
+          ]),
+          defines: new Map([['USE_TIME', '1'], ['USE_VERTEX_TRANSFORM', '']]),
         }
       );
 
@@ -1812,9 +1889,8 @@ Promise.resolve(load()).then(() => {
             { x: VA[0], y: VA[1], z: VA[2] }, RA,
             { x: VB[0], y: VB[1], z: VB[2] }, RB
         )
-        getObject(args.ObjA)
-        const objectA = object
-        getObject(args.ObjB)
+        const objectA = getObject(args.ObjA)
+        let object = getObject(args.ObjB)
         this.joint(data, objectA, object)
       }
 
@@ -1826,9 +1902,8 @@ Promise.resolve(load()).then(() => {
             { x: VA[0], y: VA[1], z: VA[2] },
             { x: VB[0], y: VB[1], z: VB[2] }
         )
-        getObject(args.ObjA)
-        const objectA = object
-        getObject(args.ObjB)
+        const objectA = getObject(args.ObjA)
+        let object = getObject(args.ObjB)
         this.joint(data, objectA, object)
       }
 
@@ -1841,9 +1916,8 @@ Promise.resolve(load()).then(() => {
             { x: VA[0], y: VA[1], z: VA[2] },
             { x: VB[0], y: VB[1], z: VB[2] }, { x: x[0], y: x[1], z: x[2] },
         )
-        getObject(args.ObjA)
-        const objectA = object
-        getObject(args.ObjB)
+        const objectA = getObject(args.ObjA)
+        let object = getObject(args.ObjB)
         this.joint(data, objectA, object)
       }
 
@@ -1856,9 +1930,8 @@ Promise.resolve(load()).then(() => {
             { x: VA[0], y: VA[1], z: VA[2] },
             { x: VB[0], y: VB[1], z: VB[2] }, { x: x[0], y: x[1], z: x[2] },
         )
-        getObject(args.ObjA)
-        const objectA = object
-        getObject(args.ObjB)
+        const objectA = getObject(args.ObjA)
+        let object = getObject(args.ObjB)
         this.joint(data, objectA, object)
       }
 
@@ -1878,27 +1951,27 @@ Promise.resolve(load()).then(() => {
       setRB(args) {
         let value = args.VALUE
         if (args.VALUE === "true" || args.VALUE === "false") value = !!args.VALUE
-        getObject(args.OBJECT)
+        let object = getObject(args.OBJECT)
         object.rigidBody[args.PROPERTY](value)
       }
       setC(args) {
         let value = args.VALUE
         if (args.VALUE === "true" || args.VALUE === "false") value = !!args.VALUE
-        getObject(args.OBJECT)
+        let object = getObject(args.OBJECT)
         object.collider[args.PROPERTY](value)
       }
 
       getRB(args) {
-        getObject(args.OBJECT)
+        let object = getObject(args.OBJECT)
         return JSON.stringify(object.rigidBody[args.PROPERTY]())
       }
       getC(args) {
-        getObject(args.OBJECT)
+        let object = getObject(args.OBJECT)
         return JSON.stringify(object.collider[args.PROPERTY]())
       }
 
       lockObjectAxis(args) {
-        getObject(args.OBJECT)
+        let object = getObject(args.OBJECT)
         const x =  !JSON.parse(args.X)
         const y = !JSON.parse(args.Y)
         const z = !JSON.parse(args.Z)
@@ -1906,7 +1979,7 @@ Promise.resolve(load()).then(() => {
       }
 
       objectPhysics(args) {
-        getObject(args.OBJECT)
+        let object = getObject(args.OBJECT)
         object.physics = JSON.parse(args.state)
 
         if (JSON.parse(args.state)) {
@@ -1944,7 +2017,7 @@ Promise.resolve(load()).then(() => {
       }
 
       enableCCD(args) {
-        getObject(args.OBJECT)
+        let object = getObject(args.OBJECT)
         if (object.physics) {
           let rigidBody = object.rigidBody
           rigidBody.enableCcd(JSON.parse(args.state))
@@ -1952,7 +2025,7 @@ Promise.resolve(load()).then(() => {
      }
 
      addForce(args) {
-      getObject(args.OBJECT)
+      let object = getObject(args.OBJECT)
       const vector = JSON.parse(args.VALUE).map(Number)
       
       let force = new THREE.Vector3(vector[0],vector[1],vector[2])
@@ -1968,10 +2041,9 @@ Promise.resolve(load()).then(() => {
      }
 
      sensorSingle(args) {
-      getObject(args.SENSOR)
-      const sensor = object
+      const sensor = getObject(args.SENSOR)
 
-      getObject(args.OBJECT)
+      let object = getObject(args.OBJECT)
 
       let touching = false
       physicsWorld.intersectionPairsWith(sensor.collider, otherCollider => {
@@ -1982,8 +2054,7 @@ Promise.resolve(load()).then(() => {
      }
 
      sensorAll(args) {
-      getObject(args.SENSOR)
-      const sensor = object
+      const sensor = getObject(args.SENSOR)
 
       const touchedObjects = []
 
