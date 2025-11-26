@@ -307,7 +307,7 @@ function getMeshesUsingTexture(scene, targetTexture) {
     const meshes = []
 
     scene.traverse(object => {
-        if (object.isMesh && object.material) {
+        if (object.material) {
             const materials = Array.isArray(object.material) ? object.material : [object.material]
             for (const material of materials) {
                 if (material.map === targetTexture) {
