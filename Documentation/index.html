@@ -85,6 +85,23 @@
                 <td> <code class="b">set rendering camera to [myCamera]:: #38c59b</code></td>
                 <td>Asign the camera that will be used to render the scene.</td>
             </tr>
+        </table> <br> <table>
+            <tr>
+                <td> <code class="b">set a RenderTarget: [myTarget] for camera [myCamera]:: #38c59b</code></td>
+                <td>Create a <a href="https://threejs.org/docs/#RenderTarget" target="_blank">RenderTarget</a> with texture of the camera view.</td>
+            </tr>
+            <tr>
+                <td> <code class="b">set RenderTarget [myTarget] size to [360] [360]:: #38c59b</code></td>
+                <td>Adjust the RenderTarget size. It should be proportional to the object size (to avoid streching!).</td>
+            </tr>
+            <tr>
+                <td> <code class="b">(get RenderTarget: [myTarget] texture:: #38c59b)</code></td>
+                <td>Return the texture of the RenderTarget. It beaves as a live texture, no need to update every frame.</td>
+            </tr>
+            <tr>
+                <td> <code class="b">remove RenderTarget: [myTarget]:: #38c59b</code></td>
+                <td>Delete the RenderTarget properly.</td>
+            </tr>
         </table>
 
     <h2 id="obj">3D Objects</h2><br>
@@ -568,6 +585,10 @@
                 <tr>
                     <td><code class="s">add depth of field focusDistance:[3] focalLength:[0.001] bokehScale:[4] | height:[240] | blend: [NORMAL] opacity:[1]::#c538a2</code></td>
                     <td>Enables adding a focus point, blurs everything out of the focus range. Take a look at <a href="https://pmndrs.github.io/postprocessing/public/demo/#depth-of-field" target="_blank">these examples</a>.</td>
+                </tr>
+                <tr>
+                    <td><code class="s">add custom shader [myShader] with GLSL fragm [] vert [] | blend: [NORMAL v] opacity:[1]::#c538a2</code></td>
+                    <td>For advanced composer passes- A bit limited. The next uniforms are avialbe: Resolution and Time. More info <a href="https://github.com/pmndrs/postprocessing/wiki/Custom-Effects" target="_blank">here</a>.</td>
                 </tr>
             </table>
     <h2 id="physics">Physics</h2><br>
