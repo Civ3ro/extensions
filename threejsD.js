@@ -19,8 +19,7 @@
   const Cast = Scratch.Cast;
   const menuIconURI = "data:image/svg+xml;base64,PHN2ZyB2aWV3Qm94PSIwLDAsMTc3LjIzLDE4MC40NzU3MSIgaGVpZ2h0PSIxODAuNDc1NzEiIHdpZHRoPSIxNzcuMjMiIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZlcnNpb249IjEuMSI+PGcgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoLTE2Ni4zODUsLTEwMS45OTQyOSkiPjxnIHN0cm9rZS1taXRlcmxpbWl0PSIxMCI+PHBhdGggc3Ryb2tlLWxpbmVqb2luPSJtaXRlciIgc3Ryb2tlLXdpZHRoPSIxIiBzdHJva2U9Im5vbmUiIGZpbGwtcnVsZT0ibm9uemVybyIgZmlsbD0iI2ZmZmZmZiIgZD0iTTMxMS4wMjY0NCwxMzYuMzI5ODRjLTAuMDgxMzYsMC4zNDU3OCAtMC4xNDIzOCwwLjY5MTU2IC0wLjI0NDA4LDEuMDM3MzRjLTAuMzA1MSwxLjI4MTQyIC0wLjkzNTY0LDQuMzEyMDggLTEuNTY2MTgsMTAuMjMxMDJjMCwwLjEwMTcgMCwwLjE4MzA2IC0wLjAyMDM0LDAuMjQ0MDhjMy40NzgxNCwxMy45OTM5MyAtMi4zNzk3OCwyMi41MTY0IC02LjI2NDcyLDI2LjQwMTM0Yy0wLjI0NDA4LDAuMjY0NDIgLTAuNTA4NSwwLjUwODUxIC0wLjc5MzI2LDAuNzUyNTljLTMuODAzNTgsMy40NTc4MSAtMTAuNDU0NzcsNy41ODY4MyAtMjAuMzgwNyw3LjU4NjgzYy00Ljk0MjYzLDAgLTkuNTU5OCwtMS4wOTgzNyAtMTMuNTg3MTMsLTMuMTEyMDNjMC4xMDE3LDUuNTUyODMgMC4xNjI3MiwxMy4yMDA2NyAwLjE2MjcyLDIzLjgxODE2YzMuNjYxMiwxLjI4MTQyIDcuMDE3MzEsMy4zNTYxMSA5Ljg2NDkxLDYuMDgxNjdjNS42NTQ1Miw1LjQzMDc5IDguNzQ2MiwxMi42OTIxNyA4Ljc0NjIsMjAuNDQxNzFjMCwxMS41MTI0NSAtNi42MzA4NCwyMS41MTk3MyAtMTcuMzA5MzUsMjYuMDk2MjRjLTAuMjY0NDIsMC4xMjIwNCAtMC41NDkxOSwwLjI0NDA4IC0wLjgxMzYsMC4zNDU3OGMtMy41Nzk4NCwxLjM2Mjc4IC03LjYwNzE2LDIuMDM0IC0xMi4zMjYwNSwyLjAzNGMtMS43MDg1NiwwIC0zLjUzOTE2LC0wLjA4MTM2IC01LjUzMjQ4LC0wLjI2NDQyYy0xLjIyMDQsLTAuMDYxMDIgLTMuMDEwMzIsLTAuMDQwNjggLTUuMTI1NjksMC4wMjAzNGMtMy44NDQyNywwLjQyNzE0IC05LjI1NDcxLDAuODU0MjggLTE2LjQ5NTc2LDEuMjYxMDhjLTAuMTQyMzgsMCAtMC4yODQ3NiwwLjAyMDM0IC0wLjQ0NzQ4LDAuMDIwMzRjLTAuOTU1OTgsMC4wNDA2OCAtMS44NzEyOCwwLjA2MTAyIC0yLjc2NjI0LDAuMDYxMDJjLTEyLjk1NjU5LDAgLTIyLjQxNDY5LC00LjEwODY5IC0yOC4xMzAyNCwtMTIuMTgzNjdjLTAuMTIyMDQsLTAuMTYyNzIgLTAuMjIzNzQsLTAuMzI1NDQgLTAuMzI1NDQsLTAuNDg4MTZjLTUuODE3MjQsLTguNjg1MTggLTUuOTc5OTYsLTE5LjY2ODc5IC0wLjQ0NzQ4LC0yOC42Mzg3NGMwLjA0MDY4LC0wLjEwMTcgMC4xMDE3LC0wLjE4MzA2IDAuMTYyNzIsLTAuMjg0NzZjMy41MTg4MiwtNS41MzI0OSA4LjY2NDg0LC05LjQ3ODQ1IDE1LjMzNjM3LC0xMS43OTcyMWMwLjA4MTM2LC0zLjkyNTYyIDAuMDYxMDIsLTguODQ3OSAtMC4wNjEwMiwtMTQuNjg1NDljLTMuMzE1NDMsMS4zODMxMiAtNy4xMzkzNCwyLjE5NjcyIC0xMS40MzEwOSwyLjE5NjcyYy0xMS4zMjkzOSwwIC0yMC42ODU4LC02LjczMjU0IC0yMy45NDAyLC0xNi45NjM1N2MtMC42NzEyMiwtMi4wNzQ2OCAtMS4zMDE3NiwtNS4xMDUzNCAtMi43NjYyNCwtMTEuOTM5NTljLTAuMDYxMDIsLTAuMjQ0MDggLTAuMTAxNywtMC40ODgxNiAtMC4xNDIzOCwtMC43MzIyNGwtMy4wMTAzMiwtMTYuODIxMTljLTAuMTAxNywtMC4zNjYxMiAtMC4yNDQwOCwtMC43OTMyNiAtMC40MDY4LC0xLjI4MTQyYy0xLjU2NjE4LC00LjQ1NDQ2IC0yLjI5ODQzLC04LjIzNzcxIC0yLjI5ODQzLC0xMS44OTg5MWMwLC00LjUzNTgyIDEuMzIyMSwtMTEuMzkwNCA3LjU4NjgzLC0xOC4yMjQ2NWMzLjE1MjcsLTMuNDU3OCA4Ljg4ODU5LC03LjkzMjYxIDE4LjEyMjk1LC05LjM3Njc1YzEuMTM5MDQsLTAuMTgzMDYgMi4yOTg0MywtMC4yODQ3NiAzLjQ1NzgxLC0wLjI4NDc2aDIyLjQ5NjA2YzAuNTA4NSwwIDEuMDE3LDAuMDIwMzQgMS41MjU1LDAuMDYxMDJjOC41ODM0OCwwLjMwNTEgMTYuMjcyMDEsMC4yODQ3NiAyMi44NjIxOCwtMC4wMjAzNGM5LjIxNDAyLC0wLjQwNjggMTguNDA3NzEsLTEuMjAwMDYgMjcuNDE4MzQsLTIuMzU5NDRjMS4wMTcsLTAuMzI1NDQgMi4xMTUzNiwtMC42NTA4OCAzLjI5NTA4LC0wLjkzNTY0YzEuMTE4NywtMC4yODQ3NiAyLjI1Nzc1LC0wLjQ2NzgyIDMuMzk2NzksLTAuNTg5ODZjOC42NjQ4NSwtMC43OTMyNiAxNi43Mzk4MywxLjcwODU2IDIzLjAyNDksNy4wNzgzMmM3Ljc5MDIzLDYuNjkxODYgMTEuMjI3NjksMTYuODIxMTkgOS4xNzMzNSwyNy4xMTMyNHoiPjwvcGF0aD48cGF0aCBzdHJva2UtbGluZWpvaW49InJvdW5kIiBzdHJva2Utd2lkdGg9IjQiIHN0cm9rZT0iI2ZmZmZmZiIgZmlsbC1ydWxlPSJldmVub2RkIiBmaWxsPSIjMjIyMjIyIiBkPSJNMjExLjU5OCwyODAuNDdsLTQzLjIxMywtMTc0Ljk0bDE3My4yMyw0OS44NzR6Ij48L3BhdGg+PHBhdGggc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIgc3Ryb2tlLXdpZHRoPSI0IiBzdHJva2U9IiNmZmZmZmYiIGZpbGwtcnVsZT0iZXZlbm9kZCIgZmlsbD0iIzIyMjIyMiIgZD0iTTI1NC45NjgsMTMwLjQ3MmwyMS41OTEsODcuNDk2bC04Ni41NjcsLTI0Ljk0NXoiPjwvcGF0aD48cGF0aCBzdHJva2UtbGluZWpvaW49InJvdW5kIiBzdHJva2Utd2lkdGg9IjQiIHN0cm9rZT0iI2ZmZmZmZiIgZmlsbC1ydWxlPSJldmVub2RkIiBmaWxsPSIjMjIyMjIyIiBkPSJNMjMzLjQ4OCwyMDQuODlsLTEwLjcyNCwtNDMuNDY1bDQzLjAwOCwxMi4zNDZ6Ij48L3BhdGg+PHBhdGggc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIgc3Ryb2tlLXdpZHRoPSI0IiBzdHJva2U9IiNmZmZmZmYiIGZpbGwtcnVsZT0iZXZlbm9kZCIgZmlsbD0iIzIyMjIyMiIgZD0iTTIxMi4wMzYsMTE4LjAxM2wxMC43MjQsNDMuNDY1bC00My4wMDgsLTEyLjM0NnoiPjwvcGF0aD48cGF0aCBzdHJva2UtbGluZWpvaW49InJvdW5kIiBzdHJva2Utd2lkdGg9IjQiIHN0cm9rZT0iI2ZmZmZmZiIgZmlsbC1ydWxlPSJldmVub2RkIiBmaWxsPSIjMjIyMjIyIiBkPSJNMjk4LjA0OCwxNDIuNzlsMTAuNzI0LDQzLjQ2NWwtNDMuMDA4LC0xMi4zNDZ6Ij48L3BhdGg+PHBhdGggc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIgc3Ryb2tlLXdpZHRoPSI0IiBzdHJva2U9IiNmZmZmZmYiIGZpbGwtcnVsZT0iZXZlbm9kZCIgZmlsbD0iIzIyMjIyMiIgZD0iTTIzMy40OTMsMjA0LjkybDEwLjcyNCw0My40NjVsLTQzLjAwOCwtMTIuMzQ2eiI+PC9wYXRoPjxwYXRoIHN0cm9rZS1saW5lam9pbj0ibWl0ZXIiIHN0cm9rZS13aWR0aD0iNSIgc3Ryb2tlPSIjMmRmZmIyIiBmaWxsLXJ1bGU9Im5vbnplcm8iIGZpbGw9IiNmN2Y3ZjciIGQ9Ik0yODkuMDgzNjMsMTMxLjk0NDUzYy0wLjgzMzk0LDMuMzQxODcgLTEuNTQ5OTEsNy44NzE1OCAtMi4xNDU4NywxMy41OTczYy0wLjI0MjA1LDIuODYzODggLTAuMTI0MDcsNS4xODg3NCAwLjM1Nzk5LDYuOTc4NjZjMC44Mjk4OCwyLjk4Mzg4IDAuNzc0OTUsNC45NTI3OSAtMC4xNzksNS45MDQ3Yy0xLjMxMzk2LDEuMTkxOTIgLTMuMTAxODUsMS43ODc4OSAtNS4zNjc3MywxLjc4Nzg5Yy0yLjYyNTksMCAtNC4zNTg4NiwtMC43NzkwMiAtNS4xODg3NCwtMi4zNDExM2MtMC4xMjQwOCwtNC44MDQzMSAtMC4wNjMwNiwtOS4zMTE2NiAwLjE3ODk5LC0xMy41MTc5OGMwLjIzMzkxLC01LjE2NjM3IDAuMzU3OTksLTcuODY5NTUgMC4zNTc5OSwtOC4xMDk1N2MtMC4xMjQwOCwwIC0wLjMwMTAzLC0wLjEyMDAxIC0wLjUzNjk4LC0wLjM2MjA1Yy0xMS4wOTU0OCwwLjQ4MjA2IC0yMS41MzE5NCwxLjE5ODAzIC0zMS4zMTE0MiwyLjE1NDAxYy0wLjI0MDAxLDEuMTk4MDMgLTAuMjQwMDEsMy4xMDc5NiAwLDUuNzM1ODhjMC40NzM5MiwzLjcwNTk1IDAuNzE1OTYsNS44NTc5MiAwLjcxNTk2LDYuNDUxODVjLTAuNDc1OTUsMy43MDU5NSAtMC43MTU5Niw5LjIwMTgyIC0wLjcxNTk2LDE2LjQ5MzcyYzAuNDczOTIsMy4xMDc5NiAwLjcxNTk2LDE2LjQzNDczIDAuNzE1OTYsMzkuOTc4M3YxMy4wODg4YzAsMi4wMzE5NyAwLjI5NDkzLDMuNDY1OTQgMC44ODY4Myw0LjMwMTkxaDEwLjk4NTY0YzIuMDA3NTYsLTAuMjM3OTggMy42MzA2OSwwLjI0MDAxIDQuODczNDcsMS40MzE5NGMxLjIzODcsMS4xOTM5NiAxLjg1OTA4LDIuNjIzODYgMS44NTkwOCw0LjI5MTc0YzAsMi42MjE4MyAtMS4yNTA5MSw0LjQ3Mjc3IC0zLjc1NjgsNS41NDg3NmMtMS41NTE5NCwwLjU5MzkzIC00LjI5Mzc3LDAuNzE1OTcgLTguMjI5NTcsMC4zNTc5OWMtMS45MDc4OSwtMC4xMjIwNCAtNC43MTI3OSwtMC4xMjIwNCAtOC40MTA2LDBjLTMuMzM5ODMsMC40MTQ5NCAtOC43MDU1MiwwLjgzMTkxIC0xNi4xMDExNSwxLjI1MDkxYy02LjQ0MTY5LDAuMjM3OTggLTEwLjM3NzQ4LC0wLjY1Njk4IC0xMS44MDk0MSwtMi42ODI4NWMtMC45NTU5OCwtMS40Mjk5IC0wLjk1NTk4LC0yLjkyMjg2IDAsLTQuNDcyNzdjMS42Njc4OCwtMi42MjE4MyA2LjAyMjY3LC0zLjkzNTggMTMuMDYyMzUsLTMuOTM1OGMyLjUwMzg1LDAgNC4wNTE3NCwtMC4yMDc0NiA0LjY0OTczLC0wLjYyNDQzYzAuNTk1OTYsLTAuNDE2OTcgMC44OTQ5NiwtMS4yMjI0NCAwLjg5NDk2LC0yLjQxNDM2YzAsLTEuMDY5ODggMCwtMi4wODA3OCAwLC0zLjAzNDczYzAsLTEuNzgzODIgMCwtNC40MDM2MiAwLC03Ljg1NTMxYzAuMzU3OTksLTYuMDY3NDIgMC4zNTc5OSwtMTUuMTE2NyAwLC0yNy4xMzk2OWMtMC40Nzc5OSwtMTcuMjU4NTEgLTAuMjQwMDEsLTMyLjQzMjE1IDAuNzE1OTcsLTQ1LjUyNzA1Yy0wLjEyLC0wLjExNzk3IC0wLjI5OSwtMC4yOTY5NyAtMC41NDEwNCwtMC41MzY5OGMtNC4zMTgxOCwwLjI0MDAxIC0xMS4yNzQ0OCwwLjEyMDAxIC0yMC44Njg4NiwtMC4zNjAwMmMtMS4wODAwNSwwIC00Ljc0MTI1LDAuMjQyMDUgLTEwLjk3NTQ3LDAuNzE4MDFjMS41NDk5MSwxMC44NTU0NyAyLjUwMzg1LDE5LjAyNjA1IDIuODYxODQsMjQuNTExNzVjMCwwLjcxNTk3IC0wLjEyLDIuMzI2OSAtMC4zNTc5OCw0LjgzMDc1Yy0wLjEyLDEuNzg3ODggLTEuNjEwOTMsMi42ODI4NSAtNC40NzI3NywyLjY4Mjg1Yy0xLjU1MTk0LDAgLTIuNDQ0ODcsLTAuNTMyOSAtMi42ODI4NSwtMS41OTY2OWMtMC4xMiwtMC4yMzM5MSAtMC44MzU5NywtMy40MzEzNiAtMi4xNDc5LC05LjU4MjE4Yy0wLjcxNTk3LC00LjAyMTIyIC0xLjczMDk0LC05LjcwMDE1IC0zLjA0MDg0LC0xNy4wMzQ3NmMwLC0wLjQ2NzgyIC0wLjQxOSwtMS45NDY1NCAtMS4yNTA5MSwtNC40MzQxMmMtMC43MTE5LC0yLjAxMTYzIC0xLjA2Nzg1LC0zLjU0OTMzIC0xLjA2Nzg1LC00LjYxMzExYzAsLTAuODI1ODEgMC41NjM0MiwtMS44NjUxOCAxLjcwMDQyLC0zLjEwMzg5YzEuMTMyOTQsLTEuMjQwNzQgMi44MzMzNiwtMi4wNDIxMyA1LjA5OTI0LC0yLjM5ODA4YzAuMzU3OTksMCAwLjkyMTQsMCAxLjcwMDQyLDBjMC43NzI5MiwwIDEuMzk5MzksMCAxLjg3NzM5LDBjMTQuMTk1MjksMCAyMC4zOTY5NiwwIDE4LjYwNzA1LDBjOS42NjE1MSwwLjM2MDAyIDE4LjI0OTA3LDAuMzYwMDIgMjUuNzYyNjcsMGMxMC43MzM0MywtMC40NzM5MiAyMS4zNDY4NSwtMS40Mjk5MSAzMS44NDYzNiwtMi44NjE4NGMwLjcxNTk3LC0wLjM1Nzk4IDEuNzg3ODgsLTAuNzE1OTcgMy4yMTc3OSwtMS4wNzE5MmMyLjYyNTksLTAuMjM3OTggNC43NzE3NywwLjM1Nzk4IDYuNDQzNzIsMS43ODk5MmMxLjY2Nzg4LDEuNDI3ODcgMi4yNjM4NCwzLjMzNzggMS43ODc4OCw1LjcyMzY4eiI+PC9wYXRoPjwvZz48L2c+PC9zdmc+PCEtLXJvdGF0aW9uQ2VudGVyOjczLjYxNTAwMDAwMDAwMDAxOjc4LjAwNTcxMTMwMDg0OTk0LS0+";
   
-  let alerts = true
-  if (vm.runtime.isPackaged) alerts = false
+  let alerts = false
   console.log("alerts are "+ (alerts ? "enabled" : "disabled"))
 
   let isMouseDown = { left: false, middle: false, right: false }
@@ -255,6 +254,21 @@ function createConvexHullCollider(mesh) {
 
     const collider = RAPIER.ColliderDesc.convexHull(Float32Array.from(vertices));
     return collider;
+}
+function TriMesh(mesh) {
+  // Get the positions array (from your geoPoints function)
+const positions = mesh.geometry.attributes.position.array; 
+const numVertices = positions.length / 3;
+
+// Create an index array: [0, 1, 2, 3, 4, 5, ..., numVertices - 1]
+const indices = Array.from({ length: numVertices }, (_, i) => i);
+
+const collider = RAPIER.ColliderDesc.trimesh(
+    positions, 
+    new Uint32Array(indices) 
+);
+
+return collider
 }
 function getModel(model, name) {
   const file = runtime.getTargetForStage().getSounds().find(c => c.name === model)
@@ -745,9 +759,15 @@ Promise.resolve(load()).then(() => {
             {blockType: Scratch.BlockType.LABEL, text: "↳ Geometries"},
             {opcode: "newGeometry",extensions: ["colours_data_lists"], blockType: Scratch.BlockType.COMMAND, text: "new geometry [NAME] [TYPE]", arguments: {NAME: {type: Scratch.ArgumentType.STRING, defaultValue: "myGeometry"}, TYPE: {type: Scratch.ArgumentType.STRING, menu: "geometryTypes", defaultValue: "BoxGeometry"}}},
             {opcode: "geometryE",extensions: ["colours_data_lists"], blockType: Scratch.BlockType.BOOLEAN, text: "is there a geometry [NAME]?", arguments: {NAME: {type: Scratch.ArgumentType.STRING, defaultValue: "myGeometry"}}},
-            {opcode: "removeGeometry",extensions: ["colours_data_lists"], blockType: Scratch.BlockType.COMMAND, text: "remove geometry [NAME]", arguments: {NAME: {type: Scratch.ArgumentType.STRING, defaultValue: "myGeometry"}, TYPE: {type: Scratch.ArgumentType.STRING, menu: "geometryTypes", defaultValue: "BoxGeometry"}}},
+            {opcode: "removeGeometry",extensions: ["colours_data_lists"], blockType: Scratch.BlockType.COMMAND, text: "remove geometry [NAME]", arguments: {NAME: {type: Scratch.ArgumentType.STRING, defaultValue: "myGeometry"}}},
+            "---",
+            {opcode: "newGeo",extensions: ["colours_data_lists"], blockType: Scratch.BlockType.COMMAND, text: "new empty geometry [NAME]", arguments: {NAME: {type: Scratch.ArgumentType.STRING, defaultValue: "myGeometry"}, POINTS: {type: Scratch.ArgumentType.STRING, defaultValue: "[points]"}}},
+            {opcode: "geoPoints",extensions: ["colours_data_lists"], blockType: Scratch.BlockType.COMMAND, text: "set geometry [NAME] vertex points to [POINTS]", arguments: {NAME: {type: Scratch.ArgumentType.STRING, defaultValue: "myGeometry"}, POINTS: {type: Scratch.ArgumentType.STRING, defaultValue: "[points]"}}},
+            {opcode: "geoUVs",extensions: ["colours_data_lists"], blockType: Scratch.BlockType.COMMAND, text: "set geometry [NAME] UVs to [POINTS]", arguments: {NAME: {type: Scratch.ArgumentType.STRING, defaultValue: "myGeometry"}, POINTS: {type: Scratch.ArgumentType.STRING, defaultValue: "[UVs]"}}},
+            "---",
             {opcode: "splines", extensions: ["colours_data_lists"], blockType: Scratch.BlockType.COMMAND, text: "create spline [NAME] from curve [CURVE]", arguments: {NAME: {type: Scratch.ArgumentType.STRING, defaultValue: "mySpline"}, CURVE: {type: Scratch.ArgumentType.STRING, defaultValue: "[curve]", exemptFromNormalization: true}}},
             {opcode: "splineModel", extensions: ["colours_operators"], blockType: Scratch.BlockType.COMMAND, text: "create (geometry&material) spline [NAME] using model [MODEL] along curve [CURVE] with spacing [SPACING]", arguments: {NAME: {type: Scratch.ArgumentType.STRING, defaultValue: "mySpline"}, MODEL: {type: Scratch.ArgumentType.STRING, menu: "modelsList"}, CURVE: {type: Scratch.ArgumentType.STRING, defaultValue: "[curve]", exemptFromNormalization: true}, SPACING: {type: Scratch.ArgumentType.NUMBER, defaultValue: 1}}},
+            "---",
             {blockType: Scratch.BlockType.BUTTON, text: "Convert font to JSON", func: "openConv"},
             {blockType: Scratch.BlockType.BUTTON, text: "Load JSON font file", func: "loadFont"},
             {opcode: "text", extensions: ["colours_data_lists"], blockType: Scratch.BlockType.COMMAND, text: "create text geometry [NAME] with text [TEXT] in font [FONT] size [S] depth [D] curvedSegments [CS]", arguments: {NAME: {type: Scratch.ArgumentType.STRING, defaultValue: "myText"}, TEXT: {type: Scratch.ArgumentType.STRING, defaultValue: "C-369"}, FONT: {type: Scratch.ArgumentType.STRING, menu: "fonts"}, S: {type: Scratch.ArgumentType.NUMBER, defaultValue: 1}, D: {type: Scratch.ArgumentType.NUMBER, defaultValue: 0.1}, CS: {type: Scratch.ArgumentType.NUMBER, defaultValue: 6}}},
@@ -757,7 +777,7 @@ Promise.resolve(load()).then(() => {
                 {text: "Positon", value: "position"},{text: "Rotation", value: "rotation"},{text: "Scale", value: "scale"},{text: "Facing Direction (.up)", value: "up"}
             ]},
             objectProperties: {acceptReporters: false, items: [
-              {text: "Geometry", value: "geometry"},{text: "Material", value: "material"},{text: "Visible (true/false)", value: "visible"},
+              {text: "Geometry Name", value: "geometry"},{text: "Material Name", value: "material"},{text: "Visible (true/false)", value: "visible"},
             ]},
             objectTypes: { acceptReporters: false, items: [
               { text: "Mesh", value: "Mesh" }, { text: "Sprite", value: "Sprite" }, { text: "Points", value: "Points" }, { text: "Line", value: "Line" }, { text: "Group", value: "Group" }
@@ -917,7 +937,6 @@ Promise.resolve(load()).then(() => {
       clone.name
       createObject(args.NAME, clone, args.GROUP)
     }
-
     setObjectV3(args) {
         let object = getObject(args.OBJECT3D)
         let values = JSON.parse(args.VALUE)
@@ -1011,7 +1030,10 @@ Promise.resolve(load()).then(() => {
     getObject(args){
       let object = getObject(args.OBJECT3D)
       if (!object) return
-      const value = object[args.PROPERTY]
+      let value
+      if (args.PROPERTY != "visible") value = object[args.PROPERTY].name; 
+      else value = object.visible;
+
       return JSON.stringify(value)
     }
     removeObject(args) {
@@ -1085,6 +1107,28 @@ Promise.resolve(load()).then(() => {
     }
     geometryE(args) {
       return geometries[args.NAME] ? true : false
+    }
+
+    newGeo(args) {
+      const geometry = new THREE.BufferGeometry()
+      geometry.name = args.NAME
+      geometries[args.NAME] = geometry
+    }
+    async geoPoints(args) {
+      const geometry = geometries[args.NAME]
+      const positions = args.POINTS.split(" ").map(v=>JSON.parse(v)).flat() //array of v3 of each vertex of each triangle
+
+      geometry.setAttribute('position', new THREE.BufferAttribute(new Float32Array(positions), 3))
+      geometry.computeVertexNormals()
+
+      geometry.needsUpdate = true
+    }
+    geoUVs(args) {
+      const geometry = geometries[args.NAME]
+      const UVs = args.POINTS.split(" ").map(v=>JSON.parse(v)).flat() //array of v2 of each UV of each triangle
+
+      geometry.setAttribute('uv', new THREE.BufferAttribute(new Float32Array(UVs), 2))
+      geometry.needsUpdate = true
     }
 
     splines(args) {
@@ -1625,6 +1669,7 @@ Promise.resolve(load()).then(() => {
       }}
 
       OrbitControl(args) {
+        if (controls) controls.dispose()
 
         console.log("creating...", OrbitControls)
         controls = new OrbitControls.OrbitControls(camera, threeRenderer.domElement);
@@ -1854,7 +1899,7 @@ Promise.resolve(load()).then(() => {
             state2: {acceptReporters: true, items: [{text: "false", value: "false"},{text: "true (must be fixed)", value: "true"}]},
             spaces: {acceptReporters: false, items: [{text: "World", value: "world"},{text: "Local", value: "local"}]},
             objectTypes: {acceptReporters: false, items: [{text: "Dynamic", value: "dynamic"},{text: "Fixed", value: "fixed"},{text: "Kinematic Position Based",value: "kinematicPositionBased"}]},
-            colliderTypes: {acceptReporters: false, items: [{text: "Box, Rectangle, cuboid", value: "cuboid"},{text: "Sphere, ball", value: "ball"},{text: "Custom, convexHull", value: "convexHull"},]},
+            colliderTypes: {acceptReporters: false, items: [{text: "Box, Rectangle, cuboid", value: "cuboid"},{text: "Sphere, ball", value: "ball"},{text: "Custom, complex simple shapes, convexHull", value: "convexHull"},{text:"Precision, TriMesh",value:"trimesh"}]},
             forces: {acceptReporters: false, items: [{text: "Force", value: "addForce"},{text: "Torque (rotation)", value: "addTorque"},{text: "Apply Impulse", value: "applyImpulse"},{text: "Apply Torque Impulse (rotation)", value: "applyTorqueImpulse"},{text: "Linear Velocity", value: "setLinvel"},{text: "Angular Velocity", value: "setAngvel"},]},
             resetF: {acceptReporters: false, items: [{text:"Forces", value: "resetForces"},{text:"Torques", value: "resetTorques"},]}
           }
@@ -1996,12 +2041,13 @@ Promise.resolve(load()).then(() => {
 
         let colliderDesc
         switch(args.collider) {
-            case "cuboid": colliderDesc = createCuboidCollider(object, args.state2); break
-            case "ball": colliderDesc = createBallCollider(object, args.state2); break
-            case "convexHull": colliderDesc = createConvexHullCollider(object, args.state2); break
+            case "cuboid": colliderDesc = createCuboidCollider(object,); break
+            case "ball": colliderDesc = createBallCollider(object); break
+            case "convexHull": colliderDesc = createConvexHullCollider(object); break
+            case "trimesh": colliderDesc = TriMesh(object); break
         }
         colliderDesc.setSensor(JSON.parse(args.state2)).setDensity(args.density).setFriction(args.friction)
-        
+
         let rigidBody = physicsWorld.createRigidBody(rigidBodyDesc)
         let collider = physicsWorld.createCollider(colliderDesc, rigidBody)
 
