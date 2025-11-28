@@ -115,6 +115,7 @@
 
 //materials
     function encodeCostume (name) {
+      if (name.startsWith("data:image/")) return name
       return Scratch.vm.editingTarget.sprite.costumes.find(c => c.name === name).asset.encodeDataURI()
     }
     function setTexutre (texture, mode, style, x, y) {
