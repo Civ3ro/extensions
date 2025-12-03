@@ -16,6 +16,7 @@
   const vm = Scratch.vm;
   const runtime = vm.runtime
   const renderer = Scratch.renderer;
+  const canvas = renderer.canvas 
   const Cast = Scratch.Cast;
   const menuIconURI = "data:image/svg+xml;base64,PHN2ZyB2aWV3Qm94PSIwLDAsMTc3LjIzLDE4MC40NzU3MSIgaGVpZ2h0PSIxODAuNDc1NzEiIHdpZHRoPSIxNzcuMjMiIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZlcnNpb249IjEuMSI+PGcgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoLTE2Ni4zODUsLTEwMS45OTQyOSkiPjxnIHN0cm9rZS1taXRlcmxpbWl0PSIxMCI+PHBhdGggc3Ryb2tlLWxpbmVqb2luPSJtaXRlciIgc3Ryb2tlLXdpZHRoPSIxIiBzdHJva2U9Im5vbmUiIGZpbGwtcnVsZT0ibm9uemVybyIgZmlsbD0iI2ZmZmZmZiIgZD0iTTMxMS4wMjY0NCwxMzYuMzI5ODRjLTAuMDgxMzYsMC4zNDU3OCAtMC4xNDIzOCwwLjY5MTU2IC0wLjI0NDA4LDEuMDM3MzRjLTAuMzA1MSwxLjI4MTQyIC0wLjkzNTY0LDQuMzEyMDggLTEuNTY2MTgsMTAuMjMxMDJjMCwwLjEwMTcgMCwwLjE4MzA2IC0wLjAyMDM0LDAuMjQ0MDhjMy40NzgxNCwxMy45OTM5MyAtMi4zNzk3OCwyMi41MTY0IC02LjI2NDcyLDI2LjQwMTM0Yy0wLjI0NDA4LDAuMjY0NDIgLTAuNTA4NSwwLjUwODUxIC0wLjc5MzI2LDAuNzUyNTljLTMuODAzNTgsMy40NTc4MSAtMTAuNDU0NzcsNy41ODY4MyAtMjAuMzgwNyw3LjU4NjgzYy00Ljk0MjYzLDAgLTkuNTU5OCwtMS4wOTgzNyAtMTMuNTg3MTMsLTMuMTEyMDNjMC4xMDE3LDUuNTUyODMgMC4xNjI3MiwxMy4yMDA2NyAwLjE2MjcyLDIzLjgxODE2YzMuNjYxMiwxLjI4MTQyIDcuMDE3MzEsMy4zNTYxMSA5Ljg2NDkxLDYuMDgxNjdjNS42NTQ1Miw1LjQzMDc5IDguNzQ2MiwxMi42OTIxNyA4Ljc0NjIsMjAuNDQxNzFjMCwxMS41MTI0NSAtNi42MzA4NCwyMS41MTk3MyAtMTcuMzA5MzUsMjYuMDk2MjRjLTAuMjY0NDIsMC4xMjIwNCAtMC41NDkxOSwwLjI0NDA4IC0wLjgxMzYsMC4zNDU3OGMtMy41Nzk4NCwxLjM2Mjc4IC03LjYwNzE2LDIuMDM0IC0xMi4zMjYwNSwyLjAzNGMtMS43MDg1NiwwIC0zLjUzOTE2LC0wLjA4MTM2IC01LjUzMjQ4LC0wLjI2NDQyYy0xLjIyMDQsLTAuMDYxMDIgLTMuMDEwMzIsLTAuMDQwNjggLTUuMTI1NjksMC4wMjAzNGMtMy44NDQyNywwLjQyNzE0IC05LjI1NDcxLDAuODU0MjggLTE2LjQ5NTc2LDEuMjYxMDhjLTAuMTQyMzgsMCAtMC4yODQ3NiwwLjAyMDM0IC0wLjQ0NzQ4LDAuMDIwMzRjLTAuOTU1OTgsMC4wNDA2OCAtMS44NzEyOCwwLjA2MTAyIC0yLjc2NjI0LDAuMDYxMDJjLTEyLjk1NjU5LDAgLTIyLjQxNDY5LC00LjEwODY5IC0yOC4xMzAyNCwtMTIuMTgzNjdjLTAuMTIyMDQsLTAuMTYyNzIgLTAuMjIzNzQsLTAuMzI1NDQgLTAuMzI1NDQsLTAuNDg4MTZjLTUuODE3MjQsLTguNjg1MTggLTUuOTc5OTYsLTE5LjY2ODc5IC0wLjQ0NzQ4LC0yOC42Mzg3NGMwLjA0MDY4LC0wLjEwMTcgMC4xMDE3LC0wLjE4MzA2IDAuMTYyNzIsLTAuMjg0NzZjMy41MTg4MiwtNS41MzI0OSA4LjY2NDg0LC05LjQ3ODQ1IDE1LjMzNjM3LC0xMS43OTcyMWMwLjA4MTM2LC0zLjkyNTYyIDAuMDYxMDIsLTguODQ3OSAtMC4wNjEwMiwtMTQuNjg1NDljLTMuMzE1NDMsMS4zODMxMiAtNy4xMzkzNCwyLjE5NjcyIC0xMS40MzEwOSwyLjE5NjcyYy0xMS4zMjkzOSwwIC0yMC42ODU4LC02LjczMjU0IC0yMy45NDAyLC0xNi45NjM1N2MtMC42NzEyMiwtMi4wNzQ2OCAtMS4zMDE3NiwtNS4xMDUzNCAtMi43NjYyNCwtMTEuOTM5NTljLTAuMDYxMDIsLTAuMjQ0MDggLTAuMTAxNywtMC40ODgxNiAtMC4xNDIzOCwtMC43MzIyNGwtMy4wMTAzMiwtMTYuODIxMTljLTAuMTAxNywtMC4zNjYxMiAtMC4yNDQwOCwtMC43OTMyNiAtMC40MDY4LC0xLjI4MTQyYy0xLjU2NjE4LC00LjQ1NDQ2IC0yLjI5ODQzLC04LjIzNzcxIC0yLjI5ODQzLC0xMS44OTg5MWMwLC00LjUzNTgyIDEuMzIyMSwtMTEuMzkwNCA3LjU4NjgzLC0xOC4yMjQ2NWMzLjE1MjcsLTMuNDU3OCA4Ljg4ODU5LC03LjkzMjYxIDE4LjEyMjk1LC05LjM3Njc1YzEuMTM5MDQsLTAuMTgzMDYgMi4yOTg0MywtMC4yODQ3NiAzLjQ1NzgxLC0wLjI4NDc2aDIyLjQ5NjA2YzAuNTA4NSwwIDEuMDE3LDAuMDIwMzQgMS41MjU1LDAuMDYxMDJjOC41ODM0OCwwLjMwNTEgMTYuMjcyMDEsMC4yODQ3NiAyMi44NjIxOCwtMC4wMjAzNGM5LjIxNDAyLC0wLjQwNjggMTguNDA3NzEsLTEuMjAwMDYgMjcuNDE4MzQsLTIuMzU5NDRjMS4wMTcsLTAuMzI1NDQgMi4xMTUzNiwtMC42NTA4OCAzLjI5NTA4LC0wLjkzNTY0YzEuMTE4NywtMC4yODQ3NiAyLjI1Nzc1LC0wLjQ2NzgyIDMuMzk2NzksLTAuNTg5ODZjOC42NjQ4NSwtMC43OTMyNiAxNi43Mzk4MywxLjcwODU2IDIzLjAyNDksNy4wNzgzMmM3Ljc5MDIzLDYuNjkxODYgMTEuMjI3NjksMTYuODIxMTkgOS4xNzMzNSwyNy4xMTMyNHoiPjwvcGF0aD48cGF0aCBzdHJva2UtbGluZWpvaW49InJvdW5kIiBzdHJva2Utd2lkdGg9IjQiIHN0cm9rZT0iI2ZmZmZmZiIgZmlsbC1ydWxlPSJldmVub2RkIiBmaWxsPSIjMjIyMjIyIiBkPSJNMjExLjU5OCwyODAuNDdsLTQzLjIxMywtMTc0Ljk0bDE3My4yMyw0OS44NzR6Ij48L3BhdGg+PHBhdGggc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIgc3Ryb2tlLXdpZHRoPSI0IiBzdHJva2U9IiNmZmZmZmYiIGZpbGwtcnVsZT0iZXZlbm9kZCIgZmlsbD0iIzIyMjIyMiIgZD0iTTI1NC45NjgsMTMwLjQ3MmwyMS41OTEsODcuNDk2bC04Ni41NjcsLTI0Ljk0NXoiPjwvcGF0aD48cGF0aCBzdHJva2UtbGluZWpvaW49InJvdW5kIiBzdHJva2Utd2lkdGg9IjQiIHN0cm9rZT0iI2ZmZmZmZiIgZmlsbC1ydWxlPSJldmVub2RkIiBmaWxsPSIjMjIyMjIyIiBkPSJNMjMzLjQ4OCwyMDQuODlsLTEwLjcyNCwtNDMuNDY1bDQzLjAwOCwxMi4zNDZ6Ij48L3BhdGg+PHBhdGggc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIgc3Ryb2tlLXdpZHRoPSI0IiBzdHJva2U9IiNmZmZmZmYiIGZpbGwtcnVsZT0iZXZlbm9kZCIgZmlsbD0iIzIyMjIyMiIgZD0iTTIxMi4wMzYsMTE4LjAxM2wxMC43MjQsNDMuNDY1bC00My4wMDgsLTEyLjM0NnoiPjwvcGF0aD48cGF0aCBzdHJva2UtbGluZWpvaW49InJvdW5kIiBzdHJva2Utd2lkdGg9IjQiIHN0cm9rZT0iI2ZmZmZmZiIgZmlsbC1ydWxlPSJldmVub2RkIiBmaWxsPSIjMjIyMjIyIiBkPSJNMjk4LjA0OCwxNDIuNzlsMTAuNzI0LDQzLjQ2NWwtNDMuMDA4LC0xMi4zNDZ6Ij48L3BhdGg+PHBhdGggc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIgc3Ryb2tlLXdpZHRoPSI0IiBzdHJva2U9IiNmZmZmZmYiIGZpbGwtcnVsZT0iZXZlbm9kZCIgZmlsbD0iIzIyMjIyMiIgZD0iTTIzMy40OTMsMjA0LjkybDEwLjcyNCw0My40NjVsLTQzLjAwOCwtMTIuMzQ2eiI+PC9wYXRoPjxwYXRoIHN0cm9rZS1saW5lam9pbj0ibWl0ZXIiIHN0cm9rZS13aWR0aD0iNSIgc3Ryb2tlPSIjMmRmZmIyIiBmaWxsLXJ1bGU9Im5vbnplcm8iIGZpbGw9IiNmN2Y3ZjciIGQ9Ik0yODkuMDgzNjMsMTMxLjk0NDUzYy0wLjgzMzk0LDMuMzQxODcgLTEuNTQ5OTEsNy44NzE1OCAtMi4xNDU4NywxMy41OTczYy0wLjI0MjA1LDIuODYzODggLTAuMTI0MDcsNS4xODg3NCAwLjM1Nzk5LDYuOTc4NjZjMC44Mjk4OCwyLjk4Mzg4IDAuNzc0OTUsNC45NTI3OSAtMC4xNzksNS45MDQ3Yy0xLjMxMzk2LDEuMTkxOTIgLTMuMTAxODUsMS43ODc4OSAtNS4zNjc3MywxLjc4Nzg5Yy0yLjYyNTksMCAtNC4zNTg4NiwtMC43NzkwMiAtNS4xODg3NCwtMi4zNDExM2MtMC4xMjQwOCwtNC44MDQzMSAtMC4wNjMwNiwtOS4zMTE2NiAwLjE3ODk5LC0xMy41MTc5OGMwLjIzMzkxLC01LjE2NjM3IDAuMzU3OTksLTcuODY5NTUgMC4zNTc5OSwtOC4xMDk1N2MtMC4xMjQwOCwwIC0wLjMwMTAzLC0wLjEyMDAxIC0wLjUzNjk4LC0wLjM2MjA1Yy0xMS4wOTU0OCwwLjQ4MjA2IC0yMS41MzE5NCwxLjE5ODAzIC0zMS4zMTE0MiwyLjE1NDAxYy0wLjI0MDAxLDEuMTk4MDMgLTAuMjQwMDEsMy4xMDc5NiAwLDUuNzM1ODhjMC40NzM5MiwzLjcwNTk1IDAuNzE1OTYsNS44NTc5MiAwLjcxNTk2LDYuNDUxODVjLTAuNDc1OTUsMy43MDU5NSAtMC43MTU5Niw5LjIwMTgyIC0wLjcxNTk2LDE2LjQ5MzcyYzAuNDczOTIsMy4xMDc5NiAwLjcxNTk2LDE2LjQzNDczIDAuNzE1OTYsMzkuOTc4M3YxMy4wODg4YzAsMi4wMzE5NyAwLjI5NDkzLDMuNDY1OTQgMC44ODY4Myw0LjMwMTkxaDEwLjk4NTY0YzIuMDA3NTYsLTAuMjM3OTggMy42MzA2OSwwLjI0MDAxIDQuODczNDcsMS40MzE5NGMxLjIzODcsMS4xOTM5NiAxLjg1OTA4LDIuNjIzODYgMS44NTkwOCw0LjI5MTc0YzAsMi42MjE4MyAtMS4yNTA5MSw0LjQ3Mjc3IC0zLjc1NjgsNS41NDg3NmMtMS41NTE5NCwwLjU5MzkzIC00LjI5Mzc3LDAuNzE1OTcgLTguMjI5NTcsMC4zNTc5OWMtMS45MDc4OSwtMC4xMjIwNCAtNC43MTI3OSwtMC4xMjIwNCAtOC40MTA2LDBjLTMuMzM5ODMsMC40MTQ5NCAtOC43MDU1MiwwLjgzMTkxIC0xNi4xMDExNSwxLjI1MDkxYy02LjQ0MTY5LDAuMjM3OTggLTEwLjM3NzQ4LC0wLjY1Njk4IC0xMS44MDk0MSwtMi42ODI4NWMtMC45NTU5OCwtMS40Mjk5IC0wLjk1NTk4LC0yLjkyMjg2IDAsLTQuNDcyNzdjMS42Njc4OCwtMi42MjE4MyA2LjAyMjY3LC0zLjkzNTggMTMuMDYyMzUsLTMuOTM1OGMyLjUwMzg1LDAgNC4wNTE3NCwtMC4yMDc0NiA0LjY0OTczLC0wLjYyNDQzYzAuNTk1OTYsLTAuNDE2OTcgMC44OTQ5NiwtMS4yMjI0NCAwLjg5NDk2LC0yLjQxNDM2YzAsLTEuMDY5ODggMCwtMi4wODA3OCAwLC0zLjAzNDczYzAsLTEuNzgzODIgMCwtNC40MDM2MiAwLC03Ljg1NTMxYzAuMzU3OTksLTYuMDY3NDIgMC4zNTc5OSwtMTUuMTE2NyAwLC0yNy4xMzk2OWMtMC40Nzc5OSwtMTcuMjU4NTEgLTAuMjQwMDEsLTMyLjQzMjE1IDAuNzE1OTcsLTQ1LjUyNzA1Yy0wLjEyLC0wLjExNzk3IC0wLjI5OSwtMC4yOTY5NyAtMC41NDEwNCwtMC41MzY5OGMtNC4zMTgxOCwwLjI0MDAxIC0xMS4yNzQ0OCwwLjEyMDAxIC0yMC44Njg4NiwtMC4zNjAwMmMtMS4wODAwNSwwIC00Ljc0MTI1LDAuMjQyMDUgLTEwLjk3NTQ3LDAuNzE4MDFjMS41NDk5MSwxMC44NTU0NyAyLjUwMzg1LDE5LjAyNjA1IDIuODYxODQsMjQuNTExNzVjMCwwLjcxNTk3IC0wLjEyLDIuMzI2OSAtMC4zNTc5OCw0LjgzMDc1Yy0wLjEyLDEuNzg3ODggLTEuNjEwOTMsMi42ODI4NSAtNC40NzI3NywyLjY4Mjg1Yy0xLjU1MTk0LDAgLTIuNDQ0ODcsLTAuNTMyOSAtMi42ODI4NSwtMS41OTY2OWMtMC4xMiwtMC4yMzM5MSAtMC44MzU5NywtMy40MzEzNiAtMi4xNDc5LC05LjU4MjE4Yy0wLjcxNTk3LC00LjAyMTIyIC0xLjczMDk0LC05LjcwMDE1IC0zLjA0MDg0LC0xNy4wMzQ3NmMwLC0wLjQ2NzgyIC0wLjQxOSwtMS45NDY1NCAtMS4yNTA5MSwtNC40MzQxMmMtMC43MTE5LC0yLjAxMTYzIC0xLjA2Nzg1LC0zLjU0OTMzIC0xLjA2Nzg1LC00LjYxMzExYzAsLTAuODI1ODEgMC41NjM0MiwtMS44NjUxOCAxLjcwMDQyLC0zLjEwMzg5YzEuMTMyOTQsLTEuMjQwNzQgMi44MzMzNiwtMi4wNDIxMyA1LjA5OTI0LC0yLjM5ODA4YzAuMzU3OTksMCAwLjkyMTQsMCAxLjcwMDQyLDBjMC43NzI5MiwwIDEuMzk5MzksMCAxLjg3NzM5LDBjMTQuMTk1MjksMCAyMC4zOTY5NiwwIDE4LjYwNzA1LDBjOS42NjE1MSwwLjM2MDAyIDE4LjI0OTA3LDAuMzYwMDIgMjUuNzYyNjcsMGMxMC43MzM0MywtMC40NzM5MiAyMS4zNDY4NSwtMS40Mjk5MSAzMS44NDYzNiwtMi44NjE4NGMwLjcxNTk3LC0wLjM1Nzk4IDEuNzg3ODgsLTAuNzE1OTcgMy4yMTc3OSwtMS4wNzE5MmMyLjYyNTksLTAuMjM3OTggNC43NzE3NywwLjM1Nzk4IDYuNDQzNzIsMS43ODk5MmMxLjY2Nzg4LDEuNDI3ODcgMi4yNjM4NCwzLjMzNzggMS43ODc4OCw1LjcyMzY4eiI+PC9wYXRoPjwvZz48L2c+PC9zdmc+PCEtLXJvdGF0aW9uQ2VudGVyOjczLjYxNTAwMDAwMDAwMDAxOjc4LjAwNTcxMTMwMDg0OTk0LS0+";
   
@@ -200,7 +201,7 @@ function getMouseNDC(event) {
   return [x, y];
 }
 function checkCanvasSize() {
-  const { width, height } = renderer.canvas
+  const { width, height } = canvas
   if (width !== lastWidth || height !== lastHeight) {
     lastWidth = width
     lastHeight = height
@@ -411,7 +412,7 @@ async function load() {
       composer = new EffectComposer(threeRenderer, {frameBufferType: THREE.HalfFloatType})
 
       renderer.addOverlay( threeRenderer.domElement, "manual" )
-      renderer.addOverlay(renderer.canvas, "manual")
+      renderer.addOverlay(canvas, "manual")
       renderer.setBackgroundColor(1, 1, 1, 0)
 
       resize()
@@ -507,8 +508,8 @@ function startRenderLoop() {
 }
 
 function resize() {
-  const w = renderer.canvas.width
-  const h = renderer.canvas.height
+  const w = canvas.width
+  const h = canvas.height
 
   threeRenderer.setSize(w, h)
   composer.setSize(w, h)
@@ -530,7 +531,7 @@ Promise.resolve(load()).then(() => {
     getInfo() {
       return {
         id: "threejsExtension",
-        name: "Three JS",
+        name: "Extra 3D",
         color1: "#222222",
         color2: "#222222",
         color3: "#11cc99",
@@ -778,7 +779,7 @@ Promise.resolve(load()).then(() => {
                 {text: "Positon", value: "position"},{text: "Rotation", value: "rotation"},{text: "Scale", value: "scale"},{text: "Facing Direction (.up)", value: "up"}
             ]},
             objectProperties: {acceptReporters: false, items: [
-              {text: "Geometry Name", value: "geometry"},{text: "Material Name", value: "material"},{text: "Visible (true/false)", value: "visible"},
+              {text: "Geometry", value: "geometry"},{text: "Material", value: "material"},{text: "Visible (true/false)", value: "visible"},
             ]},
             objectTypes: { acceptReporters: false, items: [
               { text: "Mesh", value: "Mesh" }, { text: "Sprite", value: "Sprite" }, { text: "Points", value: "Points" }, { text: "Line", value: "Line" }, { text: "Group", value: "Group" }
@@ -1035,7 +1036,7 @@ Promise.resolve(load()).then(() => {
       if (args.PROPERTY != "visible") value = object[args.PROPERTY].name; 
       else value = object.visible;
 
-      return JSON.stringify(value)
+      return value
     }
     removeObject(args) {
       removeObject(args.OBJECT3D)
@@ -2118,6 +2119,143 @@ Promise.resolve(load()).then(() => {
 
     }
   Scratch.extensions.register(new RapierPhysics())
+  
+  //Thanks to the PointerLock extension of Turbowarp
+  const mouse = vm.runtime.ioDevices.mouse;
+  let isLocked = false;
+  let isPointerLockEnabled = false;
+
+  let rect = threeRenderer.domElement.getBoundingClientRect();
+  document.addEventListener("resize", () => {
+    rect = threeRenderer.domElement.getBoundingClientRect();
+  });
+
+  const postMouseData = (e, isDown) => {
+    const { movementX, movementY } = e;
+    const { width, height } = rect;
+    const x = mouse._clientX + movementX;
+    const y = mouse._clientY - movementY;
+    mouse._clientX = x;
+    mouse._scratchX = mouse.runtime.stageWidth * (x / width - 0.5);
+    mouse._clientY = y;
+    mouse._scratchY = mouse.runtime.stageHeight * (y / height - 0.5);
+    if (typeof isDown === "boolean") {
+      const data = {
+        button: e.button,
+        isDown,
+      };
+      originalPostIOData(data);
+    }
+  };
+
+  const mouseDevice = vm.runtime.ioDevices.mouse;
+  const originalPostIOData = mouseDevice.postData.bind(mouseDevice);
+  mouseDevice.postData = (data) => {
+    if (!isPointerLockEnabled) {
+      return originalPostIOData(data);
+    }
+  };
+
+  document.addEventListener(
+    "mousedown",
+    (e) => {
+      // @ts-expect-error
+      if (threeRenderer.domElement.contains(e.target)) {
+        if (isLocked) {
+          postMouseData(e, true);
+        } else if (isPointerLockEnabled) {
+          threeRenderer.domElement.requestPointerLock();
+        }
+      }
+    },
+    true
+  );
+  document.addEventListener(
+    "mouseup",
+    (e) => {
+      if (isLocked) {
+        postMouseData(e, false);
+        // @ts-expect-error
+      } else if (isPointerLockEnabled && threeRenderer.domElement.contains(e.target)) {
+        threeRenderer.domElement.requestPointerLock();
+      }
+    },
+    true
+  );
+  document.addEventListener(
+    "mousemove",
+    (e) => {
+      if (isLocked) {
+        postMouseData(e);
+      }
+    },
+    true
+  );
+
+  document.addEventListener("pointerlockchange", () => {
+    isLocked = document.pointerLockElement === threeRenderer.domElement;
+  });
+  document.addEventListener("pointerlockerror", (e) => {
+    console.error("Pointer lock error", e);
+  });
+
+  const oldStep = vm.runtime._step;
+  vm.runtime._step = function (...args) {
+    const ret = oldStep.call(this, ...args);
+    if (isPointerLockEnabled) {
+      const { width, height } = rect;
+      mouse._clientX = width / 2;
+      mouse._clientY = height / 2;
+      mouse._scratchX = 0;
+      mouse._scratchY = 0;
+    }
+    return ret;
+  };
+
+  vm.runtime.on("PROJECT_LOADED", () => {
+    isPointerLockEnabled = false;
+    if (isLocked) {
+      document.exitPointerLock();
+    }
+  });
+
+  class Pointerlock {
+    getInfo() {
+      return {
+        id: "threepointerlockmod",
+        name: "Pointerlock for Extra 3D",
+        color1: "#8a8a8aff",
+        color2: "#222222",
+        color3: "#222222",
+
+        blocks: [
+          {opcode: "setLocked", blockType: Scratch.BlockType.COMMAND, text: "set pointer lock [enabled]", arguments: { enabled: { type: Scratch.ArgumentType.STRING, defaultValue: "true", menu: "enabled"}},},
+          {opcode: "isLocked", blockType: Scratch.BlockType.BOOLEAN, text: "pointer locked?",},
+        ],
+        menus: {
+          enabled: {acceptReporters: true, items: [
+              {text: "enabled", value: "true"},{text: "disabled", value: "false"},
+            ]}
+        },
+      }
+    }
+
+    setLocked(args) {
+      isPointerLockEnabled = Scratch.Cast.toBoolean(args.enabled) === true;
+      if (!isPointerLockEnabled && isLocked) {
+        document.exitPointerLock();
+      }
+    }
+
+    isLocked() {
+      return isLocked;
+    }
+  }
+Scratch.extensions.register(new Pointerlock())
+
   })
+
+
+  
 
 })(Scratch);
