@@ -127,8 +127,8 @@
       texture.minFilter = THREE.NearestFilter;
       texture.magFilter = THREE.NearestFilter;
       } else { //Blur
-      texture.minFilter = THREE.LinearMipMapLinearFilter
-      texture.magFilter = THREE.LinearFilter
+      texture.minFilter = THREE.NearestMipmapLinearFilter
+      texture.magFilter = THREE.NearestMipmapLinearFilter
       }
 
       if (style === "Repeat") {
@@ -158,24 +158,34 @@
   });
 }
 //light
-function updateShadowFrustum(light, focusPos) { //should better this!
-  if (light.type === "AmbientLight" || light.type === "PointLight") return;
-  
-  const d = 20; // half size of shadow box (larger = covers more area, softer shadows)
-  
-  light.shadow.camera.left   = -d;
-  light.shadow.camera.right  =  d;
-  light.shadow.camera.top    =  d;
-  light.shadow.camera.bottom = -d;
-  light.shadow.camera.near   = 0.1;
-  light.shadow.camera.far    = 500;
+function updateShadowFrustum(light, focusPos) {
+    if (light.type !== "DirectionalLight") return
 
-  // Move the *shadow camera* center near the focus position (e.g. camera or player)
-  light.position.copy(focusPos.clone().add(light.pos)); // offset light
-  light.target.position.copy(focusPos);
-  light.target.updateMatrixWorld();
+    // Frustum Size - Increase this value to cover a larger area.
+    const d = 50;
 
-  light.shadow.camera.updateProjectionMatrix();
+    // Update Orthographic Shadow Camera Frustum
+    const shadowCamera = light.shadow.camera;
+    
+    // Set the width/height of the frustum
+    shadowCamera.left = -d;
+    shadowCamera.right = d;
+    shadowCamera.top = d;
+    shadowCamera.bottom = -d;
+    
+    // Determine ranges
+    shadowCamera.near = 0.1
+    shadowCamera.far = 500
+
+    // Position the Light and its Target
+    light.target.position.copy(focusPos);
+    const direction = light.position.clone().sub(light.target.position).normalize();
+    light.position.copy(focusPos.clone().add(direction.multiplyScalar(100)));
+
+    // Ensure matrices are updated.
+    light.target.updateMatrixWorld();
+    light.shadow.camera.updateProjectionMatrix()
+    light.shadow.needsUpdate = true; 
 }
 //composer
 function updateComposers() {
@@ -1284,10 +1294,13 @@ Promise.resolve(load()).then(() => {
         ],
         menus: {
             lightTypes: {acceptReporters: false, items: [
-              {text: "Ambient Light", value: "AmbientLight"},{text: "Directional Light", value: "DirectionalLight"},{text: "Point Light", value: "PointLight"},
+              {text: "Ambient Light", value: "AmbientLight"},{text: "Directional Light", value: "DirectionalLight"},{text: "Point Light", value: "PointLight"},{text: "Hemisphere Light", value: "HemisphereLight"},{text: "Spot Light", value: "SpotLight"},
             ]},
             lightProperties: {acceptReporters: false, items: [
-              {text: "Color", value: "color"},{text: "Intensity", value: "intensity"},
+              {text: "Color", value: "color"},{text: "Intensity", value: "intensity"},{text: "Cast Shadow?", value: "castShadow"},
+              {text: "Ground Color (HemisphereLight)", value: "groundColor"},
+              {text: "Map (SpotLight)", value: "map"},{text: "Distance (SpotLight)", value: "distance"},{text: "Decay (SpotLight)", value: "decay"},{text: "Angle (SpotLight)", value: "angle"},{text: "Power (SpotLight)", value: "power"},
+              {text: "Target Position (Directional/SpotLight)", value: "target"},
             ]},
         }
       }}
@@ -1297,26 +1310,40 @@ Promise.resolve(load()).then(() => {
 
       createObject(args.NAME, light, args.GROUP)
       lights[args.NAME] = light
-      if (light.type === "AmbientLight") return
+      if (light.type === "AmbientLight" || "HemisphereLight") return
       
       light.castShadow = true
       if (light.type === "PointLight") return
-
+      //Directional & Spot Light
       light.target.position.set(0, 0, 0)
       scene.add(light.target)
-
+      
       light.pos = new THREE.Vector3(0,0,0)
 
       light.shadow.mapSize.width = 4096
       light.shadow.mapSize.height = 2048
-
-      //scene.add(new THREE.CameraHelper(light.shadow.camera))
+      
+      if (light.type === "SpotLight") {
+      light.shadow.camera.near = 500;
+      light.shadow.camera.far = 4000;
+      light.shadow.camera.fov = 30;
+      }
     }
 
     setLight(args) {
       const light = lights[args.NAME]
-      light[args.PROPERTY] = args.VALUE
-
+      if (!args.PROPERTY) return
+      if (args.PROPERTY === "target") {
+      light.target.position.set(...JSON.parse(args.VALUE)) //vector3
+      console.log(light.target, ...JSON.parse(args.VALUE))
+      light.target.updateMatrixWorld();
+      }
+      else {
+        if (typeof(args.VALUE) != "object") light[args.PROPERTY] = JSON.parse(args.VALUE)
+        else light[args.PROPERTY] = args.VALUE
+      }
+      light.shadow.camera.updateProjectionMatrix();
+      light.shadow.needsUpdate = true
       light.needsUpdate = true
     }
 
@@ -1839,7 +1866,7 @@ Promise.resolve(load()).then(() => {
             {opcode: "createWorld", blockType: Scratch.BlockType.COMMAND, text: "create world | gravity:[G]", arguments: {G: {type: Scratch.ArgumentType.STRING, defaultValue: "[0,-9.81,0]"}}},
             {opcode: "getWorld", blockType: Scratch.BlockType.REPORTER, text: "get world [PROPERTY]", arguments: {PROPERTY: {type: Scratch.ArgumentType.STRING, menu: "wProp"}}},
             "---",
-            {opcode: "objectPhysics", blockType: Scratch.BlockType.COMMAND, text: "enable physics for object [OBJECT] [state] | rigidBody [type] | collider [collider] density [density] friction [friction] sensor [state2]", arguments: {state2: {type: Scratch.ArgumentType.STRING, menu: "state2"},state: {type: Scratch.ArgumentType.STRING, menu: "state", defaultValue: "true"}, type: {type: Scratch.ArgumentType.STRING, menu: "objectTypes", defaultValue: "dynamic"}, collider: {type: Scratch.ArgumentType.STRING, menu: "colliderTypes", defaultValue: "cuboid"}, OBJECT: {type: Scratch.ArgumentType.STRING, defaultValue: "myObject"},density: {type: Scratch.ArgumentType.STRING, defaultValue: "1"},friction: {type: Scratch.ArgumentType.STRING, defaultValue: "0.5"}}},
+            {opcode: "objectPhysics", blockType: Scratch.BlockType.COMMAND, text: "enable physics for object [OBJECT] [state] | rigidBody [type] | collider [collider] mass [mass] density [density] friction [friction] sensor [state2]", arguments: {state2: {type: Scratch.ArgumentType.STRING, menu: "state2"},state: {type: Scratch.ArgumentType.STRING, menu: "state", defaultValue: "true"}, type: {type: Scratch.ArgumentType.STRING, menu: "objectTypes", defaultValue: "dynamic"}, collider: {type: Scratch.ArgumentType.STRING, menu: "colliderTypes", defaultValue: "cuboid"}, OBJECT: {type: Scratch.ArgumentType.STRING, defaultValue: "myObject"},mass: {type: Scratch.ArgumentType.NUMBER, defaultValue: "1"},density: {type: Scratch.ArgumentType.NUMBER, defaultValue: "1"},friction: {type: Scratch.ArgumentType.NUMBER, defaultValue: "0.5"}}},
             "---",
             {blockType: Scratch.BlockType.LABEL, text: "- RigidBody"},
             {opcode: "setRB", blockType: Scratch.BlockType.COMMAND, text: "set rigidbody [PROPERTY] of [OBJECT] to [VALUE]", arguments: {PROPERTY: {type: Scratch.ArgumentType.STRING, menu: "rigidBodySets"}, OBJECT: {type: Scratch.ArgumentType.STRING, defaultValue: "myObject"}, VALUE: {type: Scratch.ArgumentType.STRING, defaultValue: "1"}}},
@@ -2080,7 +2107,7 @@ Promise.resolve(load()).then(() => {
             case "convexHull": colliderDesc = createConvexHullCollider(object); break
             case "trimesh": colliderDesc = TriMesh(object); break
         }
-        colliderDesc.setSensor(JSON.parse(args.state2)).setDensity(args.density).setFriction(args.friction)
+        colliderDesc.setSensor(JSON.parse(args.state2)).setMass(args.mass).setDensity(args.density).setFriction(args.friction)
 
         let rigidBody = physicsWorld.createRigidBody(rigidBodyDesc)
         let collider = physicsWorld.createCollider(colliderDesc, rigidBody)
