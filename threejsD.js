@@ -50,6 +50,7 @@
   let scene
   let camera
   let object
+  let eulerOrder = "YXZ"
   
   let composer
   let renderPass
@@ -83,7 +84,7 @@
         alerts ? alert(name + " already exsisted, will replace!") : null
       }
       content.name = name
-      content.rotation._order = "YXZ"
+      content.rotation._order = eulerOrder
       parentName === scene.name ? object = scene : object = getObject(parentName)
       content.physics = false
 
@@ -561,8 +562,8 @@ Promise.resolve(load()).then(() => {
         color3: "#222222",
 
         blocks: [
-          {opcode: "setRendererRatio", blockType: Scratch.BlockType.COMMAND, text: "set Pixel Ratio to [VALUE]", arguments: {VALUE: {type: Scratch.ArgumentType.STRING, defaultValue: "1"}}},
-
+          {opcode: "setRendererRatio", blockType: Scratch.BlockType.COMMAND, text: "set Pixel Ratio to [VALUE]", arguments: {VALUE: {type: Scratch.ArgumentType.NUMBER, defaultValue: "1"}}},
+          {opcode: "eulerOrder", blockType: Scratch.BlockType.COMMAND, text: "set euler order to [VALUE]", arguments: {VALUE: {type: Scratch.ArgumentType.STRING, defaultValue: "YXZ"}}},
         ],
         menus: {}
       }}
@@ -570,7 +571,10 @@ Promise.resolve(load()).then(() => {
     setRendererRatio(args) {
       threeRenderer.setPixelRatio(window.devicePixelRatio * args.VALUE)
     }
-
+    eulerOrder(args) {
+      eulerOrder = args.VALUE
+      console.log("euler order set to", eulerOrder)
+    }
 
   }
   Scratch.extensions.register(new ThreeRenderer())
@@ -1332,6 +1336,7 @@ Promise.resolve(load()).then(() => {
             {opcode: "newVector2", blockType: Scratch.BlockType.REPORTER, text: "New Vector [X] [Y]", arguments: {X: {type: Scratch.ArgumentType.NUMBER}, Y: {type: Scratch.ArgumentType.NUMBER}}},
             {opcode: "newVector3", blockType: Scratch.BlockType.REPORTER, text: "New Vector [X] [Y] [Z]", arguments: {X: {type: Scratch.ArgumentType.NUMBER}, Y: {type: Scratch.ArgumentType.NUMBER}, Z: {type: Scratch.ArgumentType.NUMBER}}},
             "---",
+            {opcode: "operateV3", blockType: Scratch.BlockType.REPORTER, text: "do [V3] [O] [V32]", arguments: {V3: {type: Scratch.ArgumentType.STRING, defaultValue: "[0,0,0]"}, O: {type: Scratch.ArgumentType.STRING, menu: "operators"}, V32: {type: Scratch.ArgumentType.STRING, defaultValue: "[1,0,0]"}}},
             {opcode: "moveVector3", blockType: Scratch.BlockType.REPORTER, text: "move [S] steps in vector [V3] in direction [D3]", arguments: {S: {type: Scratch.ArgumentType.NUMBER, defaultValue: 1},V3: {type: Scratch.ArgumentType.STRING, defaultValue: "[0,0,0]"}, D3: {type: Scratch.ArgumentType.STRING, defaultValue: "[1,0,0]"}}},
             {opcode: "directionTo", blockType: Scratch.BlockType.REPORTER, text: "direction from [V3] to [T3]", arguments: {V3: {type: Scratch.ArgumentType.STRING, defaultValue: "[0,0,3]"}, T3: {type: Scratch.ArgumentType.STRING, defaultValue: "[0,0,0]"}}},
             "---",
@@ -1363,7 +1368,10 @@ Promise.resolve(load()).then(() => {
             ]},
             mouseButtons: {acceptReporters: false, items: ["left","middle","right"]},
             mouseAction: {acceptReporters: false, items: ["Down","Clicked"]},
-            curveTypes: {acceptReporters: false, items: ["CatmullRomCurve3"]}
+            curveTypes: {acceptReporters: false, items: ["CatmullRomCurve3"]},
+            operators: {acceptReporters: false, items: [
+              "+","-","*","/","=","max","min","dot","cross","distance to","angle to","apply euler",
+            ]}
         }
       }}
     mouseDown(args) {
@@ -1383,25 +1391,49 @@ Promise.resolve(load()).then(() => {
     newVector3(args) {
         return JSON.stringify([args.X, args.Y, args.Z])
     }
+    operateV3(args){
+      const v3 = new THREE.Vector3(...JSON.parse(args.V3))
+      const v32 = new THREE.Vector3(...JSON.parse(args.V32))
+
+      let r 
+      if (args.O == "+") r = v3.add(v32)
+      else if (args.O == "-") r = v3.sub(v32)
+      else if (args.O == "*") r = v3.multiply(v32)
+      else if (args.O == "/") r = v3.divide(v32)
+      else if (args.O == "=") r = v3.equals(v32)
+      else if (args.O == "max") r = v3.max(v32)
+      else if (args.O == "min") r = v3.min(v32)
+      else if (args.O == "dot") r = v3.dot(v32)
+      else if (args.O == "cross") r = v3.cross(v32)
+      else if (args.O == "distance to") r = v3.distanceTo(v32)
+      else if (args.O == "angle to") r = v3.angleTo(v32)
+      else if (args.O == "apply euler") r = v3.applyEuler(new THREE.Euler(v32.x, v32.y, v32.z, eulerOrder))
+
+      if (typeof(r) == "object") return JSON.stringify([r.x, r.y, r.z])
+      else return JSON.stringify(r)
+    }
+    
     newVector2(args) {
         return JSON.stringify([args.X, args.Y])
     }
 
     moveVector3(args) {
-        // Starting position
-        const v3 = new THREE.Vector3(...JSON.parse(args.V3))
+      const currentPos = new THREE.Vector3(...JSON.parse(args.V3));
+      const steps = Number(args.S);
 
-        // Parse yaw, pitch, roll from args.D3 (degrees → radians)
-        const [yawDeg, pitchDeg, rollDeg] = JSON.parse(args.D3).map(Number)
-        const yaw   = THREE.MathUtils.degToRad(yawDeg)
-        const pitch = THREE.MathUtils.degToRad(pitchDeg)
-        const roll  = THREE.MathUtils.degToRad(rollDeg)
+      const [pitchInputDeg, yawInputDeg, rollInputDeg] = JSON.parse(args.D3).map(Number);
 
-        const euler = new THREE.Euler(pitch, yaw, roll, "YXZ")
-        const direction = new THREE.Vector3(0, 0, -1).applyEuler(euler).normalize()
+      const yaw = THREE.MathUtils.degToRad(yawInputDeg); 
+      const pitch = THREE.MathUtils.degToRad(pitchInputDeg);
+      const roll = THREE.MathUtils.degToRad(rollInputDeg);
 
-        const pos = v3.clone().add(direction.multiplyScalar(args.S))
-        return JSON.stringify([pos.x, pos.y, pos.z])
+      const euler = new THREE.Euler(pitch, yaw, roll, eulerOrder);
+
+      const forwardVector = new THREE.Vector3(0, 0, -1);
+      const direction = forwardVector.applyEuler(euler).normalize();
+
+      const newPos = currentPos.add(direction.multiplyScalar(steps));
+      return JSON.stringify([newPos.x, newPos.y, newPos.z]);
     }
 
   directionTo(args) {
@@ -1481,7 +1513,7 @@ Promise.resolve(load()).then(() => {
         // rotation is in degrees => convert to radians first
         const rot = JSON.parse(args.D3).map(v => v * Math.PI / 180)
 
-        const euler = new THREE.Euler(rot[0], rot[1], rot[2], "YXZ")
+        const euler = new THREE.Euler(rot[0], rot[1], rot[2], eulerOrder)
         const direction = new THREE.Vector3(0, 0, -1).applyEuler(euler).normalize()
 
       const raycaster = new THREE.Raycaster()
