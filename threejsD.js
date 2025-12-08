@@ -32,7 +32,6 @@
   let THREE
     let clock
     let running
-    let ready = false
     let loopId
   //Addons
   let GLTFLoader
@@ -49,11 +48,9 @@
   let threeRenderer
   let scene
   let camera
-  let object
   let eulerOrder = "YXZ"
-  
+
   let composer
-  let renderPass
   let passes = {}
   let customEffects = []
   let renderTargets = {}
@@ -63,7 +60,41 @@
   let lights = {}
   let models = {}
 
+  let assets = { //should i place materials, geometries; inside too?
+    textures: {},
+    colors: {},
+    fogs: {},
+    curves: {},
+    renderTargets: {}, //not the same as the global one! this one only stores textures
+  }
+
   let raycastResult = []
+
+  function resetor(level) {
+    camera = undefined
+    composer.reset()
+
+    passes = {}
+    customEffects = []
+    renderTargets = {}
+
+    materials = {}
+    geometries = {}
+    lights = {}
+    models = {}
+
+    if (level > 0) {
+      assets = {
+        textures: {},
+        colors: {},
+        fogs: {},
+        curves: {},
+        renderTargets: {},
+      }
+    }
+
+    updateComposers()
+  }
   
 //utility
     function vector3ToString(prop) {
@@ -347,6 +378,17 @@ function getMeshesUsingTexture(scene, targetTexture) {
 
     return meshes
 }
+function getAsset(path) {
+  if (typeof(path) == "string") { //string?
+    if (path.includes("/")) { //has the /?
+      const value = path.split("/")
+      console.log(value[0], value[1])
+      return assets[value[0]][value[1]]
+    }
+  }
+
+  return JSON.parse(path) //boolean or number
+}
 
 let mouseNDC = [0, 0]
 //loops/init
@@ -446,7 +488,7 @@ async function load() {
       })
 
         running = false
-        ready = load()
+        load()
 
         startRenderLoop()
         runtime.on('PROJECT_START', () => startRenderLoop())
@@ -489,23 +531,31 @@ function startRenderLoop() {
         }
       })
       Object.values(renderTargets).forEach(t => {
-        t.camera.aspect = t.target.width / t.target.height
-        t.camera.updateProjectionMatrix()
+        if ( t.camera.type == "PerspectiveCamera") {
+          t.camera.aspect = t.target.width / t.target.height
+          t.camera.updateProjectionMatrix()
+        }
         // get meshes using the texture associated with this target
         const displayMeshes = getMeshesUsingTexture(scene, t.target.texture)
 
         displayMeshes.forEach(mesh => {
-        mesh.visible = false
+          mesh.visible = false
         })
 
+        if (t.camera.type == "PerspectiveCamera") {
         threeRenderer.setRenderTarget(t.target)
         threeRenderer.clear(true, true, true)
         threeRenderer.render(scene, t.camera)
+        } else {
+          t.target.clear(threeRenderer)
+          t.camera.update( threeRenderer, scene ) //cubeCamera
+        }
 
         displayMeshes.forEach(mesh => {
         mesh.visible = true
         })
       })
+
       camera.aspect = threeRenderer.domElement.width / threeRenderer.domElement.height
       camera.updateProjectionMatrix()
       threeRenderer.setRenderTarget(null)
@@ -604,35 +654,34 @@ Promise.resolve(load()).then(() => {
             {opcode: "setSceneProperty", blockType: Scratch.BlockType.COMMAND, text: "set Scene [PROPERTY] to [VALUE]", arguments: {PROPERTY: {type: Scratch.ArgumentType.STRING, menu: "sceneProperties", defaultValue: "background"}, VALUE: {type: Scratch.ArgumentType.STRING, defaultValue: "new Color()", exemptFromNormalization: true}}},
             "---",
             {opcode: "getSceneObjects", blockType: Scratch.BlockType.REPORTER, text: "get Scene [THING]", arguments:{THING: {type: Scratch.ArgumentType.STRING, menu: "sceneThings"}}},
-        ],
+            {opcode: "reset", blockType: Scratch.BlockType.COMMAND, text: "Reset Everything"}
+          ],
         menus: {
           sceneProperties: {acceptReporters: false, items: [
                 {text: "Background", value: "background"},{text: "Background Blurriness", value: "backgroundBlurriness"},{text: "Background Intensity", value: "backgroundIntensity"},{text: "Background Rotation", value: "backgroundRotation"},
                 {text: "Environment", value: "environment"},{text: "Environment Intensity", value: "environmentIntensity"},{text: "Environment Rotation", value: "environmentRotation"},{text: "Fog", value: "fog"},
             ]},
-            sceneThings: {acceptReporters: false, items: ["Objects", "Materials", "Geometries","Lights","Scene Properties"]},
+            sceneThings: {acceptReporters: false, items: ["Objects", "Materials", "Geometries","Lights","Scene Properties","Other assets"]},
             
         }
       }}
 
-          newScene(args) {
-        scene = new THREE.Scene();
-        scene.name = args.NAME 
-        scene.background = new THREE.Color("#222")
-        //scene.add(new THREE.GridHelper(16, 16)) //future helper section?
-        materials = {}
-        geometries = {}
-        lights = {}
-        models = {}
-        camera = undefined
+    newScene(args) {
+      scene = new THREE.Scene();
+      scene.name = args.NAME 
+      scene.background = new THREE.Color("#222")
+      //scene.add(new THREE.GridHelper(16, 16)) //future helper section?
 
-        composer.reset()
-        updateComposers()
+      resetor(0)
+    }
+
+    reset() {
+      resetor(1)
     }
 
     async setSceneProperty(args) {
         const property = args.PROPERTY;
-        const value = await args.VALUE;
+        const value = getAsset(args.VALUE);
 
         scene[property] = value;
     }
@@ -647,6 +696,7 @@ Promise.resolve(load()).then(() => {
     else if (args.THING === "Geometries") return JSON.stringify(Object.keys(geometries))
     else if (args.THING === "Ligts") return JSON.stringify(Object.keys(lights)) 
     else if (args.THING === "Scene Properties") {console.log(scene); return "check console"}
+    else if (args.THING === "Other assets")  return JSON.stringify(assets)
 
       return JSON.stringify(names); // if objects
     }
@@ -670,6 +720,8 @@ Promise.resolve(load()).then(() => {
             "---",
             {opcode: "renderSceneCamera", blockType: Scratch.BlockType.COMMAND, text: "set rendering camera to [CAMERA]", arguments: {CAMERA: {type: Scratch.ArgumentType.STRING, defaultValue: "myCamera"}}},
             "---",
+            {opcode: "cubeCamera", blockType: Scratch.BlockType.COMMAND, text: "add cube camera [CAMERA] to [GROUP] with RenderTarget [RT]", arguments: {CAMERA: {type: Scratch.ArgumentType.STRING, defaultValue: "cubeCamera"}, GROUP: {type: Scratch.ArgumentType.STRING, defaultValue: "scene"}, RT: {type: Scratch.ArgumentType.STRING, defaultValue: "myTarget"}, } },
+            "---",
             {opcode: "renderTarget", blockType: Scratch.BlockType.COMMAND, text: "set a RenderTarget: [RT] for camera [CAMERA]", arguments: {CAMERA: {type: Scratch.ArgumentType.STRING, defaultValue: "myCamera"}, RT: {type: Scratch.ArgumentType.STRING, defaultValue: "myTarget"}, } },
             {opcode: "sizeTarget", blockType: Scratch.BlockType.COMMAND, text: "set RenderTarget [RT] size to [W] [H]", arguments: {RT: {type: Scratch.ArgumentType.STRING, defaultValue: "myTarget"}, W: {type: Scratch.ArgumentType.NUMBER, defaultValue: 480}, H: {type: Scratch.ArgumentType.NUMBER, defaultValue: 360},} },
             {opcode: "getTarget", blockType: Scratch.BlockType.REPORTER, text: "get RenderTarget: [RT] texture", arguments: {RT: {type: Scratch.ArgumentType.STRING, defaultValue: "myTarget"}} },
@@ -677,7 +729,7 @@ Promise.resolve(load()).then(() => {
           ],
         menus: {
             cameraTypes: {acceptReporters: false, items: [
-                {text: "Perspective", value: "PerspectiveCamera"},{text: "Orthographic (not done yet!)", value: "OrthographicCamera"}
+                {text: "Perspective", value: "PerspectiveCamera"},
             ]},
             cameraProperties: {acceptReporters: false, items: [
                 {text: "Near", value: "near"},{text: "Far", value: "far"},{text: "FOV", value: "fov"},{text: "Focus (nothing...)", value: "focus"},{text: "Zoom", value: "zoom"},
@@ -713,6 +765,17 @@ Promise.resolve(load()).then(() => {
       updateComposers()
     }
 
+    cubeCamera(args) {
+      // Create cube render target
+      const cubeRenderTarget = new THREE.WebGLCubeRenderTarget( 256, { generateMipmaps: true } ) 
+      // Create cube camera
+      const cubeCamera = new THREE.CubeCamera( 0.1, 500, cubeRenderTarget )
+      createObject(args.CAMERA, cubeCamera, args.GROUP)
+
+      renderTargets[args.RT] = {target: cubeRenderTarget, camera: cubeCamera}
+      assets.renderTargets[cubeRenderTarget.texture.uuid] = cubeRenderTarget.texture
+    }
+
     renderTarget(args) {
       let object = getObject(args.CAMERA)
       const renderTarget = new THREE.WebGLRenderTarget(
@@ -724,15 +787,18 @@ Promise.resolve(load()).then(() => {
       )
 
       renderTargets[args.RT] = {target: renderTarget, camera: object}
+      assets.renderTargets[renderTarget.texture.uuid] == renderTarget.texture
     }
     sizeTarget(args) {
       renderTargets[args.RT].target.setSize(args.W, args.H)
     }
     getTarget(args) {
-      console.log(renderTargets, renderTargets[args.RT].target.texture)
-      return renderTargets[args.RT].target.texture
+      const t = renderTargets[args.RT].target.texture
+      console.log(t, renderTargets[args.RT])
+      return `renderTargets/${t.uuid}`
     }
     removeTarget(args) {
+      delete(assets.renderTargets[renderTargets[args.RT].target.texture.uuid])
       renderTargets[args.RT].target.dispose()
       delete(renderTargets[args.RT])
     }
@@ -998,6 +1064,8 @@ Promise.resolve(load()).then(() => {
         }
         if (object.isDirectionalLight == true) {object.pos = new THREE.Vector3(...values); console.log(true, values, object.pos); return}
           object[args.PROPERTY].set(...values);
+
+        if (object.type == "CubeCamera") object.updateCoordinateSystem()
     }
     /*
     changeObjectV3(args) {
@@ -1070,17 +1138,20 @@ Promise.resolve(load()).then(() => {
     async setMaterial(args) {
       if (typeof(args.VALUE) == "string" && args.VALUE.at(0) == "|") return
       const mat = materials[args.NAME]
-      console.log(args.VALUE)
-      let value
-      if (typeof(args.VALUE) == ("object") || args.VALUE == "D" || "B" || "F" ) value = args.VALUE; else value = JSON.parse(args.VALUE);
+
+      let value = args.VALUE
+
       if (args.VALUE == "false") value = false
-      console.log(value)
-      if  (args.PROPERTY == "side") {
-      value = (value == "D" ? THREE.DoubleSide : value == "B" ? THREE.BackSide : THREE.FrontSide)
-      } else if (args.PROPERTY === "normalScale") value = new THREE.Vector2(...(value))
+
+      if  (args.PROPERTY == "side") {value = (args.VALUE == "D" ? THREE.DoubleSide : args.VALUE == "B" ? THREE.BackSide : THREE.FrontSide)} 
+      else if (args.PROPERTY === "normalScale") value = new THREE.Vector2(...JSON.parse(args.VALUE))
+      else value = getAsset(value)
+      
+      
+      console.log("o:", args.VALUE, typeof(args.VALUE))
+      console.log("r:", value, typeof(value))
       
       mat[args.PROPERTY] = await (value) //await incase its a texture
-      //mat.transparent = mat.opacity < 1.0   should this be auto?
       mat.needsUpdate = true
     }
     setBlending(args) {
@@ -1148,7 +1219,7 @@ Promise.resolve(load()).then(() => {
     }
 
     splines(args) {
-      const geometry = new THREE.TubeGeometry(args.CURVE)
+      const geometry = new THREE.TubeGeometry(getAsset(args.CURVE))
       geometry.name = args.NAME
 
       geometries[args.NAME] = geometry
@@ -1158,7 +1229,7 @@ Promise.resolve(load()).then(() => {
   const model = await getModel(args.MODEL, args.NAME)
   if (!model) return console.warn("Model not found:", args.MODEL)
 
-  const curve = args.CURVE
+  const curve = getAsset(args.CURVE)
   const spacing = parseFloat(args.SPACING) || 1
   const curveLength = curve.getLength()
   const divisions = Math.floor(curveLength / spacing)
@@ -1299,7 +1370,7 @@ Promise.resolve(load()).then(() => {
             lightProperties: {acceptReporters: false, items: [
               {text: "Color", value: "color"},{text: "Intensity", value: "intensity"},{text: "Cast Shadow?", value: "castShadow"},
               {text: "Ground Color (HemisphereLight)", value: "groundColor"},
-              {text: "Map (SpotLight)", value: "map"},{text: "Distance (SpotLight)", value: "distance"},{text: "Decay (SpotLight)", value: "decay"},{text: "Angle (SpotLight)", value: "angle"},{text: "Power (SpotLight)", value: "power"},
+              {text: "Map (SpotLight)", value: "map"},{text: "Distance (SpotLight)", value: "distance"},{text: "Decay (SpotLight)", value: "decay"},{text: "Penumbra (SpotLight)", value: "penumbra"},{text: "Angle/Size (SpotLight)", value: "angle"},{text: "Power (SpotLight)", value: "power"},
               {text: "Target Position (Directional/SpotLight)", value: "target"},
             ]},
         }
@@ -1324,10 +1395,13 @@ Promise.resolve(load()).then(() => {
       light.shadow.mapSize.height = 2048
       
       if (light.type === "SpotLight") {
+      light.decay = 0
       light.shadow.camera.near = 500;
       light.shadow.camera.far = 4000;
       light.shadow.camera.fov = 30;
       }
+      light.shadow.needsUpdate = true
+      light.needsUpdate = true
     }
 
     setLight(args) {
@@ -1335,16 +1409,17 @@ Promise.resolve(load()).then(() => {
       if (!args.PROPERTY) return
       if (args.PROPERTY === "target") {
       light.target.position.set(...JSON.parse(args.VALUE)) //vector3
-      console.log(light.target, ...JSON.parse(args.VALUE))
       light.target.updateMatrixWorld();
       }
       else {
-        if (typeof(args.VALUE) != "object") light[args.PROPERTY] = JSON.parse(args.VALUE)
-        else light[args.PROPERTY] = args.VALUE
+        light[args.PROPERTY] = getAsset(args.VALUE)
       }
+      light.needsUpdate = true
+
+      if (light.type === "AmbientLight" || "HemisphereLight") return
+
       light.shadow.camera.updateProjectionMatrix();
       light.shadow.needsUpdate = true
-      light.needsUpdate = true
     }
 
   }
@@ -1411,10 +1486,6 @@ Promise.resolve(load()).then(() => {
     mousePos(event) {
       return JSON.stringify(mouseNDC)
     }
-
-    newColor(args) {
-        return new THREE.Color(args.HEX);
-    }
     newVector3(args) {
         return JSON.stringify([args.X, args.Y, args.Z])
     }
@@ -1463,22 +1534,31 @@ Promise.resolve(load()).then(() => {
       return JSON.stringify([newPos.x, newPos.y, newPos.z]);
     }
 
-  directionTo(args) {
-  const v3 = new THREE.Vector3(...JSON.parse(args.V3))
-  const toV3 = new THREE.Vector3(...JSON.parse(args.T3))
+    directionTo(args) {
+    const v3 = new THREE.Vector3(...JSON.parse(args.V3))
+    const toV3 = new THREE.Vector3(...JSON.parse(args.T3))
 
-  const direction = toV3.clone().sub(v3).normalize();
-  // Pitch (X)
-  const pitch = Math.atan2(-direction.y, Math.sqrt(direction.x*direction.x + direction.z*direction.z));
-  // Yaw (Y)
-  const yaw = Math.atan2(direction.x, direction.z);
+    const direction = toV3.clone().sub(v3).normalize();
+    // Pitch (X)
+    const pitch = Math.atan2(-direction.y, Math.sqrt(direction.x*direction.x + direction.z*direction.z));
+    // Yaw (Y)
+    const yaw = Math.atan2(direction.x, direction.z);
 
-  // Roll always 0
-  return JSON.stringify([180+THREE.MathUtils.radToDeg(pitch),THREE.MathUtils.radToDeg(yaw),0])
-  }
+    // Roll always 0
+    return JSON.stringify([180+THREE.MathUtils.radToDeg(pitch),THREE.MathUtils.radToDeg(yaw),0])
+    }
 
+    newColor(args) {
+      const color = new THREE.Color(args.HEX)
+      const uuid = crypto.randomUUID()
+      assets.colors[uuid] = color
+      return `colors/${uuid}`
+    }
     newFog(args) {
-        return new THREE.Fog(args.COLOR, args.NEAR, args.FAR)
+      const fog = new THREE.Fog(args.COLOR, args.NEAR, args.FAR)
+      const uuid = crypto.randomUUID()
+      assets.fogs[uuid] = fog
+      return `fogs/${uuid}`
     }
     async newTexture(args) {
       const textureURI = encodeCostume(args.COSTUME)
@@ -1486,7 +1566,8 @@ Promise.resolve(load()).then(() => {
       texture.name = args.COSTUME
 
       setTexutre(texture, args.MODE, args.STYLE, args.X, args.Y)
-      return texture;
+      assets.textures[texture.uuid] = texture
+      return `textures/${texture.uuid}`
     }
     async newCubeTexture(args) {
       const uris = [encodeCostume(args.COSTUMEX0),encodeCostume(args.COSTUMEX1), encodeCostume(args.COSTUMEY0),encodeCostume(args.COSTUMEY1), encodeCostume(args.COSTUMEZ0),encodeCostume(args.COSTUMEZ1)]
@@ -1496,7 +1577,8 @@ Promise.resolve(load()).then(() => {
       texture.name = "CubeTexture" + args.COSTUMEX0;
 
       setTexutre(texture, args.MODE, args.STYLE, args.X, args.Y)
-      return texture;
+      assets.textures[texture.uuid] = texture
+      return `textures/${texture.uuid}`
     }
     async newEquirectangularTexture(args) {
       const textureURI = encodeCostume(args.COSTUME)
@@ -1505,7 +1587,8 @@ Promise.resolve(load()).then(() => {
       texture.mapping = THREE.EquirectangularReflectionMapping
 
       setTexutre(texture, args.MODE)
-      return texture;
+      assets.textures[texture.uuid] = texture
+      return `textures/${texture.uuid}`
     }
 
     curve(args) {
@@ -1525,7 +1608,10 @@ Promise.resolve(load()).then(() => {
       const points = parsePoints(args.POINTS)
       const curve = new THREE[args.TYPE](points)
       curve.closed = JSON.parse(args.CLOSED)
-      return curve
+
+      const uuid = crypto.randomUUID()
+      assets.curves[uuid] = curve
+      return `curves/${uuid}`
     }
 
     getItem(args) {
