@@ -10,8 +10,9 @@
   if (!Scratch.extensions.unsandboxed) {
     throw new Error("Three-D extension must run unsandboxed");
   }
-  if (Scratch.vm.extensionManager._loadedExtensions.has("threejsExtension")) return
 
+  if (Scratch.vm.runtime.isPackaged) {alert(`Uncheck the setting "Remove raw asset data after loading to save RAM" for package!`); return}
+  //if (Scratch.vm.extensionManager._loadedExtensions.has("threejsExtension") && typeof scaffolding == "undefined") return
 
   const vm = Scratch.vm;
   const runtime = vm.runtime
