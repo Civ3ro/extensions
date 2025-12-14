@@ -185,6 +185,7 @@
       ctx.drawImage(img, 0, 0, size, size)
 
       resolve(canvas.toDataURL()) // return normalized Data URI
+      //delete canvas?
     };
     img.src = uri
   });
@@ -495,7 +496,7 @@ async function load() {
         runtime.on('PROJECT_START', () => startRenderLoop())
         runtime.on('PROJECT_STOP_ALL', () => stopLoop())
         runtime.on('STAGE_SIZE_CHANGED', () => {requestAnimationFrame(() => resize())})
-        if (!runtime.isPackaged) checkCanvasSize() //only in editor
+        //if (!runtime.isPackaged) checkCanvasSize() //only in editor
     }
   }
 function startRenderLoop() {
