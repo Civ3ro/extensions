@@ -731,6 +731,7 @@
 
     class ThreeScene {
       constructor() {
+        // expose threejs and the scenes, so other extensions and javascript can do stuff manually
         this.THREE = THREE;
         this.scenes = {};
       }
@@ -836,16 +837,16 @@
       }
 
       newScene(args) {
-        scene = new THREE.Scene();
+        const scene = new THREE.Scene();
         scene.name = args.NAME;
         scene.background = new THREE.Color("#222");
-        //scene.add(new THREE.GridHelper(16, 16)) //future helper section?
-        this.scenes = {
-          ...this.scenes,
-          ...scene,
-        };
+      
+        this.scenes[scene.name] = scene; // this can overwrite an existing scene of that name, which is okay
+      
         resetor(0);
       }
+
+
 
       reset() {
         resetor(1);
