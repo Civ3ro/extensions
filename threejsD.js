@@ -642,6 +642,11 @@ Promise.resolve(load()).then(() => {
   Scratch.extensions.register(new ThreeRenderer())
 
   class ThreeScene {
+    constructor() {
+      this.THREE = THREE;
+      this.scenes = {};
+    }
+    
     getInfo() {
       return {
         id: "threeScene",
@@ -673,7 +678,7 @@ Promise.resolve(load()).then(() => {
       scene.name = args.NAME 
       scene.background = new THREE.Color("#222")
       //scene.add(new THREE.GridHelper(16, 16)) //future helper section?
-
+      this.scenes = {...this.scenes, {scene}};
       resetor(0)
     }
 
