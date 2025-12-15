@@ -60,7 +60,6 @@
   let physicsWorld;
 
   let threeRenderer;
-  let scene;
   let camera;
   let eulerOrder = "YXZ";
 
@@ -87,7 +86,7 @@
 
   function resetor(level) {
     camera = undefined;
-    composer.reset();
+    if (composer) composer.reset();
 
     passes = {};
     customEffects = [];
@@ -129,8 +128,36 @@
     return [x, y, z];
   }
 
+  // Helper function to get current scene
+  function getCurrentScene() {
+    const threeScene = runtime.ext_threeScene;
+    if (!threeScene) return null;
+    const currentSceneName = threeScene.currentSceneName;
+    return currentSceneName ? threeScene.scenes[currentSceneName] : null;
+  }
+
+  // Helper function to get scene by name
+  function getSceneByName(sceneName) {
+    const threeScene = runtime.ext_threeScene;
+    if (!threeScene) return null;
+    return threeScene.scenes[sceneName];
+  }
+
+  // Helper function to set current scene
+  function setCurrentScene(sceneName) {
+    const threeScene = runtime.ext_threeScene;
+    if (!threeScene) return;
+    threeScene.currentSceneName = sceneName;
+  }
+
   //objects
   function createObject(name, content, parentName) {
+    const scene = getCurrentScene();
+    if (!scene) {
+      alerts ? alert("No active scene! Create a scene first!") : null;
+      return;
+    }
+    
     let object = getObject(name, true);
     if (object) {
       removeObject(name);
@@ -138,13 +165,25 @@
     }
     content.name = name;
     content.rotation._order = eulerOrder;
-    parentName === scene.name ? (object = scene) : (object = getObject(parentName));
+    
+    let parentObject;
+    if (parentName === scene.name) {
+      parentObject = scene;
+    } else {
+      parentObject = getObject(parentName);
+      if (!parentObject) {
+        parentObject = scene;
+      }
+    }
+    
     content.physics = false;
-
-    object.add(content);
+    parentObject.add(content);
   }
 
   function removeObject(name) {
+    const scene = getCurrentScene();
+    if (!scene) return;
+
     let object = getObject(name);
     if (!object) return;
 
@@ -162,15 +201,16 @@
   }
 
   function getObject(name, isNew) {
-    let object = null;
+    const scene = getCurrentScene();
     if (!scene) {
       alerts ? alert("Can not get " + name + ". Create a scene first!") : null;
-      return;
+      return null;
     }
-    object = scene.getObjectByName(name);
+    
+    let object = scene.getObjectByName(name);
     if (!object && !isNew) {
       alerts ? alert(name + " does not exist! Add it to scene") : null;
-      return;
+      return null;
     }
     return object;
   }
@@ -178,7 +218,10 @@
   //materials
   function encodeCostume(name) {
     if (name.startsWith("data:image/")) return name;
-    return Scratch.vm.editingTarget.sprite.costumes.find((c) => c.name === name).asset.encodeDataURI();
+    const editingTarget = vm.editingTarget;
+    if (!editingTarget) return null;
+    const costume = editingTarget.sprite.costumes.find((c) => c.name === name);
+    return costume ? costume.asset.encodeDataURI() : null;
   }
 
   function setTexutre(texture, mode, style, x, y) {
@@ -252,6 +295,7 @@
   }
   //composer
   function updateComposers() {
+    const scene = getCurrentScene();
     if (!camera || !scene) return; // nothing to do yet
 
     // always recreate the RenderPass to point to the current scene/camera
@@ -563,8 +607,15 @@
 
     const loop = () => {
       if (!running) return;
+      
+      const scene = getCurrentScene();
+      if (!scene) {
+        loopId = requestAnimationFrame(loop);
+        return;
+      }
+      
       //RAPIER
-      if (physicsWorld && scene) {
+      if (physicsWorld) {
         physicsWorld.step();
 
         scene.children.forEach((obj) => {
@@ -575,7 +626,7 @@
           }
         });
       }
-      if (scene && camera) {
+      if (camera) {
         if (controls) controls.update();
 
         const delta = clock.getDelta();
@@ -634,7 +685,7 @@
     const h = canvas.height;
 
     threeRenderer.setSize(w, h);
-    composer.setSize(w, h);
+    if (composer) composer.setSize(w, h);
     customEffects.forEach((e) => {
       if (e.uniforms.get("resolution")) {
         e.uniforms.get("resolution").value.set(w, h);
@@ -734,6 +785,7 @@
         // expose threejs and the scenes, so other extensions and javascript can do stuff manually
         this.THREE = THREE;
         this.scenes = {};
+        this.currentSceneName = null;
       }
 
       getInfo() {
@@ -838,27 +890,42 @@
 
       newScene(args) {
         const scene = new THREE.Scene();
-        scene.name = Scratch.Cast.toString(args.NAME);
+        const sceneName = Scratch.Cast.toString(args.NAME);
+        scene.name = sceneName;
         scene.background = new THREE.Color("#222");
       
-        this.scenes[Scratch.Cast.toString(args.NAME)] = scene; // this can overwrite an existing scene of that name, which is okay
+        this.scenes[sceneName] = scene;
+        this.currentSceneName = sceneName; // Set as current scene
       
         resetor(0);
       }
 
-
-
       reset() {
         resetor(1);
+        this.scenes = {};
+        this.currentSceneName = null;
       }
 
       async setSceneProperty(args) {
+        const scene = getCurrentScene();
+        if (!scene) {
+          alerts ? alert("No active scene! Create a scene first!") : null;
+          return;
+        }
+        
         const property = args.PROPERTY;
         const value = getAsset(args.VALUE);
 
         scene[property] = value;
       }
+      
       getSceneObjects(args) {
+        const scene = getCurrentScene();
+        if (!scene) {
+          alerts ? alert("No active scene! Create a scene first!") : null;
+          return "[]";
+        }
+        
         const names = [];
         if (args.THING === "Objects") {
           scene.traverse((obj) => {
@@ -866,7 +933,7 @@
           });
         } else if (args.THING === "Materials") return JSON.stringify(Object.keys(materials));
         else if (args.THING === "Geometries") return JSON.stringify(Object.keys(geometries));
-        else if (args.THING === "Ligts") return JSON.stringify(Object.keys(lights));
+        else if (args.THING === "Lights") return JSON.stringify(Object.keys(lights));
         else if (args.THING === "Scene Properties") {
           console.log(scene);
           return "check console";
@@ -1075,11 +1142,13 @@
       }
       setCamera(args) {
         let object = getObject(args.CAMERA);
+        if (!object) return;
         object[args.PROPERTY] = args.VALUE;
         object.updateProjectionMatrix();
       }
       getCamera(args) {
         let object = getObject(args.CAMERA);
+        if (!object) return "null";
         const value = JSON.stringify(object[args.PROPERTY]);
         return value;
       }
@@ -1112,6 +1181,8 @@
 
       renderTarget(args) {
         let object = getObject(args.CAMERA);
+        if (!object) return;
+        
         const renderTarget = new THREE.WebGLRenderTarget(360, 360, {
           generateMipmaps: false,
         });
@@ -1120,19 +1191,25 @@
           target: renderTarget,
           camera: object,
         };
-        assets.renderTargets[renderTarget.texture.uuid] == renderTarget.texture;
+        assets.renderTargets[renderTarget.texture.uuid] = renderTarget.texture;
       }
       sizeTarget(args) {
-        renderTargets[args.RT].target.setSize(args.W, args.H);
+        const target = renderTargets[args.RT];
+        if (!target) return;
+        target.target.setSize(args.W, args.H);
       }
       getTarget(args) {
-        const t = renderTargets[args.RT].target.texture;
+        const target = renderTargets[args.RT];
+        if (!target) return "null";
+        const t = target.target.texture;
         console.log(t, renderTargets[args.RT]);
         return `renderTargets/${t.uuid}`;
       }
       removeTarget(args) {
-        delete assets.renderTargets[renderTargets[args.RT].target.texture.uuid];
-        renderTargets[args.RT].target.dispose();
+        const target = renderTargets[args.RT];
+        if (!target) return;
+        delete assets.renderTargets[target.target.texture.uuid];
+        target.target.dispose();
         delete renderTargets[args.RT];
       }
     }
@@ -2195,12 +2272,15 @@
       }
       cloneObject(args) {
         let object = getObject(args.OBJECT3D);
+        if (!object) return;
         const clone = object.clone(true);
         clone.name;
         createObject(args.NAME, clone, args.GROUP);
       }
       setObjectV3(args) {
         let object = getObject(args.OBJECT3D);
+        if (!object) return;
+        
         let values = JSON.parse(args.VALUE);
 
         function degToRad(deg) {
@@ -2274,7 +2354,7 @@
       */
       getObjectV3(args) {
         let object = getObject(args.OBJECT3D);
-        if (!object) return;
+        if (!object) return "[0,0,0]";
         let values = vector3ToString(object[args.PROPERTY]);
         if (args.PROPERTY === "rotation") {
           const toDeg = Math.PI / 180;
@@ -2285,6 +2365,8 @@
       }
       setObject(args) {
         let object = getObject(args.OBJECT3D);
+        if (!object) return;
+        
         let value = args.VALUE;
         if (args.PROPERTY === "material") {
           const mat = materials[args.NAME];
@@ -2301,7 +2383,7 @@
       }
       getObject(args) {
         let object = getObject(args.OBJECT3D);
-        if (!object) return;
+        if (!object) return "null";
         let value;
         if (args.PROPERTY != "visible") value = object[args.PROPERTY].name;
         else value = object.visible;
@@ -2312,6 +2394,8 @@
         removeObject(args.OBJECT3D);
       }
       objectE(args) {
+        const scene = getCurrentScene();
+        if (!scene) return false;
         return scene.children.map((o) => o.name).includes(args.NAME);
       }
 
@@ -2326,6 +2410,7 @@
       async setMaterial(args) {
         if (typeof args.VALUE == "string" && args.VALUE.at(0) == "|") return;
         const mat = materials[args.NAME];
+        if (!mat) return;
 
         let value = args.VALUE;
 
@@ -2344,17 +2429,20 @@
       }
       setBlending(args) {
         const mat = materials[args.NAME];
+        if (!mat) return;
         mat.blending = THREE[args.VALUE];
         mat.premultipliedAlpha = true;
         mat.needsUpdate = true;
       }
       setDepth(args) {
         const mat = materials[args.NAME];
+        if (!mat) return;
         mat.depthFunc = THREE[args.VALUE];
         mat.needsUpdate = true;
       }
       removeMaterial(args) {
         const mat = materials[args.NAME];
+        if (!mat) return;
         mat.dispose();
         delete materials[args.NAME];
       }
@@ -2371,12 +2459,14 @@
       }
       setGeometry(args) {
         const geo = geometries[args.NAME];
+        if (!geo) return;
         geo[args.PROPERTY] = args.VALUE;
 
         geo.needsUpdate = true;
       }
       removeGeometry(args) {
         const geo = geometries[args.NAME];
+        if (!geo) return;
         geo.dispose();
         delete geometries[args.NAME];
       }
@@ -2391,6 +2481,7 @@
       }
       async geoPoints(args) {
         const geometry = geometries[args.NAME];
+        if (!geometry) return;
         const positions = args.POINTS.split(" ")
           .map((v) => JSON.parse(v))
           .flat(); //array of v3 of each vertex of each triangle
@@ -2402,6 +2493,7 @@
       }
       geoUVs(args) {
         const geometry = geometries[args.NAME];
+        if (!geometry) return;
         const UVs = args.POINTS.split(" ")
           .map((v) => JSON.parse(v))
           .flat(); //array of v2 of each UV of each triangle
@@ -2691,7 +2783,9 @@
         if (light.type === "PointLight") return;
         //Directional & Spot Light
         light.target.position.set(0, 0, 0);
-        scene.add(light.target);
+        
+        const scene = getCurrentScene();
+        if (scene) scene.add(light.target);
 
         light.pos = new THREE.Vector3(0, 0, 0);
 
@@ -2710,7 +2804,8 @@
 
       setLight(args) {
         const light = lights[args.NAME];
-        if (!args.PROPERTY) return;
+        if (!light || !args.PROPERTY) return;
+        
         if (args.PROPERTY === "target") {
           light.target.position.set(...JSON.parse(args.VALUE)); //vector3
           light.target.updateMatrixWorld();
@@ -3187,6 +3282,7 @@
       }
       async newTexture(args) {
         const textureURI = encodeCostume(args.COSTUME);
+        if (!textureURI) return "null";
         const texture = await new THREE.TextureLoader().loadAsync(textureURI);
         texture.name = args.COSTUME;
 
@@ -3203,6 +3299,9 @@
           encodeCostume(args.COSTUMEZ0),
           encodeCostume(args.COSTUMEZ1),
         ];
+        // Check if all URIs are valid
+        if (uris.some(uri => !uri)) return "null";
+        
         const normalized = await Promise.all(uris.map((uri) => resizeImageToSquare(uri, 256)));
         const texture = await new THREE.CubeTextureLoader().loadAsync(normalized);
 
@@ -3214,6 +3313,7 @@
       }
       async newEquirectangularTexture(args) {
         const textureURI = encodeCostume(args.COSTUME);
+        if (!textureURI) return "null";
         const texture = await new THREE.TextureLoader().loadAsync(textureURI);
         texture.name = args.COSTUME;
         texture.mapping = THREE.EquirectangularReflectionMapping;
@@ -3254,6 +3354,9 @@
       }
 
       raycast(args) {
+        const scene = getCurrentScene();
+        if (!scene) return;
+        
         const origin = new THREE.Vector3(...JSON.parse(args.V3));
         // rotation is in degrees => convert to radians first
         const rot = JSON.parse(args.D3).map((v) => (v * Math.PI) / 180);
@@ -3484,7 +3587,7 @@
         createObject(args.NAME, group, args.GROUP);
       }
       getModel(args) {
-        if (!models[args.NAME]) return;
+        if (!models[args.NAME]) return "null";
         return Object.keys(models[args.NAME].actions).toString();
       }
 
@@ -3788,6 +3891,7 @@
       }
 
       bloom(args) {
+        const scene = getCurrentScene();
         if (!camera || !scene) {
           if (alerts) alert("set a camera!");
           return;
@@ -3806,11 +3910,13 @@
       }
 
       godRays(args) {
+        const scene = getCurrentScene();
         if (!camera || !scene) {
           if (alerts) alert("set a camera!");
           return;
         }
         let object = getObject(args.NAME);
+        if (!object) return;
         const sun = object;
 
         const godRays = new GodRaysEffect(camera, sun, {
@@ -3828,6 +3934,7 @@
       }
 
       dots(args) {
+        const scene = getCurrentScene();
         if (!camera || !scene) {
           if (alerts) alert("set a camera!");
           return;
@@ -3843,6 +3950,7 @@
       }
 
       depth(args) {
+        const scene = getCurrentScene();
         if (!camera || !scene) {
           if (alerts) alert("set a camera!");
           return;
@@ -4584,6 +4692,7 @@
         };
       }
       joint(jointData, bodyA, bodyB) {
+        if (!physicsWorld || !bodyA || !bodyB) return;
         physicsWorld.createImpulseJoint(jointData, bodyA.rigidBody, bodyB.rigidBody, true);
       }
 
@@ -4702,6 +4811,7 @@
       }
 
       getWorld(args) {
+        if (!physicsWorld) return "null";
         if (args.PROPERTY === "log") {
           console.log(physicsWorld);
           return "logged";
@@ -4713,26 +4823,32 @@
         let value = args.VALUE;
         if (args.VALUE === "true" || args.VALUE === "false") value = !!args.VALUE;
         let object = getObject(args.OBJECT);
+        if (!object || !object.rigidBody) return;
         object.rigidBody[args.PROPERTY](value);
       }
       setC(args) {
         let value = args.VALUE;
         if (args.VALUE === "true" || args.VALUE === "false") value = !!args.VALUE;
         let object = getObject(args.OBJECT);
+        if (!object || !object.collider) return;
         object.collider[args.PROPERTY](value);
       }
 
       getRB(args) {
         let object = getObject(args.OBJECT);
+        if (!object || !object.rigidBody) return "null";
         return JSON.stringify(object.rigidBody[args.PROPERTY]());
       }
       getC(args) {
         let object = getObject(args.OBJECT);
+        if (!object || !object.collider) return "null";
         return JSON.stringify(object.collider[args.PROPERTY]());
       }
 
       lockObjectAxis(args) {
         let object = getObject(args.OBJECT);
+        if (!object || !object.rigidBody) return;
+        
         const x = !JSON.parse(args.X);
         const y = !JSON.parse(args.Y);
         const z = !JSON.parse(args.Z);
@@ -4741,15 +4857,25 @@
 
       objectPhysics(args) {
         let object = getObject(args.OBJECT);
+        if (!object) return;
+        
         object.physics = JSON.parse(args.state);
 
         if (JSON.parse(args.state)) {
           //if already exists delete:
           if (object.rigidBody) {
-            physicsWorld.removeRigidBody(object.rigidBody);
+            if (physicsWorld) {
+              physicsWorld.removeRigidBody(object.rigidBody);
+            }
             object.rigidBody = null;
             object.collider = null;
           }
+          
+          if (!physicsWorld) {
+            console.error("Physics world not created!");
+            return;
+          }
+          
           /*asing a rigidbody and collider to object and add them to physicsWorld*/
           let rigidBodyDesc = RAPIER.RigidBodyDesc[args.type]()
             .setTranslation(object.position.x, object.position.y, object.position.z)
@@ -4774,7 +4900,13 @@
             case "trimesh":
               colliderDesc = TriMesh(object);
               break;
+            default:
+              console.error("Unknown collider type:", args.collider);
+              return;
           }
+          
+          if (!colliderDesc) return;
+          
           colliderDesc
             .setSensor(JSON.parse(args.state2))
             .setMass(args.mass)
@@ -4788,7 +4920,9 @@
           object.collider = collider;
         } else {
           /*if disabling physics, delete rigidbody and collider from physicsWorld and object*/
-          physicsWorld.removeRigidBody(object.rigidBody);
+          if (physicsWorld && object.rigidBody) {
+            physicsWorld.removeRigidBody(object.rigidBody);
+          }
           object.rigidBody = null;
           object.collider = null;
         }
@@ -4796,7 +4930,7 @@
 
       enableCCD(args) {
         let object = getObject(args.OBJECT);
-        if (object.physics) {
+        if (object && object.physics && object.rigidBody) {
           let rigidBody = object.rigidBody;
           rigidBody.enableCcd(JSON.parse(args.state));
         }
@@ -4804,6 +4938,8 @@
 
       addForce(args) {
         let object = getObject(args.OBJECT);
+        if (!object || !object.rigidBody) return;
+        
         const vector = JSON.parse(args.VALUE).map(Number);
 
         let force = new THREE.Vector3(vector[0], vector[1], vector[2]);
@@ -4815,13 +4951,18 @@
       }
 
       resetForces(args) {
-        rigidBody[args.PROPERTY](true);
+        let object = getObject(args.OBJECT);
+        if (!object || !object.rigidBody) return;
+        
+        object.rigidBody[args.PROPERTY](true);
       }
 
       sensorSingle(args) {
         const sensor = getObject(args.SENSOR);
+        if (!sensor || !sensor.collider || !physicsWorld) return false;
 
         let object = getObject(args.OBJECT);
+        if (!object || !object.collider) return false;
 
         let touching = false;
         physicsWorld.intersectionPairsWith(sensor.collider, (otherCollider) => {
@@ -4833,14 +4974,17 @@
 
       sensorAll(args) {
         const sensor = getObject(args.SENSOR);
+        if (!sensor || !sensor.collider || !physicsWorld) return "[]";
 
         const touchedObjects = [];
 
-        // loop thruogh every collider touching sensor
+        // loop through every collider touching sensor
         physicsWorld.intersectionPairsWith(sensor.collider, (otherCollider) => {
           // find owner of collider
+          const scene = getCurrentScene();
+          if (!scene) return;
+          
           const otherObject = scene.children.find((o) => o.collider === otherCollider);
-          console.log(otherCollider);
           if (otherObject) touchedObjects.push(otherObject.name);
         });
 
