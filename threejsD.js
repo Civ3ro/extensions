@@ -838,10 +838,10 @@
 
       newScene(args) {
         const scene = new THREE.Scene();
-        scene.name = args.NAME;
+        scene.name = Scratch.Cast.toString(args.NAME);
         scene.background = new THREE.Color("#222");
       
-        this.scenes[scene.name] = scene; // this can overwrite an existing scene of that name, which is okay
+        this.scenes[Scratch.Cast.toString(args.NAME)] = scene; // this can overwrite an existing scene of that name, which is okay
       
         resetor(0);
       }
