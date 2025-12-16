@@ -69,7 +69,9 @@
   let renderTargets = {};
 
   let materials = {};
+  window.__THREE_MATERIALS__ = materials;
   let geometries = {};
+  window.__THREE_GEOMETRIES__ = geometries;
   let lights = {};
   let models = {};
 
