@@ -59,22 +59,23 @@
   let RAPIER;
   let physicsWorld;
 
-  let threeRenderer
-  let scene
-  let camera
-  let eulerOrder = "YXZ"
+  let threeRenderer;
+  let scene;
+  let camera;
+  let eulerOrder = "YXZ";
 
-  let composer
-  let passes = {}
-  let customEffects = []
-  let renderTargets = {}
+  let composer;
+  let passes = {};
+  let customEffects = [];
+  let renderTargets = {};
 
-  let materials = {}
-  let geometries = {}
-  let lights = {}
-  let models = {}
+  let materials = {};
+  let geometries = {};
+  let lights = {};
+  let models = {};
 
-  let assets = { //should i place materials, geometries; inside too?
+  let assets = {
+    //should i place materials, geometries; inside too?
     textures: {},
     colors: {},
     fogs: {},
@@ -85,17 +86,17 @@
   let raycastResult = [];
 
   function resetor(level) {
-    camera = undefined
-    composer.reset()
+    camera = undefined;
+    composer.reset();
 
-    passes = {}
-    customEffects = []
-    renderTargets = {}
+    passes = {};
+    customEffects = [];
+    renderTargets = {};
 
-    materials = {}
-    geometries = {}
-    lights = {}
-    models = {}
+    materials = {};
+    geometries = {};
+    lights = {};
+    models = {};
 
     if (level > 0) {
       assets = {
@@ -128,42 +129,62 @@
     return [x, y, z];
   }
 
-      object.add(content)
+  //objects
+  function createObject(name, content, parentName) {
+    let object = getObject(name, true);
+    if (object) {
+      removeObject(name);
+      alerts ? alert(name + " already exsisted, will replace!") : null;
     }
-    function removeObject(name) {
-      let object = getObject(name)
-      if (!object) return
+    content.name = name;
+    content.rotation._order = eulerOrder;
+    parentName === scene.name ? (object = scene) : (object = getObject(parentName));
+    content.physics = false;
 
-      scene.remove(object)
+    object.add(content);
+  }
 
-      if (object.rigidBody) {
-        physicsWorld.removeCollider(object.collider, true)
-        physicsWorld.removeRigidBody(object.rigidBody, true)
-        object.rigidBody = null
-        object.collider = null
-      }
-      if (object.isLight) {
-        delete(lights[name])
-      }
+  function removeObject(name) {
+    let object = getObject(name);
+    if (!object) return;
+
+    scene.remove(object);
+
+    if (object.rigidBody) {
+      physicsWorld.removeCollider(object.collider, true);
+      physicsWorld.removeRigidBody(object.rigidBody, true);
+      object.rigidBody = null;
+      object.collider = null;
     }
-    function getObject(name, isNew) {
-      let object = null
-      if (!scene) {
-        alerts ? alert("Can not get " + name + ". Create a scene first!") : null; return;}
-      object = scene.getObjectByName(name)
-      if (!object && !isNew) {alerts ? alert(name + " does not exist! Add it to scene"):null; return;}
-      return object
+    if (object.isLight) {
+      delete lights[name];
     }
+  }
 
-//materials
-    function encodeCostume (name) {
-      if (name.startsWith("data:image/")) return name
-      return Scratch.vm.editingTarget.sprite.costumes.find(c => c.name === name).asset.encodeDataURI()
+  function getObject(name, isNew) {
+    let object = null;
+    if (!scene) {
+      alerts ? alert("Can not get " + name + ". Create a scene first!") : null;
+      return;
     }
-    function setTexutre (texture, mode, style, x, y) {
-      texture.colorSpace = THREE.SRGBColorSpace
+    object = scene.getObjectByName(name);
+    if (!object && !isNew) {
+      alerts ? alert(name + " does not exist! Add it to scene") : null;
+      return;
+    }
+    return object;
+  }
 
-      if (mode === "Pixelate") {
+  //materials
+  function encodeCostume(name) {
+    if (name.startsWith("data:image/")) return name;
+    return Scratch.vm.editingTarget.sprite.costumes.find((c) => c.name === name).asset.encodeDataURI();
+  }
+
+  function setTexutre(texture, mode, style, x, y) {
+    texture.colorSpace = THREE.SRGBColorSpace;
+
+    if (mode === "Pixelate") {
       texture.minFilter = THREE.NearestFilter;
       texture.magFilter = THREE.NearestFilter;
     } else {
@@ -226,12 +247,12 @@
 
     // Ensure matrices are updated.
     light.target.updateMatrixWorld();
-    light.shadow.camera.updateProjectionMatrix()
-    light.shadow.needsUpdate = true; 
-}
-//composer
-function updateComposers() {
-  if (!camera || !scene) return;                     // nothing to do yet
+    light.shadow.camera.updateProjectionMatrix();
+    light.shadow.needsUpdate = true;
+  }
+  //composer
+  function updateComposers() {
+    if (!camera || !scene) return; // nothing to do yet
 
     // always recreate the RenderPass to point to the current scene/camera
     passes["Render"] = new RenderPass(scene, camera);
@@ -422,8 +443,11 @@ function updateComposers() {
     return JSON.parse(path); //boolean or number
   }
 
-  return JSON.parse(path) //boolean or number
-}
+  let mouseNDC = [0, 0];
+  //loops/init
+  function stopLoop() {
+    if (!running) return;
+    running = false;
 
     if (loopId) {
       cancelAnimationFrame(loopId);
@@ -476,11 +500,11 @@ function updateComposers() {
         powerPreference: "high-performance",
         antialias: false,
         stencil: false,
-        depth: true
-      })
-      threeRenderer.setPixelRatio(window.devicePixelRatio)
-      threeRenderer.outputColorSpace = THREE.SRGBColorSpace // correct colors
-      threeRenderer.toneMapping = THREE.ACESFilmicToneMapping // HDR look (test)
+        depth: true,
+      });
+      threeRenderer.setPixelRatio(window.devicePixelRatio);
+      threeRenderer.outputColorSpace = THREE.SRGBColorSpace; // correct colors
+      threeRenderer.toneMapping = THREE.ACESFilmicToneMapping; // HDR look (test)
       //threeRenderer.toneMappingExposure = 1.0 //(test)
 
       threeRenderer.shadowMap.enabled = true;
@@ -532,23 +556,26 @@ function updateComposers() {
     }
   }
 
-  const loop = () => {
-    if (!running) return
-    //RAPIER
-    if (physicsWorld && scene) {
-      physicsWorld.step()
+  function startRenderLoop() {
+    if (running) return;
+    running = true;
 
-      scene.children.forEach(obj => {
-        if (!(obj.isMesh) || !(obj.physics)) return
-        if (obj.rigidBody) {
-            obj.position.copy(obj.rigidBody.translation())
-            obj.quaternion.copy(obj.rigidBody.rotation())
-        }
-      })
+    const loop = () => {
+      if (!running) return;
+      //RAPIER
+      if (physicsWorld && scene) {
+        physicsWorld.step();
 
-    }
-    if (scene && camera) {
-        if (controls) controls.update()
+        scene.children.forEach((obj) => {
+          if (!obj.isMesh || !obj.physics) return;
+          if (obj.rigidBody) {
+            obj.position.copy(obj.rigidBody.translation());
+            obj.quaternion.copy(obj.rigidBody.rotation());
+          }
+        });
+      }
+      if (scene && camera) {
+        if (controls) controls.update();
 
         const delta = clock.getDelta();
         Object.values(models).forEach((model) => {
@@ -605,9 +632,13 @@ function updateComposers() {
     const w = canvas.width;
     const h = canvas.height;
 
-function resize() {
-  const w = canvas.width
-  const h = canvas.height
+    threeRenderer.setSize(w, h);
+    composer.setSize(w, h);
+    customEffects.forEach((e) => {
+      if (e.uniforms.get("resolution")) {
+        e.uniforms.get("resolution").value.set(w, h);
+      }
+    });
 
     if (camera) {
       camera.aspect = w / h;
@@ -697,8 +728,11 @@ function resize() {
     }
     Scratch.extensions.register(new ThreeRenderer());
 
-  }
-  Scratch.extensions.register(new ThreeRenderer())
+    class ThreeScene {
+      constructor() {
+        this.THREE = THREE;
+        this.scenes = {};
+      }
 
       getInfo() {
         return {
@@ -800,37 +834,41 @@ function resize() {
         };
       }
 
-    newScene(args) {
-      scene = new THREE.Scene();
-      scene.name = args.NAME 
-      scene.background = new THREE.Color("#222")
-      //scene.add(new THREE.GridHelper(16, 16)) //future helper section?
+      newScene(args) {
+        scene = new THREE.Scene();
+        scene.name = args.NAME;
+        scene.background = new THREE.Color("#222");
+        //scene.add(new THREE.GridHelper(16, 16)) //future helper section?
+        this.scenes = {
+          ...this.scenes,
+          ...scene,
+        };
+        resetor(0);
+      }
 
-      resetor(0)
-    }
+      reset() {
+        resetor(1);
+      }
 
-    reset() {
-      resetor(1)
-    }
-
-    async setSceneProperty(args) {
+      async setSceneProperty(args) {
         const property = args.PROPERTY;
         const value = getAsset(args.VALUE);
 
         scene[property] = value;
-    }
-    getSceneObjects(args){
-      const names = [];
-      if (args.THING === "Objects") {
-      scene.traverse(obj => {
-        if (obj.name) names.push(obj.name); //if it has a name, add to list!
-      }); 
-    } 
-    else if (args.THING === "Materials") return JSON.stringify(Object.keys(materials))
-    else if (args.THING === "Geometries") return JSON.stringify(Object.keys(geometries))
-    else if (args.THING === "Ligts") return JSON.stringify(Object.keys(lights)) 
-    else if (args.THING === "Scene Properties") {console.log(scene); return "check console"}
-    else if (args.THING === "Other assets")  return JSON.stringify(assets)
+      }
+      getSceneObjects(args) {
+        const names = [];
+        if (args.THING === "Objects") {
+          scene.traverse((obj) => {
+            if (obj.name) names.push(obj.name); //if it has a name, add to list!
+          });
+        } else if (args.THING === "Materials") return JSON.stringify(Object.keys(materials));
+        else if (args.THING === "Geometries") return JSON.stringify(Object.keys(geometries));
+        else if (args.THING === "Ligts") return JSON.stringify(Object.keys(lights));
+        else if (args.THING === "Scene Properties") {
+          console.log(scene);
+          return "check console";
+        } else if (args.THING === "Other assets") return JSON.stringify(assets);
 
         return JSON.stringify(names); // if objects
       }
@@ -1031,12 +1069,28 @@ function resize() {
         const object = new THREE.PerspectiveCamera(90, v2.x / v2.y);
         object.position.z = 3;
 
-    cubeCamera(args) {
-      // Create cube render target
-      const cubeRenderTarget = new THREE.WebGLCubeRenderTarget( 256, { generateMipmaps: true } ) 
-      // Create cube camera
-      const cubeCamera = new THREE.CubeCamera( 0.1, 500, cubeRenderTarget )
-      createObject(args.CAMERA, cubeCamera, args.GROUP)
+        createObject(args.CAMERA, object, args.GROUP);
+      }
+      setCamera(args) {
+        let object = getObject(args.CAMERA);
+        object[args.PROPERTY] = args.VALUE;
+        object.updateProjectionMatrix();
+      }
+      getCamera(args) {
+        let object = getObject(args.CAMERA);
+        const value = JSON.stringify(object[args.PROPERTY]);
+        return value;
+      }
+      renderSceneCamera(args) {
+        let object = getObject(args.CAMERA);
+        if (!object) return;
+        camera = object;
+        //reset composer, else it does not update.
+        composer.passes = [];
+        passes = {};
+        customEffects = [];
+        updateComposers();
+      }
 
       cubeCamera(args) {
         // Create cube render target
@@ -1054,8 +1108,31 @@ function resize() {
         assets.renderTargets[cubeRenderTarget.texture.uuid] = cubeRenderTarget.texture;
       }
 
-      renderTargets[args.RT] = {target: renderTarget, camera: object}
-      assets.renderTargets[renderTarget.texture.uuid] == renderTarget.texture
+      renderTarget(args) {
+        let object = getObject(args.CAMERA);
+        const renderTarget = new THREE.WebGLRenderTarget(360, 360, {
+          generateMipmaps: false,
+        });
+
+        renderTargets[args.RT] = {
+          target: renderTarget,
+          camera: object,
+        };
+        assets.renderTargets[renderTarget.texture.uuid] == renderTarget.texture;
+      }
+      sizeTarget(args) {
+        renderTargets[args.RT].target.setSize(args.W, args.H);
+      }
+      getTarget(args) {
+        const t = renderTargets[args.RT].target.texture;
+        console.log(t, renderTargets[args.RT]);
+        return `renderTargets/${t.uuid}`;
+      }
+      removeTarget(args) {
+        delete assets.renderTargets[renderTargets[args.RT].target.texture.uuid];
+        renderTargets[args.RT].target.dispose();
+        delete renderTargets[args.RT];
+      }
     }
     Scratch.extensions.register(new ThreeCameras());
 
@@ -2112,17 +2189,17 @@ function resize() {
         object.castShadow = true;
         object.receiveShadow = true;
 
-        createObject(args.OBJECT3D, object, args.GROUP)
-    }
-    cloneObject(args) {
-      let object = getObject(args.OBJECT3D)
-      const clone = object.clone(true)
-      clone.name
-      createObject(args.NAME, clone, args.GROUP)
-    }
-    setObjectV3(args) {
-        let object = getObject(args.OBJECT3D)
-        let values = JSON.parse(args.VALUE)
+        createObject(args.OBJECT3D, object, args.GROUP);
+      }
+      cloneObject(args) {
+        let object = getObject(args.OBJECT3D);
+        const clone = object.clone(true);
+        clone.name;
+        createObject(args.NAME, clone, args.GROUP);
+      }
+      setObjectV3(args) {
+        let object = getObject(args.OBJECT3D);
+        let values = JSON.parse(args.VALUE);
 
         function degToRad(deg) {
           return (deg * Math.PI) / 180;
@@ -2190,57 +2267,63 @@ function resize() {
           let value = args.VALUE
           if (args.PROPERTY === "rotation") value = value * Math.PI / 180
 
-          object[args.PROPERTY][args.X] += value
-    }
-    */
-    getObjectV3(args) {
-        let object = getObject(args.OBJECT3D)
-        if (!object) return
-        let values = vector3ToString(object[args.PROPERTY])
+            object[args.PROPERTY][args.X] += value
+      }
+      */
+      getObjectV3(args) {
+        let object = getObject(args.OBJECT3D);
+        if (!object) return;
+        let values = vector3ToString(object[args.PROPERTY]);
         if (args.PROPERTY === "rotation") {
           const toDeg = Math.PI / 180;
           values = [values[0] / toDeg, values[1] / toDeg, values[2] / toDeg];
         }
 
-        return JSON.stringify(values)
-    }
-    setObject(args){
-      let object = getObject(args.OBJECT3D)
-      let value = args.VALUE
-      if (args.PROPERTY === "material") {const mat = materials[args.NAME]; if (mat) value = mat; else value = undefined}
-      else if (args.PROPERTY === "geometry") {const geo = geometries[args.NAME]; if (geo) value = geo; else value = undefined}
-      else value = !!value
+        return JSON.stringify(values);
+      }
+      setObject(args) {
+        let object = getObject(args.OBJECT3D);
+        let value = args.VALUE;
+        if (args.PROPERTY === "material") {
+          const mat = materials[args.NAME];
+          if (mat) value = mat;
+          else value = undefined;
+        } else if (args.PROPERTY === "geometry") {
+          const geo = geometries[args.NAME];
+          if (geo) value = geo;
+          else value = undefined;
+        } else value = !!value;
 
-      if (value == undefined) return //invalid geo/mat
-      object[args.PROPERTY] = value
-    }
-    getObject(args){
-      let object = getObject(args.OBJECT3D)
-      if (!object) return
-      let value
-      if (args.PROPERTY != "visible") value = object[args.PROPERTY].name; 
-      else value = object.visible;
+        if (value == undefined) return; //invalid geo/mat
+        object[args.PROPERTY] = value;
+      }
+      getObject(args) {
+        let object = getObject(args.OBJECT3D);
+        if (!object) return;
+        let value;
+        if (args.PROPERTY != "visible") value = object[args.PROPERTY].name;
+        else value = object.visible;
 
-      return value
-    }
-    removeObject(args) {
-      removeObject(args.OBJECT3D)
-    }
-    objectE(args) {
-      return scene.children.map(o => o.name).includes(args.NAME)
-    }
+        return value;
+      }
+      removeObject(args) {
+        removeObject(args.OBJECT3D);
+      }
+      objectE(args) {
+        return scene.children.map((o) => o.name).includes(args.NAME);
+      }
 
-//defines
-    newMaterial(args) {
-      if (materials[args.NAME] && alerts) alert ("material already exists! will replace...")
-      const mat = new THREE[args.TYPE]();
-      mat.name = args.NAME;
+      //defines
+      newMaterial(args) {
+        if (materials[args.NAME] && alerts) alert("material already exists! will replace...");
+        const mat = new THREE[args.TYPE]();
+        mat.name = args.NAME;
 
-      materials[args.NAME] = mat;
-    }
-    async setMaterial(args) {
-      if (typeof(args.VALUE) == "string" && args.VALUE.at(0) == "|") return
-      const mat = materials[args.NAME]
+        materials[args.NAME] = mat;
+      }
+      async setMaterial(args) {
+        if (typeof args.VALUE == "string" && args.VALUE.at(0) == "|") return;
+        const mat = materials[args.NAME];
 
         let value = args.VALUE;
 
@@ -2254,47 +2337,72 @@ function resize() {
         console.log("o:", args.VALUE, typeof args.VALUE);
         console.log("r:", value, typeof value);
 
-      geometries[args.NAME] = geo
-    }
-    setGeometry(args) {
-      const geo = geometries[args.NAME]
-      geo[args.PROPERTY] = (args.VALUE)
+        mat[args.PROPERTY] = await value; //await incase its a texture
+        mat.needsUpdate = true;
+      }
+      setBlending(args) {
+        const mat = materials[args.NAME];
+        mat.blending = THREE[args.VALUE];
+        mat.premultipliedAlpha = true;
+        mat.needsUpdate = true;
+      }
+      setDepth(args) {
+        const mat = materials[args.NAME];
+        mat.depthFunc = THREE[args.VALUE];
+        mat.needsUpdate = true;
+      }
+      removeMaterial(args) {
+        const mat = materials[args.NAME];
+        mat.dispose();
+        delete materials[args.NAME];
+      }
+      materialE(args) {
+        return materials[args.NAME] ? true : false;
+      }
 
-      geo.needsUpdate = true;
-    }
-    removeGeometry(args){
-      const geo = geometries[args.NAME]
-      geo.dispose()
-      delete(geometries[args.NAME])
-    }
-    geometryE(args) {
-      return geometries[args.NAME] ? true : false
-    }
+      newGeometry(args) {
+        if (geometries[args.NAME] && alerts) alert("geometry already exists! will replace...");
+        const geo = new THREE[args.TYPE]();
+        geo.name = args.NAME;
 
-    newGeo(args) {
-      const geometry = new THREE.BufferGeometry()
-      geometry.name = args.NAME
-      geometries[args.NAME] = geometry
-    }
-    async geoPoints(args) {
-      const geometry = geometries[args.NAME]
-      const positions = args.POINTS.split(" ").map(v=>JSON.parse(v)).flat() //array of v3 of each vertex of each triangle
+        geometries[args.NAME] = geo;
+      }
+      setGeometry(args) {
+        const geo = geometries[args.NAME];
+        geo[args.PROPERTY] = args.VALUE;
 
-      geometry.setAttribute('position', new THREE.BufferAttribute(new Float32Array(positions), 3))
-      geometry.computeVertexNormals()
+        geo.needsUpdate = true;
+      }
+      removeGeometry(args) {
+        const geo = geometries[args.NAME];
+        geo.dispose();
+        delete geometries[args.NAME];
+      }
+      geometryE(args) {
+        return geometries[args.NAME] ? true : false;
+      }
 
-      geometry.needsUpdate = true
-    }
-    geoUVs(args) {
-      const geometry = geometries[args.NAME]
-      const UVs = args.POINTS.split(" ").map(v=>JSON.parse(v)).flat() //array of v2 of each UV of each triangle
+      newGeo(args) {
+        const geometry = new THREE.BufferGeometry();
+        geometry.name = args.NAME;
+        geometries[args.NAME] = geometry;
+      }
+      async geoPoints(args) {
+        const geometry = geometries[args.NAME];
+        const positions = args.POINTS.split(" ")
+          .map((v) => JSON.parse(v))
+          .flat(); //array of v3 of each vertex of each triangle
 
         geometry.setAttribute("position", new THREE.BufferAttribute(new Float32Array(positions), 3));
         geometry.computeVertexNormals();
 
-    splines(args) {
-      const geometry = new THREE.TubeGeometry(getAsset(args.CURVE))
-      geometry.name = args.NAME
+        geometry.needsUpdate = true;
+      }
+      geoUVs(args) {
+        const geometry = geometries[args.NAME];
+        const UVs = args.POINTS.split(" ")
+          .map((v) => JSON.parse(v))
+          .flat(); //array of v2 of each UV of each triangle
 
         geometry.setAttribute("uv", new THREE.BufferAttribute(new Float32Array(UVs), 2));
         geometry.needsUpdate = true;
@@ -2304,10 +2412,8 @@ function resize() {
         const geometry = new THREE.TubeGeometry(getAsset(args.CURVE));
         geometry.name = args.NAME;
 
-  const curve = getAsset(args.CURVE)
-  const spacing = parseFloat(args.SPACING) || 1
-  const curveLength = curve.getLength()
-  const divisions = Math.floor(curveLength / spacing)
+        geometries[args.NAME] = geometry;
+      }
 
       async splineModel(args) {
         const model = await getModel(args.MODEL, args.NAME);
@@ -2329,12 +2435,36 @@ function resize() {
           const temp = model.clone(true);
           temp.position.copy(pos);
 
-    temp.traverse(child => {
-      if (child.isMesh && child.geometry) {
-        const geom = child.geometry.clone()
-        geom.applyMatrix4(child.matrixWorld)
-        geomList.push(geom)
-        matList.push(child.material) //.clone() ?
+          const up = new THREE.Vector3(0, 0, 1);
+          const quat = new THREE.Quaternion().setFromUnitVectors(up, tangent.clone().normalize());
+          temp.quaternion.copy(quat);
+
+          temp.updateMatrixWorld(true);
+
+          temp.traverse((child) => {
+            if (child.isMesh && child.geometry) {
+              const geom = child.geometry.clone();
+              geom.applyMatrix4(child.matrixWorld);
+              geomList.push(geom);
+              matList.push(child.material); //.clone() ?
+            }
+          });
+        }
+
+        const validGeoms = geomList.filter((g) => {
+          const ok = g && g.isBufferGeometry && g.attributes && g.attributes.position;
+          if (!ok) console.warn("geometry skipped:", g);
+          return ok;
+        });
+
+        const merged = BufferGeometryUtils.mergeGeometries(validGeoms, true);
+        merged.computeBoundingBox();
+        merged.computeBoundingSphere();
+
+        merged.name = args.NAME;
+        geometries[args.NAME] = merged;
+        matList.name = args.NAME;
+        materials[args.NAME] = matList;
       }
 
       async text(args) {
@@ -2362,11 +2492,8 @@ function resize() {
 
         geometry.name = args.NAME;
 
-      const params = {font: font, size: JSON.parse(args.S), height: JSON.parse(args.D), curveSegments: JSON.parse(args.CS), bevelEnabled: false}
-      const geometry = new TextGeometry.TextGeometry(args.TEXT, params)
-      geometry.computeVertexNormals()
-      geometry.center() // optional, recenters the text
-      
+        geometries[args.NAME] = geometry;
+      }
 
       async loadFont() {
         openFileExplorer(".json").then((files) => {
@@ -2558,18 +2685,11 @@ function resize() {
         lights[args.NAME] = light;
         if (light.type === "AmbientLight" || "HemisphereLight") return;
 
-      light.shadow.mapSize.width = 4096
-      light.shadow.mapSize.height = 2048
-      
-      if (light.type === "SpotLight") {
-      light.decay = 0
-      light.shadow.camera.near = 500;
-      light.shadow.camera.far = 4000;
-      light.shadow.camera.fov = 30;
-      }
-      light.shadow.needsUpdate = true
-      light.needsUpdate = true
-    }
+        light.castShadow = true;
+        if (light.type === "PointLight") return;
+        //Directional & Spot Light
+        light.target.position.set(0, 0, 0);
+        scene.add(light.target);
 
         light.pos = new THREE.Vector3(0, 0, 0);
 
@@ -2586,7 +2706,16 @@ function resize() {
         light.needsUpdate = true;
       }
 
-      if (light.type === "AmbientLight" || "HemisphereLight") return
+      setLight(args) {
+        const light = lights[args.NAME];
+        if (!args.PROPERTY) return;
+        if (args.PROPERTY === "target") {
+          light.target.position.set(...JSON.parse(args.VALUE)); //vector3
+          light.target.updateMatrixWorld();
+        } else {
+          light[args.PROPERTY] = getAsset(args.VALUE);
+        }
+        light.needsUpdate = true;
 
         if (light.type === "AmbientLight" || "HemisphereLight") return;
 
@@ -3042,34 +3171,50 @@ function resize() {
         return JSON.stringify([180 + THREE.MathUtils.radToDeg(pitch), THREE.MathUtils.radToDeg(yaw), 0]);
       }
 
-      setTexutre(texture, args.MODE, args.STYLE, args.X, args.Y)
-      assets.textures[texture.uuid] = texture
-      return `textures/${texture.uuid}`
-    }
-    async newCubeTexture(args) {
-      const uris = [encodeCostume(args.COSTUMEX0),encodeCostume(args.COSTUMEX1), encodeCostume(args.COSTUMEY0),encodeCostume(args.COSTUMEY1), encodeCostume(args.COSTUMEZ0),encodeCostume(args.COSTUMEZ1)]
-      const normalized = await Promise.all(uris.map(uri => resizeImageToSquare(uri, 256)));
-      const texture = await new THREE.CubeTextureLoader().loadAsync(normalized);
-      
-      texture.name = "CubeTexture" + args.COSTUMEX0;
+      newColor(args) {
+        const color = new THREE.Color(args.HEX);
+        const uuid = crypto.randomUUID();
+        assets.colors[uuid] = color;
+        return `colors/${uuid}`;
+      }
+      newFog(args) {
+        const fog = new THREE.Fog(args.COLOR, args.NEAR, args.FAR);
+        const uuid = crypto.randomUUID();
+        assets.fogs[uuid] = fog;
+        return `fogs/${uuid}`;
+      }
+      async newTexture(args) {
+        const textureURI = encodeCostume(args.COSTUME);
+        const texture = await new THREE.TextureLoader().loadAsync(textureURI);
+        texture.name = args.COSTUME;
 
-      setTexutre(texture, args.MODE, args.STYLE, args.X, args.Y)
-      assets.textures[texture.uuid] = texture
-      return `textures/${texture.uuid}`
-    }
-    async newEquirectangularTexture(args) {
-      const textureURI = encodeCostume(args.COSTUME)
-      const texture = await new THREE.TextureLoader().loadAsync(textureURI);
-      texture.name = args.COSTUME
-      texture.mapping = THREE.EquirectangularReflectionMapping
+        setTexutre(texture, args.MODE, args.STYLE, args.X, args.Y);
+        assets.textures[texture.uuid] = texture;
+        return `textures/${texture.uuid}`;
+      }
+      async newCubeTexture(args) {
+        const uris = [
+          encodeCostume(args.COSTUMEX0),
+          encodeCostume(args.COSTUMEX1),
+          encodeCostume(args.COSTUMEY0),
+          encodeCostume(args.COSTUMEY1),
+          encodeCostume(args.COSTUMEZ0),
+          encodeCostume(args.COSTUMEZ1),
+        ];
+        const normalized = await Promise.all(uris.map((uri) => resizeImageToSquare(uri, 256)));
+        const texture = await new THREE.CubeTextureLoader().loadAsync(normalized);
 
         texture.name = "CubeTexture" + args.COSTUMEX0;
 
-    curve(args) {
-      function parsePoints(input) {
-        // Match all [x,y,z] groups
-        const matches = input.match(/\[([^\]]+)\]/g)
-        if (!matches) return []
+        setTexutre(texture, args.MODE, args.STYLE, args.X, args.Y);
+        assets.textures[texture.uuid] = texture;
+        return `textures/${texture.uuid}`;
+      }
+      async newEquirectangularTexture(args) {
+        const textureURI = encodeCostume(args.COSTUME);
+        const texture = await new THREE.TextureLoader().loadAsync(textureURI);
+        texture.name = args.COSTUME;
+        texture.mapping = THREE.EquirectangularReflectionMapping;
 
         setTexutre(texture, args.MODE);
         assets.textures[texture.uuid] = texture;
@@ -3094,8 +3239,20 @@ function resize() {
         const curve = new THREE[args.TYPE](points);
         curve.closed = JSON.parse(args.CLOSED);
 
-    raycast(args) {
-      const origin = new THREE.Vector3(...JSON.parse(args.V3))
+        const uuid = crypto.randomUUID();
+        assets.curves[uuid] = curve;
+        return `curves/${uuid}`;
+      }
+
+      getItem(args) {
+        const items = JSON.parse(args.ARRAY);
+        const item = items[args.ITEM - 1];
+        if (!item) return "0";
+        return item;
+      }
+
+      raycast(args) {
+        const origin = new THREE.Vector3(...JSON.parse(args.V3));
         // rotation is in degrees => convert to radians first
         const rot = JSON.parse(args.D3).map((v) => (v * Math.PI) / 180);
 
@@ -3322,9 +3479,12 @@ function resize() {
       async addModel(args) {
         const group = await getModel(args.ITEM, args.NAME);
 
-    }
-    async addModel(args) {
-      const group = await getModel(args.ITEM, args.NAME)
+        createObject(args.NAME, group, args.GROUP);
+      }
+      getModel(args) {
+        if (!models[args.NAME]) return;
+        return Object.keys(models[args.NAME].actions).toString();
+      }
 
       playAnimation(args) {
         const model = models[args.NAME];
@@ -3625,26 +3785,31 @@ function resize() {
         updateComposers();
       }
 
-    const pass = new EffectPass(camera, bloomEffect)
+      bloom(args) {
+        if (!camera || !scene) {
+          if (alerts) alert("set a camera!");
+          return;
+        }
+        const bloomEffect = new BloomEffect({
+          intensity: args.I,
+          luminanceThreshold: args.T, // ← correct key
+          luminanceSmoothing: args.S,
+          blendFunction: BlendFunction[args.BLEND],
+        });
+        bloomEffect.blendMode.opacity.value = args.OP;
 
         const pass = new EffectPass(camera, bloomEffect);
 
         composer.addPass(pass);
       }
 
-      const godRays = new GodRaysEffect(camera, sun, {
-        resolutionScale: args.RES,
-        density: args.DENS,           // ray density
-        decay: args.DEC,             // fade out
-        weight: args.WEI,             // brightness of rays
-        exposure: args.EXP,
-        samples: args.SAMP,
-        blendFunction: BlendFunction[args.BLEND],
-      })
-      godRays.blendMode.opacity.value = args.OP
-      const pass = new EffectPass(camera, godRays)
-      composer.addPass(pass)
-    }
+      godRays(args) {
+        if (!camera || !scene) {
+          if (alerts) alert("set a camera!");
+          return;
+        }
+        let object = getObject(args.NAME);
+        const sun = object;
 
         const godRays = new GodRaysEffect(camera, sun, {
           resolutionScale: args.RES,
@@ -3660,20 +3825,34 @@ function resize() {
         composer.addPass(pass);
       }
 
-    depth(args) {
-      if (!camera || !scene) {if (alerts) alert("set a camera!"); return}
-      const dofEffect = new DepthOfFieldEffect(camera, {
-        focusDistance: (args.FD - camera.near) / (camera.far - camera.near),     // how far from camera things are sharp (0 = near, 1 = far)
-        focalLength: args.FL,      // lens focal length in meters
-        bokehScale: args.BS,      // strength/size of the blur circles
-        height: args.H,          // resolution hint (affects quality/perf)
-        blendFunction: BlendFunction[args.BLEND],
-      })
-      dofEffect.blendMode.opacity.value = args.OP
+      dots(args) {
+        if (!camera || !scene) {
+          if (alerts) alert("set a camera!");
+          return;
+        }
+        const dot = new DotScreenEffect({
+          angle: args.A,
+          scale: args.S,
+          blendFunction: BlendFunction[args.BLEND],
+        });
+        dot.blendMode.opacity.value = args.OP;
+        const pass = new EffectPass(camera, dot);
+        composer.addPass(pass);
+      }
 
-      const dofPass = new EffectPass(camera, dofEffect)
-      composer.addPass(dofPass)
-    }
+      depth(args) {
+        if (!camera || !scene) {
+          if (alerts) alert("set a camera!");
+          return;
+        }
+        const dofEffect = new DepthOfFieldEffect(camera, {
+          focusDistance: (args.FD - camera.near) / (camera.far - camera.near), // how far from camera things are sharp (0 = near, 1 = far)
+          focalLength: args.FL, // lens focal length in meters
+          bokehScale: args.BS, // strength/size of the blur circles
+          height: args.H, // resolution hint (affects quality/perf)
+          blendFunction: BlendFunction[args.BLEND],
+        });
+        dofEffect.blendMode.opacity.value = args.OP;
 
         const dofPass = new EffectPass(camera, dofEffect);
         composer.addPass(dofPass);
@@ -4403,7 +4582,7 @@ function resize() {
         };
       }
       joint(jointData, bodyA, bodyB) {
-        physicsWorld.createImpulseJoint(jointData, bodyA.rigidBody, bodyB.rigidBody, true)
+        physicsWorld.createImpulseJoint(jointData, bodyA.rigidBody, bodyB.rigidBody, true);
       }
 
       fixedJoint(args) {
@@ -4521,57 +4700,54 @@ function resize() {
       }
 
       getWorld(args) {
-        if (args.PROPERTY === "log") {console.log(physicsWorld); return "logged"}
-        return JSON.stringify(physicsWorld[args.PROPERTY])
+        if (args.PROPERTY === "log") {
+          console.log(physicsWorld);
+          return "logged";
+        }
+        return JSON.stringify(physicsWorld[args.PROPERTY]);
       }
 
       setRB(args) {
-        let value = args.VALUE
-        if (args.VALUE === "true" || args.VALUE === "false") value = !!args.VALUE
-        let object = getObject(args.OBJECT)
-        object.rigidBody[args.PROPERTY](value)
+        let value = args.VALUE;
+        if (args.VALUE === "true" || args.VALUE === "false") value = !!args.VALUE;
+        let object = getObject(args.OBJECT);
+        object.rigidBody[args.PROPERTY](value);
       }
       setC(args) {
-        let value = args.VALUE
-        if (args.VALUE === "true" || args.VALUE === "false") value = !!args.VALUE
-        let object = getObject(args.OBJECT)
-        object.collider[args.PROPERTY](value)
+        let value = args.VALUE;
+        if (args.VALUE === "true" || args.VALUE === "false") value = !!args.VALUE;
+        let object = getObject(args.OBJECT);
+        object.collider[args.PROPERTY](value);
       }
 
       getRB(args) {
-        let object = getObject(args.OBJECT)
-        return JSON.stringify(object.rigidBody[args.PROPERTY]())
+        let object = getObject(args.OBJECT);
+        return JSON.stringify(object.rigidBody[args.PROPERTY]());
       }
       getC(args) {
-        let object = getObject(args.OBJECT)
-        return JSON.stringify(object.collider[args.PROPERTY]())
+        let object = getObject(args.OBJECT);
+        return JSON.stringify(object.collider[args.PROPERTY]());
       }
 
       lockObjectAxis(args) {
-        let object = getObject(args.OBJECT)
-        const x =  !JSON.parse(args.X)
-        const y = !JSON.parse(args.Y)
-        const z = !JSON.parse(args.Z)
-        object.rigidBody[args.PROPERTY](x,y,z,true) //changes is xyz, wake up
+        let object = getObject(args.OBJECT);
+        const x = !JSON.parse(args.X);
+        const y = !JSON.parse(args.Y);
+        const z = !JSON.parse(args.Z);
+        object.rigidBody[args.PROPERTY](x, y, z, true); //changes is xyz, wake up
       }
 
       objectPhysics(args) {
-        let object = getObject(args.OBJECT)
-        object.physics = JSON.parse(args.state)
+        let object = getObject(args.OBJECT);
+        object.physics = JSON.parse(args.state);
 
         if (JSON.parse(args.state)) {
           //if already exists delete:
           if (object.rigidBody) {
-            physicsWorld.removeRigidBody(object.rigidBody)
-            object.rigidBody = null
-            object.collider = null
+            physicsWorld.removeRigidBody(object.rigidBody);
+            object.rigidBody = null;
+            object.collider = null;
           }
-          
-          if (!physicsWorld) {
-            console.error("Physics world not created!");
-            return;
-          }
-          
           /*asing a rigidbody and collider to object and add them to physicsWorld*/
           let rigidBodyDesc = RAPIER.RigidBodyDesc[args.type]()
             .setTranslation(object.position.x, object.position.y, object.position.z)
@@ -4582,14 +4758,26 @@ function resize() {
               z: object.quaternion._z,
             });
 
-        let colliderDesc
-        switch(args.collider) {
-            case "cuboid": colliderDesc = createCuboidCollider(object,); break
-            case "ball": colliderDesc = createBallCollider(object); break
-            case "convexHull": colliderDesc = createConvexHullCollider(object); break
-            case "trimesh": colliderDesc = TriMesh(object); break
-        }
-        colliderDesc.setSensor(JSON.parse(args.state2)).setMass(args.mass).setDensity(args.density).setFriction(args.friction)
+          let colliderDesc;
+          switch (args.collider) {
+            case "cuboid":
+              colliderDesc = createCuboidCollider(object);
+              break;
+            case "ball":
+              colliderDesc = createBallCollider(object);
+              break;
+            case "convexHull":
+              colliderDesc = createConvexHullCollider(object);
+              break;
+            case "trimesh":
+              colliderDesc = TriMesh(object);
+              break;
+          }
+          colliderDesc
+            .setSensor(JSON.parse(args.state2))
+            .setMass(args.mass)
+            .setDensity(args.density)
+            .setFriction(args.friction);
 
           let rigidBody = physicsWorld.createRigidBody(rigidBodyDesc);
           let collider = physicsWorld.createCollider(colliderDesc, rigidBody);
@@ -4598,25 +4786,25 @@ function resize() {
           object.collider = collider;
         } else {
           /*if disabling physics, delete rigidbody and collider from physicsWorld and object*/
-          physicsWorld.removeRigidBody(object.rigidBody)
-          object.rigidBody = null
-          object.collider = null
+          physicsWorld.removeRigidBody(object.rigidBody);
+          object.rigidBody = null;
+          object.collider = null;
         }
       }
 
       enableCCD(args) {
-        let object = getObject(args.OBJECT)
+        let object = getObject(args.OBJECT);
         if (object.physics) {
-          let rigidBody = object.rigidBody
-          rigidBody.enableCcd(JSON.parse(args.state))
+          let rigidBody = object.rigidBody;
+          rigidBody.enableCcd(JSON.parse(args.state));
         }
       }
 
-     addForce(args) {
-      let object = getObject(args.OBJECT)
-      const vector = JSON.parse(args.VALUE).map(Number)
-      
-      let force = new THREE.Vector3(vector[0],vector[1],vector[2])
+      addForce(args) {
+        let object = getObject(args.OBJECT);
+        const vector = JSON.parse(args.VALUE).map(Number);
+
+        let force = new THREE.Vector3(vector[0], vector[1], vector[2]);
         if (args.SPACE === "local") {
           force.applyQuaternion(object.quaternion);
         }
@@ -4624,14 +4812,14 @@ function resize() {
         object.rigidBody[args.PROPERTY](force, true);
       }
 
-     resetForces(args) {
-      rigidBody[args.PROPERTY](true)
-     }
+      resetForces(args) {
+        rigidBody[args.PROPERTY](true);
+      }
 
-     sensorSingle(args) {
-      const sensor = getObject(args.SENSOR)
+      sensorSingle(args) {
+        const sensor = getObject(args.SENSOR);
 
-      let object = getObject(args.OBJECT)
+        let object = getObject(args.OBJECT);
 
         let touching = false;
         physicsWorld.intersectionPairsWith(sensor.collider, (otherCollider) => {
@@ -4641,18 +4829,18 @@ function resize() {
         return touching;
       }
 
-     sensorAll(args) {
-      const sensor = getObject(args.SENSOR)
+      sensorAll(args) {
+        const sensor = getObject(args.SENSOR);
 
         const touchedObjects = [];
 
-      // loop thruogh every collider touching sensor
-      physicsWorld.intersectionPairsWith(sensor.collider, otherCollider => {
-        // find owner of collider
-        const otherObject = scene.children.find(o => o.collider === otherCollider)
-        console.log(otherCollider)
-        if (otherObject) touchedObjects.push(otherObject.name)
-      })
+        // loop thruogh every collider touching sensor
+        physicsWorld.intersectionPairsWith(sensor.collider, (otherCollider) => {
+          // find owner of collider
+          const otherObject = scene.children.find((o) => o.collider === otherCollider);
+          console.log(otherCollider);
+          if (otherObject) touchedObjects.push(otherObject.name);
+        });
 
         return JSON.stringify(touchedObjects);
       }
