@@ -489,6 +489,7 @@
   //loops/init
   function stopLoop() {
     if (!running) return;
+    checkCanvasSize();
     vm.renderer.canvas.style.visibility="visible";
     running = false;
 
@@ -611,9 +612,7 @@
     let accumulator = 0
     let lastTime = performance.now()
   
-    const yieldToBrowser = () => new Promise(r => setTimeout(r, 0))
-  
-    const loop = async (now) => {
+    const loop = (now) => {
       if (!running) return
   
       const scene = getCurrentScene()
@@ -622,11 +621,11 @@
         return
       }
   
-      /* ---------- FIXED PHYSICS ---------- */
-      const deltaTime = Math.min(0.1, (now - lastTime) / 1000)
+      const deltaTime = Math.min(0.25, (now - lastTime) / 1000)
       lastTime = now
       accumulator += deltaTime
   
+      /* ---------- FIXED PHYSICS ---------- */
       if (physicsWorld) {
         while (accumulator >= fixedDt) {
           physicsWorld.step()
@@ -635,13 +634,15 @@
   
         scene.children.forEach((obj) => {
           if (!obj.isMesh || !obj.physics || !obj.rigidBody) return
+  
+          // sync transform
           obj.position.copy(obj.rigidBody.translation())
           obj.quaternion.copy(obj.rigidBody.rotation())
+  
+          // allow this body to sleep
+          obj.rigidBody.setCanSleep(true)
         })
       }
-  
-      /* ---------- ASYNC YIELD ---------- */
-      await yieldToBrowser()
   
       /* ---------- NORMAL UPDATE ---------- */
       if (camera) {
@@ -650,7 +651,7 @@
         const delta = clock.getDelta()
   
         Object.values(models).forEach((model) => {
-          if (model) model.mixer.update(delta)
+          model?.mixer?.update(delta)
         })
   
         Object.values(lights).forEach((light) =>
@@ -669,7 +670,6 @@
             t.camera.updateProjectionMatrix()
           }
   
-          // ✅ CACHE mesh lookup
           if (!t._displayMeshes) {
             t._displayMeshes = getMeshesUsingTexture(scene, t.target.texture)
           }
@@ -701,7 +701,6 @@
   
     loopId = requestAnimationFrame(loop)
   }
-
 
   function resize() {
     const w = canvas.width;
