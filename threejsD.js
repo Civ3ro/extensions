@@ -95,7 +95,9 @@
     renderTargets = {};
 
     materials = {};
+    window.__THREE_MATERIALS__ = materials;
     geometries = {};
+    window.__THREE_GEOMETRIES__ = geometries;
     lights = {};
     models = {};
 
