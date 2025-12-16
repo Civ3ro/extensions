@@ -545,6 +545,7 @@
         stencil: false,
         depth: true,
       });
+      window.__THREE_RENDERER__ = threeRenderer;
       threeRenderer.setPixelRatio(window.devicePixelRatio);
       threeRenderer.outputColorSpace = THREE.SRGBColorSpace; // correct colors
       threeRenderer.toneMapping = THREE.ACESFilmicToneMapping; // HDR look (test)
