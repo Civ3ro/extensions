@@ -458,8 +458,7 @@
   async function load() {
     if (!THREE) {
       // @ts-ignore
-      THREE = await import("https://esm.sh/three@0.180.0")
-      window._THREE_ = THREE
+      THREE = await import("https://esm.sh/three@0.180.0");
       //Addons
       GLTFLoader = await import("https://esm.sh/three@0.180.0/examples/jsm/loaders/GLTFLoader.js");
       OrbitControls = await import("https://esm.sh/three@0.180.0/examples/jsm/controls/OrbitControls.js");
@@ -548,11 +547,13 @@
       running = false;
       load();
 
-        startRenderLoop()
-        runtime.on('PROJECT_START', () => startRenderLoop())
-        runtime.on('PROJECT_STOP_ALL', () => stopLoop())
-        runtime.on('STAGE_SIZE_CHANGED', () => {requestAnimationFrame(() => resize())})
-        checkCanvasSize()
+      startRenderLoop();
+      runtime.on("PROJECT_START", () => startRenderLoop());
+      runtime.on("PROJECT_STOP_ALL", () => stopLoop());
+      runtime.on("STAGE_SIZE_CHANGED", () => {
+        requestAnimationFrame(() => resize());
+      });
+      //if (!runtime.isPackaged) checkCanvasSize() //only in editor
     }
   }
 
