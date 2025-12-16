@@ -2370,7 +2370,7 @@
         
         let value = args.VALUE;
         if (args.PROPERTY === "material") {
-          const mat = materials[args.NAME];
+          const mat = window.__THREE_MATERIALS__[args.NAME];
           if (mat) value = mat;
           else value = undefined;
         } else if (args.PROPERTY === "geometry") {
@@ -2402,15 +2402,15 @@
 
       //defines
       newMaterial(args) {
-        if (materials[args.NAME] && alerts) alert("material already exists! will replace...");
+        if (window.__THREE_MATERIALS__[args.NAME] && alerts) alert("material already exists! will replace...");
         const mat = new THREE[args.TYPE]();
         mat.name = args.NAME;
 
-        materials[args.NAME] = mat;
+        window.__THREE_MATERIALS__[args.NAME] = mat;
       }
       async setMaterial(args) {
         if (typeof args.VALUE == "string" && args.VALUE.at(0) == "|") return;
-        const mat = materials[args.NAME];
+        const mat = window.__THREE_MATERIALS__[args.NAME];
         if (!mat) return;
 
         let value = args.VALUE;
@@ -2429,26 +2429,26 @@
         mat.needsUpdate = true;
       }
       setBlending(args) {
-        const mat = materials[args.NAME];
+        const mat = window.__THREE_MATERIALS__[args.NAME];
         if (!mat) return;
         mat.blending = THREE[args.VALUE];
         mat.premultipliedAlpha = true;
         mat.needsUpdate = true;
       }
       setDepth(args) {
-        const mat = materials[args.NAME];
+        const mat = window.__THREE_MATERIALS__[args.NAME];
         if (!mat) return;
         mat.depthFunc = THREE[args.VALUE];
         mat.needsUpdate = true;
       }
       removeMaterial(args) {
-        const mat = materials[args.NAME];
+        const mat = window.__THREE_MATERIALS__[args.NAME];
         if (!mat) return;
         mat.dispose();
-        delete materials[args.NAME];
+        delete window.__THREE_MATERIALS__[args.NAME];
       }
       materialE(args) {
-        return materials[args.NAME] ? true : false;
+        return window.__THREE_MATERIALS__[args.NAME] ? true : false;
       }
 
       newGeometry(args) {
@@ -2559,7 +2559,7 @@
         merged.name = args.NAME;
         window.__THREE_GEOMETRIES__[args.NAME] = merged;
         matList.name = args.NAME;
-        materials[args.NAME] = matList;
+        window.__THREE_MATERIALS__[args.NAME] = matList;
       }
 
       async text(args) {
