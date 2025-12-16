@@ -491,6 +491,7 @@
   //loops/init
   function stopLoop() {
     if (!running) return;
+    vm.renderer.canvas.style.visibility="visible";
     running = false;
 
     if (loopId) {
@@ -604,6 +605,7 @@
 
   function startRenderLoop() {
     if (running) return;
+    vm.renderer.canvas.style.visibility="hidden";
     running = true;
 
     const loop = () => {
