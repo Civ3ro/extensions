@@ -638,9 +638,6 @@
           // sync transform
           obj.position.copy(obj.rigidBody.translation())
           obj.quaternion.copy(obj.rigidBody.rotation())
-  
-          // allow this body to sleep
-          obj.rigidBody.setCanSleep(true)
         })
       }
   
@@ -4906,7 +4903,8 @@
               x: object.quaternion._x,
               y: object.quaternion._y,
               z: object.quaternion._z,
-            });
+            })
+            .setCanSleep(true);
 
           let colliderDesc;
           switch (args.collider) {
