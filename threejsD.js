@@ -67,11 +67,8 @@
   let passes = {};
   let customEffects = [];
   let renderTargets = {};
-
-  let materials = {};
-  window.__THREE_MATERIALS__ = materials;
-  let geometries = {};
-  window.__THREE_GEOMETRIES__ = geometries;
+  window.__THREE_MATERIALS__ = {};
+  window.__THREE_GEOMETRIES__ = {}
   let lights = {};
   let models = {};
 
@@ -93,11 +90,8 @@
     passes = {};
     customEffects = [];
     renderTargets = {};
-
-    materials = {};
-    window.__THREE_MATERIALS__ = materials;
-    geometries = {};
-    window.__THREE_GEOMETRIES__ = geometries;
+    window.__THREE_MATERIALS__ = {};
+    window.__THREE_GEOMETRIES__ = {};
     lights = {};
     models = {};
 
@@ -938,8 +932,8 @@
           scene.traverse((obj) => {
             if (obj.name) names.push(obj.name); //if it has a name, add to list!
           });
-        } else if (args.THING === "Materials") return JSON.stringify(Object.keys(materials));
-        else if (args.THING === "Geometries") return JSON.stringify(Object.keys(geometries));
+        } else if (args.THING === "Materials") return JSON.stringify(Object.keys(window.__THREE_MATERIALS__));
+        else if (args.THING === "Geometries") return JSON.stringify(Object.keys(window.__THREE_GEOMETRIES__));
         else if (args.THING === "Lights") return JSON.stringify(Object.keys(lights));
         else if (args.THING === "Scene Properties") {
           console.log(scene);
@@ -2380,7 +2374,7 @@
           if (mat) value = mat;
           else value = undefined;
         } else if (args.PROPERTY === "geometry") {
-          const geo = geometries[args.NAME];
+          const geo = window.__THREE_GEOMETRIES__[args.NAME];
           if (geo) value = geo;
           else value = undefined;
         } else value = !!value;
@@ -2458,36 +2452,36 @@
       }
 
       newGeometry(args) {
-        if (geometries[args.NAME] && alerts) alert("geometry already exists! will replace...");
+        if (window.__THREE_GEOMETRIES__[args.NAME] && alerts) alert("geometry already exists! will replace...");
         const geo = new THREE[args.TYPE]();
         geo.name = args.NAME;
 
-        geometries[args.NAME] = geo;
+        window.__THREE_GEOMETRIES__[args.NAME] = geo;
       }
       setGeometry(args) {
-        const geo = geometries[args.NAME];
+        const geo = window.__THREE_GEOMETRIES__[args.NAME];
         if (!geo) return;
         geo[args.PROPERTY] = args.VALUE;
 
         geo.needsUpdate = true;
       }
       removeGeometry(args) {
-        const geo = geometries[args.NAME];
+        const geo = window.__THREE_GEOMETRIES__[args.NAME];
         if (!geo) return;
         geo.dispose();
-        delete geometries[args.NAME];
+        delete window.__THREE_GEOMETRIES__[args.NAME];
       }
       geometryE(args) {
-        return geometries[args.NAME] ? true : false;
+        return window.__THREE_GEOMETRIES__[args.NAME] ? true : false;
       }
 
       newGeo(args) {
         const geometry = new THREE.BufferGeometry();
         geometry.name = args.NAME;
-        geometries[args.NAME] = geometry;
+        window.__THREE_GEOMETRIES__[args.NAME] = geometry;
       }
       async geoPoints(args) {
-        const geometry = geometries[args.NAME];
+        const geometry = window.__THREE_GEOMETRIES__[args.NAME];
         if (!geometry) return;
         const positions = args.POINTS.split(" ")
           .map((v) => JSON.parse(v))
@@ -2499,7 +2493,7 @@
         geometry.needsUpdate = true;
       }
       geoUVs(args) {
-        const geometry = geometries[args.NAME];
+        const geometry = window.__THREE_GEOMETRIES__[args.NAME];
         if (!geometry) return;
         const UVs = args.POINTS.split(" ")
           .map((v) => JSON.parse(v))
@@ -2513,7 +2507,7 @@
         const geometry = new THREE.TubeGeometry(getAsset(args.CURVE));
         geometry.name = args.NAME;
 
-        geometries[args.NAME] = geometry;
+        window.__THREE_GEOMETRIES__[args.NAME] = geometry;
       }
 
       async splineModel(args) {
@@ -2563,7 +2557,7 @@
         merged.computeBoundingSphere();
 
         merged.name = args.NAME;
-        geometries[args.NAME] = merged;
+        window.__THREE_GEOMETRIES__[args.NAME] = merged;
         matList.name = args.NAME;
         materials[args.NAME] = matList;
       }
@@ -2593,7 +2587,7 @@
 
         geometry.name = args.NAME;
 
-        geometries[args.NAME] = geometry;
+        window.__THREE_GEOMETRIES__[args.NAME] = geometry;
       }
 
       async loadFont() {
