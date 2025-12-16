@@ -602,85 +602,106 @@
     }
   }
 
-  function startRenderLoop() {
-    if (running) return;
-    vm.renderer.canvas.style.visibility="hidden";
-    running = true;
-
-    const loop = () => {
-      if (!running) return;
-      
-      const scene = getCurrentScene();
+  async function startRenderLoop() {
+    if (running) return
+    vm.renderer.canvas.style.visibility = "hidden"
+    running = true
+  
+    const fixedDt = 1 / 60
+    let accumulator = 0
+    let lastTime = performance.now()
+  
+    const yieldToBrowser = () => new Promise(r => setTimeout(r, 0))
+  
+    const loop = async (now) => {
+      if (!running) return
+  
+      const scene = getCurrentScene()
       if (!scene) {
-        loopId = requestAnimationFrame(loop);
-        return;
+        loopId = requestAnimationFrame(loop)
+        return
       }
-      
-      //RAPIER
+  
+      /* ---------- FIXED PHYSICS ---------- */
+      const deltaTime = Math.min(0.1, (now - lastTime) / 1000)
+      lastTime = now
+      accumulator += deltaTime
+  
       if (physicsWorld) {
-        physicsWorld.step();
-
+        while (accumulator >= fixedDt) {
+          physicsWorld.step()
+          accumulator -= fixedDt
+        }
+  
         scene.children.forEach((obj) => {
-          if (!obj.isMesh || !obj.physics) return;
-          if (obj.rigidBody) {
-            obj.position.copy(obj.rigidBody.translation());
-            obj.quaternion.copy(obj.rigidBody.rotation());
-          }
-        });
+          if (!obj.isMesh || !obj.physics || !obj.rigidBody) return
+          obj.position.copy(obj.rigidBody.translation())
+          obj.quaternion.copy(obj.rigidBody.rotation())
+        })
       }
+  
+      /* ---------- ASYNC YIELD ---------- */
+      await yieldToBrowser()
+  
+      /* ---------- NORMAL UPDATE ---------- */
       if (camera) {
-        if (controls) controls.update();
-
-        const delta = clock.getDelta();
+        if (controls) controls.update()
+  
+        const delta = clock.getDelta()
+  
         Object.values(models).forEach((model) => {
-          if (model) model.mixer.update(delta);
-        });
-
-        Object.values(lights).forEach((light) => updateShadowFrustum(light, camera.position));
-
-        //update custom effects time
+          if (model) model.mixer.update(delta)
+        })
+  
+        Object.values(lights).forEach((light) =>
+          updateShadowFrustum(light, camera.position)
+        )
+  
         customEffects.forEach((e) => {
           if (e.uniforms.get("time")) {
-            e.uniforms.get("time").value += delta;
+            e.uniforms.get("time").value += delta
           }
-        });
+        })
+  
         Object.values(renderTargets).forEach((t) => {
-          if (t.camera.type == "PerspectiveCamera") {
-            t.camera.aspect = t.target.width / t.target.height;
-            t.camera.updateProjectionMatrix();
+          if (t.camera.type === "PerspectiveCamera") {
+            t.camera.aspect = t.target.width / t.target.height
+            t.camera.updateProjectionMatrix()
           }
-          // get meshes using the texture associated with this target
-          const displayMeshes = getMeshesUsingTexture(scene, t.target.texture);
-
-          displayMeshes.forEach((mesh) => {
-            mesh.visible = false;
-          });
-
-          if (t.camera.type == "PerspectiveCamera") {
-            threeRenderer.setRenderTarget(t.target);
-            threeRenderer.clear(true, true, true);
-            threeRenderer.render(scene, t.camera);
+  
+          // ✅ CACHE mesh lookup
+          if (!t._displayMeshes) {
+            t._displayMeshes = getMeshesUsingTexture(scene, t.target.texture)
+          }
+  
+          t._displayMeshes.forEach((mesh) => (mesh.visible = false))
+  
+          if (t.camera.type === "PerspectiveCamera") {
+            threeRenderer.setRenderTarget(t.target)
+            threeRenderer.clear(true, true, true)
+            threeRenderer.render(scene, t.camera)
           } else {
-            t.target.clear(threeRenderer);
-            t.camera.update(threeRenderer, scene); //cubeCamera
+            t.target.clear(threeRenderer)
+            t.camera.update(threeRenderer, scene)
           }
-
-          displayMeshes.forEach((mesh) => {
-            mesh.visible = true;
-          });
-        });
-
-        camera.aspect = threeRenderer.domElement.width / threeRenderer.domElement.height;
-        camera.updateProjectionMatrix();
-        threeRenderer.setRenderTarget(null);
-        composer.render(delta);
+  
+          t._displayMeshes.forEach((mesh) => (mesh.visible = true))
+        })
+  
+        camera.aspect =
+          threeRenderer.domElement.width / threeRenderer.domElement.height
+        camera.updateProjectionMatrix()
+  
+        threeRenderer.setRenderTarget(null)
+        composer.render(delta)
       }
-
-      loopId = requestAnimationFrame(loop);
-    };
-
-    loopId = requestAnimationFrame(loop);
+  
+      loopId = requestAnimationFrame(loop)
+    }
+  
+    loopId = requestAnimationFrame(loop)
   }
+
 
   function resize() {
     const w = canvas.width;
