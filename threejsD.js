@@ -496,7 +496,7 @@ async function load() {
         runtime.on('PROJECT_START', () => startRenderLoop())
         runtime.on('PROJECT_STOP_ALL', () => stopLoop())
         runtime.on('STAGE_SIZE_CHANGED', () => {requestAnimationFrame(() => resize())})
-        //if (!runtime.isPackaged) checkCanvasSize() //only in editor
+        checkCanvasSize()
     }
   }
 function startRenderLoop() {
