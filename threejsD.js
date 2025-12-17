@@ -489,9 +489,10 @@
   //loops/init
   function stopLoop() {
     if (!running) return;
-    checkCanvasSize();
+    //checkCanvasSize();
     //vm.renderer.canvas.style.visibility="visible";
     renderer.setBackgroundColor(1, 1, 1);
+    threeRenderer.domElement.style.visibility="hidden"
     running = false;
 
     if (loopId) {
@@ -609,7 +610,8 @@
     if (running) return
     //vm.renderer.canvas.style.visibility = "hidden"
     renderer.setBackgroundColor(1, 1, 1, 0);
-    checkCanvasSize();
+    threeRenderer.domElement.style.visibility="visible"
+    //checkCanvasSize();
     running = true
   
     const fixedDt = 1 / 60
