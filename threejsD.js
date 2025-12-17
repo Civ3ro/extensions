@@ -128,7 +128,7 @@
 
   // Helper function to get current scene
   function getCurrentScene() {
-    const threeScene = runtime.ext_threeScene;
+    const threeScene = runtime.ext_threeScene || window.__threeScene__;
     if (!threeScene) return null;
     const currentSceneName = threeScene.currentSceneName;
     return currentSceneName ? threeScene.scenes[currentSceneName] : null;
@@ -136,14 +136,14 @@
 
   // Helper function to get scene by name
   function getSceneByName(sceneName) {
-    const threeScene = runtime.ext_threeScene;
+    const threeScene = runtime.ext_threeScene || window.__threeScene__;
     if (!threeScene) return null;
     return threeScene.scenes[sceneName];
   }
 
   // Helper function to set current scene
   function setCurrentScene(sceneName) {
-    const threeScene = runtime.ext_threeScene;
+    const threeScene = runtime.ext_threeScene || window.__threeScene__;
     if (!threeScene) return;
     threeScene.currentSceneName = sceneName;
   }
@@ -961,7 +961,8 @@
         return JSON.stringify(names); // if objects
       }
     }
-    Scratch.extensions.register(new ThreeScene());
+    window.__threeScene__ = new ThreeScene();
+    Scratch.extensions.register(window.__threeScene__);
 
     class ThreeCameras {
       getInfo() {
