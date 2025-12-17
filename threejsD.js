@@ -4904,7 +4904,7 @@
               y: object.quaternion._y,
               z: object.quaternion._z,
             })
-            .setCanSleep(true);
+            .setCanSleep(false);
 
           let colliderDesc;
           switch (args.collider) {
