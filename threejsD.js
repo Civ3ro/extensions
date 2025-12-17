@@ -716,7 +716,11 @@
       camera.aspect = w / h;
       camera.updateProjectionMatrix();
     }
-    if (running) vm.renderer.canvas.style.visibility = "hidden";
+    if (running) {
+      vm.renderer.canvas.style.visibility = "hidden"
+    } else {
+      vm.renderer.canvas.style.visibility = "visible"
+    }
   }
   //wait until all packages are loaded
   Promise.resolve(load()).then(() => {
