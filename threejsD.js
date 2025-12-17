@@ -716,6 +716,7 @@
       camera.aspect = w / h;
       camera.updateProjectionMatrix();
     }
+    if (running) vm.renderer.canvas.style.visibility = "hidden";
   }
   //wait until all packages are loaded
   Promise.resolve(load()).then(() => {
