@@ -80,7 +80,8 @@
     curves: {},
     renderTargets: {}, //not the same as the global one! this one only stores textures
   };
-
+  let rect;
+  
   let raycastResult = [];
 
   function resetor(level) {
@@ -256,7 +257,7 @@
         ctx.drawImage(img, 0, 0, size, size);
 
         resolve(canvas.toDataURL()); // return normalized Data URI
-        //delete canvas?
+        canvas.remove();
       };
       img.src = uri;
     });
@@ -727,6 +728,8 @@
       //vm.renderer.canvas.style.visibility = "visible"
     }
   }
+  rect = threeRenderer.domElement.getBoundingClientRect()
+  
   //wait until all packages are loaded
   Promise.resolve(load()).then(() => {
     class threejsExtension {
@@ -5029,11 +5032,6 @@
     const mouse = vm.runtime.ioDevices.mouse;
     let isLocked = false;
     let isPointerLockEnabled = false;
-
-    let rect = threeRenderer.domElement.getBoundingClientRect();
-    document.addEventListener("resize", () => {
-      rect = threeRenderer.domElement.getBoundingClientRect();
-    });
 
     const postMouseData = (e, isDown) => {
       const {
