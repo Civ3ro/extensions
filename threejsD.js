@@ -491,7 +491,6 @@
     if (!running) return;
     checkCanvasSize();
     vm.renderer.canvas.style.visibility="visible";
-    renderer.setBackgroundColor(255, 255, 255)
     running = false;
 
     if (loopId) {
@@ -567,7 +566,7 @@
 
       renderer.addOverlay(threeRenderer.domElement, "manual");
       renderer.addOverlay(canvas, "manual");
-      renderer.setBackgroundColor(1, 1, 1, 0);
+      renderer.setBackgroundColor(1, 1, 1);
 
       resize();
 
