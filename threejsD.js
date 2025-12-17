@@ -599,9 +599,6 @@
       runtime.on("STAGE_SIZE_CHANGED", () => {
         requestAnimationFrame(() => resize());
       });
-      new ResizeObserver(() => {
-        if (running) vm.renderer.canvas.style.visibility = "hidden";
-      }).observe(canvas);
       checkCanvasSize();
     }
   }
@@ -609,6 +606,7 @@
   async function startRenderLoop() {
     if (running) return
     vm.renderer.canvas.style.visibility = "hidden"
+    checkCanvasSize();
     running = true
   
     const fixedDt = 1 / 60
