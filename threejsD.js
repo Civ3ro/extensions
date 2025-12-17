@@ -491,6 +491,14 @@
     if (!running) return;
     checkCanvasSize();
     vm.renderer.canvas.style.visibility="visible";
+    // borrowed from penguinmod's runtime core extension
+    RGB = "ffffff"
+    this.runtime.renderer.setBackgroundColor(
+        parseInt(RGB.slice(0, 2), 16) / 255,
+        parseInt(RGB.slice(2, 4), 16) / 255,
+        parseInt(RGB.slice(4, 6), 16) / 255,
+        RGB.length === 8 ? parseInt(RGB.slice(6, 8), 16) / 255 : 1
+    )
     running = false;
 
     if (loopId) {
