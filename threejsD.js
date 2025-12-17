@@ -599,6 +599,9 @@
       runtime.on("STAGE_SIZE_CHANGED", () => {
         requestAnimationFrame(() => resize());
       });
+      new ResizeObserver(() => {
+        if (running) vm.renderer.canvas.style.visibility = "hidden";
+      }).observe(canvas);
       checkCanvasSize();
     }
   }
