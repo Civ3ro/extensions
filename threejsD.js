@@ -69,6 +69,8 @@
     renderTargets: {}, //not the same as the global one! this one only stores textures
   }
 
+  let rect 
+
   let raycastResult = []
 
   function resetor(level) {
@@ -185,7 +187,7 @@
       ctx.drawImage(img, 0, 0, size, size)
 
       resolve(canvas.toDataURL()) // return normalized Data URI
-      //delete canvas?
+      canvas.remove()
     };
     img.src = uri
   });
@@ -238,8 +240,6 @@ function updateComposers() {
 }
 //utility
 function getMouseNDC(event) {
-  // Use threeRenderer.domElement for correct offset
-  const rect = threeRenderer.domElement.getBoundingClientRect();
   const x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
   const y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
   return [x, y];
@@ -496,7 +496,7 @@ async function load() {
         runtime.on('PROJECT_START', () => startRenderLoop())
         runtime.on('PROJECT_STOP_ALL', () => stopLoop())
         runtime.on('STAGE_SIZE_CHANGED', () => {requestAnimationFrame(() => resize())})
-        //if (!runtime.isPackaged) checkCanvasSize() //only in editor
+        checkCanvasSize()
     }
   }
 function startRenderLoop() {
@@ -586,6 +586,8 @@ function resize() {
   camera.aspect = w / h
   camera.updateProjectionMatrix()
 }
+
+rect = threeRenderer.domElement.getBoundingClientRect()
 }
 //wait until all packages are loaded
 Promise.resolve(load()).then(() => {
@@ -2271,11 +2273,6 @@ Promise.resolve(load()).then(() => {
   const mouse = vm.runtime.ioDevices.mouse;
   let isLocked = false;
   let isPointerLockEnabled = false;
-
-  let rect = threeRenderer.domElement.getBoundingClientRect();
-  document.addEventListener("resize", () => {
-    rect = threeRenderer.domElement.getBoundingClientRect();
-  });
 
   const postMouseData = (e, isDown) => {
     const { movementX, movementY } = e;
