@@ -490,7 +490,8 @@
   function stopLoop() {
     if (!running) return;
     checkCanvasSize();
-    vm.renderer.canvas.style.visibility="visible";
+    //vm.renderer.canvas.style.visibility="visible";
+    renderer.setBackgroundColor(1, 1, 1);
     running = false;
 
     if (loopId) {
@@ -566,7 +567,7 @@
 
       renderer.addOverlay(threeRenderer.domElement, "manual");
       renderer.addOverlay(canvas, "manual");
-      renderer.setBackgroundColor(1, 1, 1);
+      //renderer.setBackgroundColor(1, 1, 1, 0);
 
       resize();
 
@@ -600,12 +601,14 @@
         requestAnimationFrame(() => resize());
       });
       checkCanvasSize();
+      renderer.setBackgroundColor(1, 1, 1);
     }
   }
 
   async function startRenderLoop() {
     if (running) return
-    vm.renderer.canvas.style.visibility = "hidden"
+    //vm.renderer.canvas.style.visibility = "hidden"
+    renderer.setBackgroundColor(1, 1, 1, 0);
     checkCanvasSize();
     running = true
   
@@ -717,9 +720,9 @@
       camera.updateProjectionMatrix();
     }
     if (running) {
-      vm.renderer.canvas.style.visibility = "hidden"
+      //vm.renderer.canvas.style.visibility = "hidden"
     } else {
-      vm.renderer.canvas.style.visibility = "visible"
+      //vm.renderer.canvas.style.visibility = "visible"
     }
   }
   //wait until all packages are loaded
