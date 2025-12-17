@@ -245,7 +245,10 @@ function getMouseNDC(event) {
   return [x, y];
 }
 function checkCanvasSize() {
-  const { width, height } = canvas
+  const pr = window.devicePixelRatio
+  const width = canvas.width*1/pr
+  const height = canvas.height*1/pr
+
   if (width !== lastWidth || height !== lastHeight) {
     lastWidth = width
     lastHeight = height
@@ -461,6 +464,8 @@ async function load() {
       threeRenderer.shadowMap.type = THREE.PCFSoftShadowMap // (optional)
       threeRenderer.domElement.style.pointerEvents = 'auto' //will disable turbowarp mouse events, but enable threejs's
 
+      window._THREE_RENDERER_ = threeRenderer
+
       gltf = new GLTFLoader.GLTFLoader()
       clock = new THREE.Clock()
       
@@ -572,11 +577,13 @@ function startRenderLoop() {
 }
 
 function resize() {
-  const w = canvas.width
-  const h = canvas.height
+  const pr = window.devicePixelRatio
+  const w = canvas.width*1/pr
+  const h = canvas.height*1/pr
 
   threeRenderer.setSize(w, h)
   composer.setSize(w, h)
+
   customEffects.forEach(e => {
     if (e.uniforms.get('resolution')) {
     e.uniforms.get('resolution').value.set(w,h)
@@ -586,9 +593,10 @@ function resize() {
   if (camera) {
   camera.aspect = w / h
   camera.updateProjectionMatrix()
-}
+  }
 
-rect = threeRenderer.domElement.getBoundingClientRect()
+  rect = threeRenderer.domElement.getBoundingClientRect()
+  console.log(pr, w, h)
 }
 //wait until all packages are loaded
 Promise.resolve(load()).then(() => {
