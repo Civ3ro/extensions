@@ -412,8 +412,6 @@
     const w = canvas.width*(1/pr)
     const h = canvas.height*(1/pr)
 
-    console.log("yo!", pr)
-
     threeRenderer.setSize(w, h)
     if (_Extra3D_.COMPOSER) _Extra3D_.COMPOSER.setSize(w, h)
 
