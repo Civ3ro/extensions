@@ -29,9 +29,12 @@
   let clock
   let running
   let loopId
+
   //Addons
   let TextGeometry
   let fontLoad
+  let OrbitControls
+  let controls
   //Physics
   let RAPIER
   let physicsWorld
@@ -46,7 +49,6 @@
   let lights = {}
   let assets = { //should i place materials, geometries; inside too?
     textures: {},
-    colors: {},
     fogs: {},
     curves: {},
     renderTargets: {}, //not the same as the global one! this one only stores textures
@@ -62,7 +64,6 @@
     materials = {}
     geometries = {}
     lights = {}
-    models = {}
 
     if (level > 0) {
       assets = {
@@ -106,8 +107,8 @@
     scene.remove(object)
 
     if (object.rigidBody) {
-      physicsWorld.removeCollider(object.collider, true)
-      physicsWorld.removeRigidBody(object.rigidBody, true)
+      _Extra3D_.PhysicsWorld.removeCollider(object.collider, true)
+      _Extra3D_.PhysicsWorld.removeRigidBody(object.rigidBody, true)
       object.rigidBody = null
       object.collider = null
     }
@@ -128,15 +129,15 @@
     if (name.startsWith("data:image/")) return name
     return Scratch.vm.editingTarget.sprite.costumes.find(c => c.name === name).asset.encodeDataURI()
   }
-  function setTexutre (texture, mode, style, x, y) {
+  function setTexture (texture, mode, style, x, y) {
     texture.colorSpace = THREE.SRGBColorSpace
 
     if (mode === "Pixelate") {
     texture.minFilter = THREE.NearestFilter;
     texture.magFilter = THREE.NearestFilter;
     } else { //Blur
-    texture.minFilter = THREE.NearestMipmapLinearFilter
-    texture.magFilter = THREE.NearestMipmapLinearFilter
+    //texture.minFilter = THREE.NearestMipmapLinearFilter
+    //texture.magFilter = THREE.NearestMipmapLinearFilter
     }
 
     if (style === "Repeat") {
@@ -147,7 +148,7 @@
 
     texture.generateMipmaps = true;
   }
-  async function resizeImageToSquare(uri, size = 256) {
+  async function resizeImageToSquare(uri, size = 128) {
       return new Promise((resolve) => {
       const img = new Image()
       img.onload = () => {
@@ -251,12 +252,13 @@
         const value = path.split("/")
         console.log(value[0], value[1])
         return assets[value[0]][value[1]]
-      }
+      } else if (path.charAt(0) === "#") return new THREE.Color(path)
     }
 
     return JSON.parse(path) //boolean or number
   }
   let mouseNDC = [0, 0]
+
   //loops/init
   function stopLoop() {
     if (!running) return
@@ -265,85 +267,92 @@
     if (loopId) {
       cancelAnimationFrame(loopId)
       loopId = null
-      if (threeRenderer) threeRenderer.clear();
     }
   }
   async function load() {
-      if (!THREE) {
-        THREE = await import("https://esm.sh/three@0.180.0")
-        
-        //Addons
-        TextGeometry = await import("https://esm.sh/three@0.158.0/examples/jsm/geometries/TextGeometry.js") //old version due to TextDepth not working properly in @180
-        const FontLoader = await import("https://esm.sh/three@0.158.0/examples/jsm/loaders/FontLoader.js")
-        fontLoad = new FontLoader.FontLoader()
+    if (!THREE) {
+      THREE = await import("https://esm.sh/three@0.180.0")
+      
+      //Addons
+      TextGeometry = await import("https://esm.sh/three@0.158.0/examples/jsm/geometries/TextGeometry.js") //old version due to TextDepth not working properly in @180
+      const FontLoader = await import("https://esm.sh/three@0.158.0/examples/jsm/loaders/FontLoader.js")
+      fontLoad = new FontLoader.FontLoader()
 
-    
-        threeRenderer = new THREE.WebGLRenderer({
-          powerPreference: "high-performance",
-          antialias: false,
-          stencil: false,
-          depth: true
-        })
-        threeRenderer.setPixelRatio(window.devicePixelRatio)
-        threeRenderer.outputColorSpace = THREE.SRGBColorSpace // correct colors
-        //threeRenderer.toneMapping = THREE.ACESFilmicToneMapping // HDR look (test)
-        //threeRenderer.toneMappingExposure = 1.0 //(test)
+      OrbitControls = await import("https://esm.sh/three@0.180.0/examples/jsm/controls/OrbitControls.js")
 
-        threeRenderer.shadowMap.enabled = true
-        threeRenderer.shadowMap.type = THREE.PCFSoftShadowMap // (optional)
-        threeRenderer.domElement.style.pointerEvents = 'auto' //will disable turbowarp mouse events, but enable threejs's
-        
-        //API? Communication with other extensions
-        window._Extra3D_ = {
-          THREE: THREE,
-          get THREERENDERER() {return threeRenderer},
-          get SCENE() {return scene},
-          get CAMERA() {return camera},
-          get MATERIALS() {return materials},
-          get GEOMETRIES() {return geometries},
+      threeRenderer = new THREE.WebGLRenderer({
+        powerPreference: "high-performance",
+        antialias: false,
+        stencil: false,
+        depth: true
+      })
+      threeRenderer.setPixelRatio(window.devicePixelRatio)
+      threeRenderer.outputColorSpace = THREE.SRGBColorSpace // correct colors
+      //threeRenderer.toneMapping = THREE.ACESFilmicToneMapping // HDR look (test)
+      //threeRenderer.toneMappingExposure = 1.0 //(test)
 
-          getObject: getObject,
-          createObject: createObject,
-          removeObject: removeObject,
-          getAsset: getAsset,
+      threeRenderer.shadowMap.enabled = true
+      threeRenderer.shadowMap.type = THREE.PCFSoftShadowMap // (optional)
+      threeRenderer.domElement.style.pointerEvents = 'auto' //will disable turbowarp mouse events, but enable threejs's
+      
+      //API? Communication with other extensions
+      window._Extra3D_ = {
+        THREE: THREE,
+        get THREERENDERER() {return threeRenderer},
+        get SCENE() {return scene},
+        get CAMERA() {return camera},
+        get MATERIALS() {return materials},
+        get GEOMETRIES() {return geometries},
 
-          onUpdate: [],
-        }
+        getObject: getObject,
+        createObject: createObject,
+        removeObject: removeObject,
+        getAsset: getAsset,
 
-        clock = new THREE.Clock()
-        
-        renderer.addOverlay( threeRenderer.domElement, "manual" )
-        renderer.addOverlay(canvas, "manual")
-        renderer.setBackgroundColor(1, 1, 1, 0)
-
-        resize()
-
-        window.addEventListener("mousedown", e => {
-          if (e.button === 0) isMouseDown.left = true
-          if (e.button === 1) isMouseDown.middle = true
-          if (e.button === 2) isMouseDown.right = true
-        })
-        window.addEventListener("mouseup", e => {
-          if (e.button === 0) isMouseDown.left = false; prevMouse.left = false
-          if (e.button === 1) isMouseDown.middle = false; prevMouse.middle = false
-          if (e.button === 2) isMouseDown.right = false; prevMouse.right = false
-        })
-        // prevent contextmenu on right click
-        threeRenderer.domElement.addEventListener("contextmenu", e => e.preventDefault());
-
-        threeRenderer.domElement.addEventListener('mousemove', (event) => {
-          mouseNDC = getMouseNDC(event);
-        })
-
-          running = false
-          load()
-
-          startRenderLoop()
-          runtime.on('PROJECT_START', () => startRenderLoop())
-          runtime.on('PROJECT_STOP_ALL', () => stopLoop())
-          runtime.on('STAGE_SIZE_CHANGED', () => {requestAnimationFrame(() => resize())})
-          checkCanvasSize()
+        onUpdate: [],
       }
+
+      clock = new THREE.Clock()
+      
+      renderer.addOverlay( threeRenderer.domElement, "manual" )
+      renderer.addOverlay(canvas, "manual")
+      renderer.setBackgroundColor(1, 1, 1, 0)
+
+      resize()
+
+      window.addEventListener("mousedown", e => {
+        if (e.button === 0) isMouseDown.left = true
+        if (e.button === 1) isMouseDown.middle = true
+        if (e.button === 2) isMouseDown.right = true
+      })
+      window.addEventListener("mouseup", e => {
+        if (e.button === 0) isMouseDown.left = false; prevMouse.left = false
+        if (e.button === 1) isMouseDown.middle = false; prevMouse.middle = false
+        if (e.button === 2) isMouseDown.right = false; prevMouse.right = false
+      })
+      // prevent contextmenu on right click
+      threeRenderer.domElement.addEventListener("contextmenu", e => e.preventDefault());
+
+      threeRenderer.domElement.addEventListener('mousemove', (event) => {
+        mouseNDC = getMouseNDC(event);
+      })
+
+      running = false
+      load()
+
+      startRenderLoop()
+      runtime.on('PROJECT_START', () => startRenderLoop())
+      runtime.on('PROJECT_STOP_ALL', () => stopLoop())
+      runtime.on('STAGE_SIZE_CHANGED', () => {requestAnimationFrame(() => resize())})
+      let lastRatio = window.devicePixelRatio;
+      window.addEventListener('resize', () => {
+          if (window.devicePixelRatio !== lastRatio) { //not working... mmmh
+              lastRatio = window.devicePixelRatio;
+          }
+          requestAnimationFrame(() => resize())
+      })
+      checkCanvasSize()
+    }
   }
   function startRenderLoop() {
     if (running) return
@@ -355,21 +364,9 @@
       const delta = clock.getDelta()
       _Extra3D_.onUpdate.forEach(f => f(delta)) //run other functions, from Addons Extension or User made. This is called an Array "Hook"
 
-      //RAPIER
-      if (physicsWorld && scene) {
-        physicsWorld.step()
-
-        scene.children.forEach(obj => {
-          if (!(obj.isMesh) || !(obj.physics)) return
-          if (obj.rigidBody) {
-              obj.position.copy(obj.rigidBody.translation())
-              obj.quaternion.copy(obj.rigidBody.rotation())
-          }
-        })
-
-      }
-
       if (scene && camera) {
+        if (controls) controls.update()
+
         Object.values(lights).forEach(light => updateShadowFrustum(light, camera.position))
 
         Object.values(renderTargets).forEach(t => {
@@ -397,7 +394,6 @@
           mesh.visible = true
           })
         })
-
         camera.aspect = threeRenderer.domElement.width / threeRenderer.domElement.height //is this slow?
         camera.updateProjectionMatrix()
         threeRenderer.setRenderTarget(null) //to canvas
@@ -411,9 +407,12 @@
     loopId = requestAnimationFrame(loop)
   }
   function resize() {
+    
     const pr = window.devicePixelRatio
-    const w = canvas.width*1/pr
-    const h = canvas.height*1/pr
+    const w = canvas.width*(1/pr)
+    const h = canvas.height*(1/pr)
+
+    console.log("yo!", pr)
 
     threeRenderer.setSize(w, h)
     if (_Extra3D_.COMPOSER) _Extra3D_.COMPOSER.setSize(w, h)
@@ -467,11 +466,11 @@
       "mousedown",
       (e) => {
       // @ts-expect-error
-      if (_Extra3D_.THREERENDERER.domElement.contains(e.target)) {
+      if (threeRenderer.domElement.contains(e.target)) {
           if (isLocked) {
           postMouseData(e, true);
           } else if (isPointerLockEnabled) {
-          _Extra3D_.THREERENDERER.domElement.requestPointerLock();
+          threeRenderer.domElement.requestPointerLock();
           }
       }
       },
@@ -483,8 +482,8 @@
       if (isLocked) {
           postMouseData(e, false);
           // @ts-expect-error
-      } else if (isPointerLockEnabled && _Extra3D_.THREERENDERER.domElement.contains(e.target)) {
-          _Extra3D_.THREERENDERER.domElement.requestPointerLock();
+      } else if (isPointerLockEnabled && threeRenderer.domElement.contains(e.target)) {
+          threeRenderer.domElement.requestPointerLock();
       }
       },
       true
@@ -500,7 +499,7 @@
   );
 
   document.addEventListener("pointerlockchange", () => {
-      isLocked = document.pointerLockElement === _Extra3D_.THREERENDERER.domElement;
+      isLocked = document.pointerLockElement === threeRenderer.domElement;
   });
   document.addEventListener("pointerlockerror", (e) => {
       console.error("Pointer lock error", e);
@@ -530,7 +529,7 @@
   const sceneBlocks = [
     {blockType: Scratch.BlockType.LABEL, text: "Scene:"},
     {opcode: "newScene", blockType: Scratch.BlockType.COMMAND, text: "new Scene [NAME]", arguments: {NAME: {type: Scratch.ArgumentType.STRING, defaultValue: "scene"}}},
-    {opcode: "setSceneProperty", blockType: Scratch.BlockType.COMMAND, text: "set Scene [PROPERTY] to [VALUE]", arguments: {PROPERTY: {type: Scratch.ArgumentType.STRING, menu: "sceneProperties", defaultValue: "background"}, VALUE: {type: Scratch.ArgumentType.STRING, defaultValue: "new Color()", exemptFromNormalization: true}}},
+    {opcode: "setSceneProperty", extensions: ["colours_looks"], blockType: Scratch.BlockType.COMMAND, text: "set Scene [PROPERTY] to [VALUE]", arguments: {PROPERTY: {type: Scratch.ArgumentType.STRING, menu: "sceneProperties", defaultValue: "background"}, VALUE: {type: Scratch.ArgumentType.STRING, defaultValue: "#9966ff", exemptFromNormalization: true}}},
     "---",
     {opcode: "getSceneObjects", blockType: Scratch.BlockType.REPORTER, text: "get Scene [THING]", arguments:{THING: {type: Scratch.ArgumentType.STRING, menu: "sceneThings"}}},
     {opcode: "reset", blockType: Scratch.BlockType.COMMAND, text: "Reset Everything"}
@@ -578,14 +577,6 @@
     {opcode: "setObjectV3",extensions: ["colours_motion"], blockType: Scratch.BlockType.COMMAND, text: "set transform [PROPERTY] of [OBJECT3D] to [VALUE]", arguments: {PROPERTY: {type: Scratch.ArgumentType.STRING, menu: "objectVector3", defaultValue: "position"}, OBJECT3D: {type: Scratch.ArgumentType.STRING, defaultValue: "myObject"}, VALUE: {type: Scratch.ArgumentType.STRING, defaultValue: "[0,0,0]"}}},           
     {opcode: "getObjectV3",extensions: ["colours_motion"], blockType: Scratch.BlockType.REPORTER, text: "get [PROPERTY] of [OBJECT3D]", arguments: {PROPERTY: {type: Scratch.ArgumentType.STRING, menu: "objectVector3", defaultValue: "position"}, OBJECT3D: {type: Scratch.ArgumentType.STRING, defaultValue: "myObject"}}},
 
-    {blockType: Scratch.BlockType.LABEL, text: "↳ Materials"},
-    {opcode: "newMaterial",extensions: ["colours_looks"], blockType: Scratch.BlockType.COMMAND, text: "new material [NAME] [TYPE]", arguments: {NAME: {type: Scratch.ArgumentType.STRING, defaultValue: "myMaterial"}, TYPE: {type: Scratch.ArgumentType.STRING, menu: "materialTypes", defaultValue: "MeshStandardMaterial"}}},
-    {opcode: "materialE",extensions: ["colours_looks"], blockType: Scratch.BlockType.BOOLEAN, text: "is there a material [NAME]?", arguments: {NAME: {type: Scratch.ArgumentType.STRING, defaultValue: "myMaterial"}}},
-    {opcode: "removeMaterial",extensions: ["colours_looks"], blockType: Scratch.BlockType.COMMAND, text: "remove material [NAME]", arguments: {NAME: {type: Scratch.ArgumentType.STRING, defaultValue: "myMaterial"}}},
-    {opcode: "setMaterial",extensions: ["colours_looks"], blockType: Scratch.BlockType.COMMAND, text: "set material [PROPERTY] of [NAME] to [VALUE]", arguments: {PROPERTY: {type: Scratch.ArgumentType.STRING, menu: "materialProperties", defaultValue: "color"},NAME: {type: Scratch.ArgumentType.STRING, defaultValue: "myMaterial"}, VALUE: {type: Scratch.ArgumentType.STRING, defaultValue: "new Color()", exemptFromNormalization: true}}},
-    {opcode: "setBlending",extensions: ["colours_looks"], blockType: Scratch.BlockType.COMMAND, text: "set material [NAME] blending to [VALUE]", arguments: {NAME: {type: Scratch.ArgumentType.STRING, defaultValue: "myMaterial"}, VALUE: {type: Scratch.ArgumentType.STRING, menu: "blendModes"}}},
-    {opcode: "setDepth",extensions: ["colours_looks"], blockType: Scratch.BlockType.COMMAND, text: "set material [NAME] depth to [VALUE]", arguments: {NAME: {type: Scratch.ArgumentType.STRING, defaultValue: "myMaterial"}, VALUE: {type: Scratch.ArgumentType.STRING, menu: "depthModes"}}},
-    
     {blockType: Scratch.BlockType.LABEL, text: "↳ Geometries"},
     {opcode: "newGeometry",extensions: ["colours_data_lists"], blockType: Scratch.BlockType.COMMAND, text: "new geometry [NAME] [TYPE]", arguments: {NAME: {type: Scratch.ArgumentType.STRING, defaultValue: "myGeometry"}, TYPE: {type: Scratch.ArgumentType.STRING, menu: "geometryTypes", defaultValue: "BoxGeometry"}}},
     {opcode: "geometryE",extensions: ["colours_data_lists"], blockType: Scratch.BlockType.BOOLEAN, text: "is there a geometry [NAME]?", arguments: {NAME: {type: Scratch.ArgumentType.STRING, defaultValue: "myGeometry"}}},
@@ -600,7 +591,16 @@
     {blockType: Scratch.BlockType.BUTTON, text: "Convert font to JSON", func: "openConv"},
     {blockType: Scratch.BlockType.BUTTON, text: "Load JSON font file", func: "loadFont"},
     {opcode: "text", extensions: ["colours_data_lists"], blockType: Scratch.BlockType.COMMAND, text: "create text geometry [NAME] with text [TEXT] in font [FONT] size [S] depth [D] curvedSegments [CS]", arguments: {NAME: {type: Scratch.ArgumentType.STRING, defaultValue: "myText"}, TEXT: {type: Scratch.ArgumentType.STRING, defaultValue: "Civero!"}, FONT: {type: Scratch.ArgumentType.STRING, menu: "fonts"}, S: {type: Scratch.ArgumentType.NUMBER, defaultValue: 1}, D: {type: Scratch.ArgumentType.NUMBER, defaultValue: 0.1}, CS: {type: Scratch.ArgumentType.NUMBER, defaultValue: 6}}},
-  ].map(b => typeof b === 'string' ? b : {...b, color1: "#EB6534", color2: "#cf653e", color3: "#fc7c4e"})
+  
+    {blockType: Scratch.BlockType.LABEL, text: "↳ Materials"},
+    {opcode: "newMaterial",extensions: ["colours_looks"], blockType: Scratch.BlockType.COMMAND, text: "new material [NAME] [TYPE]", arguments: {NAME: {type: Scratch.ArgumentType.STRING, defaultValue: "myMaterial"}, TYPE: {type: Scratch.ArgumentType.STRING, menu: "materialTypes", defaultValue: "MeshStandardMaterial"}}},
+    {opcode: "materialE",extensions: ["colours_looks"], blockType: Scratch.BlockType.BOOLEAN, text: "is there a material [NAME]?", arguments: {NAME: {type: Scratch.ArgumentType.STRING, defaultValue: "myMaterial"}}},
+    {opcode: "removeMaterial",extensions: ["colours_looks"], blockType: Scratch.BlockType.COMMAND, text: "remove material [NAME]", arguments: {NAME: {type: Scratch.ArgumentType.STRING, defaultValue: "myMaterial"}}},
+    {opcode: "setMaterial",extensions: ["colours_looks"], blockType: Scratch.BlockType.COMMAND, text: "set material [PROPERTY] of [NAME] to [VALUE]", arguments: {PROPERTY: {type: Scratch.ArgumentType.STRING, menu: "materialProperties", defaultValue: "color"},NAME: {type: Scratch.ArgumentType.STRING, defaultValue: "myMaterial"}, VALUE: {type: Scratch.ArgumentType.STRING, defaultValue: "#9966ff", exemptFromNormalization: true}}},
+    {opcode: "setBlending",extensions: ["colours_looks"], blockType: Scratch.BlockType.COMMAND, text: "set material [NAME] blending to [VALUE]", arguments: {NAME: {type: Scratch.ArgumentType.STRING, defaultValue: "myMaterial"}, VALUE: {type: Scratch.ArgumentType.STRING, menu: "blendModes"}}},
+    {opcode: "setDepth",extensions: ["colours_looks"], blockType: Scratch.BlockType.COMMAND, text: "set material [NAME] depth to [VALUE]", arguments: {NAME: {type: Scratch.ArgumentType.STRING, defaultValue: "myMaterial"}, VALUE: {type: Scratch.ArgumentType.STRING, menu: "depthModes"}}},
+  
+  ].map(b => typeof b === 'string' ? b : {...b, color1: "#4bbea5ff", color2: "#4da891ff", color3: "#297e62ff"})
   const objectMenus = {
     objectVector3: {acceptReporters: false, items: [
     {text: "Positon", value: "position"},{text: "Rotation", value: "rotation"},{text: "Scale", value: "scale"},{text: "Facing Direction (.up)", value: "up"}
@@ -785,6 +785,8 @@
     "---",
     {opcode:"mouseDown",extensions: ["colours_sensing"], blockType: Scratch.BlockType.BOOLEAN, text: "mouse [BUTTON] [action]?", arguments: {BUTTON: {type: Scratch.ArgumentType.STRING, menu: "mouseButtons"},action: {type: Scratch.ArgumentType.STRING, menu: "mouseAction"}}},
     //{opcode: "mousePos",extensions: ["colours_sensing"], blockType: Scratch.BlockType.REPORTER, text: "mouse position", arguments: {}},
+    "---",
+    {opcode: "OrbitControl", blockType: Scratch.BlockType.COMMAND, text: "set addon Orbit Control [STATE]", arguments: {STATE: {type: Scratch.ArgumentType.STRING, menu: "enabled"},}},
   ].map(b => typeof b === 'string' ? b : {...b, color1: "#6e7774ff", color2: "#595f5dff", color3: "#5b615fff"})
   const utilitiesMenus = {
     textureModes: {acceptReporters: false, items: ["Pixelate","Blur"]},
@@ -987,7 +989,7 @@ Promise.resolve(load()).then(() => {
           values = values.map(v => v * Math.PI / 180);
           object.rotation.set(0,0,0)
         }
-        if (object.isDirectionalLight == true) {object.pos = new THREE.Vector3(...values); console.log(true, values, object.pos); return}
+        //if (object.isDirectionalLight == true) {object.pos = new THREE.Vector3(...values); console.log(true, values, object.pos); return}
           object[args.PROPERTY].set(...values);
 
         if (object.type == "CubeCamera") object.updateCoordinateSystem()
@@ -1040,7 +1042,7 @@ Promise.resolve(load()).then(() => {
         if (typeof(args.VALUE) == "string" && args.VALUE.at(0) == "|") return
         const mat = materials[args.NAME]
 
-        let value = args.VALUE
+        let value = await args.VALUE
 
         if (args.VALUE == "false") value = false
 
@@ -1048,11 +1050,10 @@ Promise.resolve(load()).then(() => {
         else if (args.PROPERTY === "normalScale") value = new THREE.Vector2(...JSON.parse(args.VALUE))
         else value = getAsset(value)
         
-        
         console.log("o:", args.VALUE, typeof(args.VALUE))
         console.log("r:", value, typeof(value))
         
-        mat[args.PROPERTY] = await (value) //await incase its a texture
+        mat[args.PROPERTY] = (value)
         mat.needsUpdate = true
       }
       setBlending(args) {
@@ -1308,10 +1309,7 @@ Promise.resolve(load()).then(() => {
       return JSON.stringify([180+THREE.MathUtils.radToDeg(pitch),THREE.MathUtils.radToDeg(yaw),0])
     }
     newColor(args) {
-      const color = new THREE.Color(args.HEX)
-      const uuid = crypto.randomUUID()
-      assets.colors[uuid] = color
-      return `colors/${uuid}`
+      return args.HEX
     }
     newFog(args) {
       const fog = new THREE.Fog(args.COLOR, args.NEAR, args.FAR)
@@ -1324,7 +1322,7 @@ Promise.resolve(load()).then(() => {
       const texture = await new THREE.TextureLoader().loadAsync(textureURI);
       texture.name = args.COSTUME
 
-      setTexutre(texture, args.MODE, args.STYLE, args.X, args.Y)
+      setTexture(texture, args.MODE, args.STYLE, args.X, args.Y)
       assets.textures[texture.uuid] = texture
       return `textures/${texture.uuid}`
     }
@@ -1335,7 +1333,7 @@ Promise.resolve(load()).then(() => {
       
       texture.name = "CubeTexture" + args.COSTUMEX0;
 
-      setTexutre(texture, args.MODE, args.STYLE, args.X, args.Y)
+      console.log(texture, uris, normalized)
       assets.textures[texture.uuid] = texture
       return `textures/${texture.uuid}`
     }
@@ -1345,7 +1343,7 @@ Promise.resolve(load()).then(() => {
       texture.name = args.COSTUME
       texture.mapping = THREE.EquirectangularReflectionMapping
 
-      setTexutre(texture, args.MODE)
+      setTexture(texture, args.MODE)
       assets.textures[texture.uuid] = texture
       return `textures/${texture.uuid}`
     }
@@ -1405,10 +1403,18 @@ Promise.resolve(load()).then(() => {
       document.exitPointerLock();
       }
       }
-
       isLocked() {
       return isLocked;
       }
+
+    OrbitControl(args) {
+      if (controls) controls.dispose()
+
+      controls = new OrbitControls.OrbitControls(camera, threeRenderer.domElement);
+      controls.enableDamping = true
+      
+      controls.enabled = !!args.STATE
+    }
 
   }
 
